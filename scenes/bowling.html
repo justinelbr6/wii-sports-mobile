@@ -494,8 +494,8 @@ scene.fog = new THREE.Fog(0x1a1a2e, 30, 60);
 
 // Caméra
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(0, 3, 8);
-camera.lookAt(0, 0, 0);
+camera.position.set(0, 1.8, 9.5);
+camera.lookAt(0, 0.5, 0);
 
 // ── Lumières ──
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
@@ -514,86 +514,235 @@ const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
 fillLight.position.set(-5, 5, 5);
 scene.add(fillLight);
 
-// ── Piste de bowling ──
+// ── Piste de bowling style Wii ──
 function creerPiste() {
-  // Sol principal (bois)
-  const pisteMat = new THREE.MeshLambertMaterial({ color: 0xD4A855 });
-  const pisteGeo = new THREE.BoxGeometry(3.6, 0.1, 25);
+
+  // === SOL GÉNÉRAL (béton beige) ===
+  const solMat = new THREE.MeshLambertMaterial({ color: 0xC8B89A });
+  const solGeo = new THREE.BoxGeometry(40, 0.1, 50);
+  const sol = new THREE.Mesh(solGeo, solMat);
+  sol.position.set(0, -0.06, -5);
+  sol.receiveShadow = true;
+  scene.add(sol);
+
+  // === PISTES ADJACENTES (gauche et droite, décoratives) ===
+  const pisteMat = new THREE.MeshLambertMaterial({ color: 0xE8C97A });
+  const pisteLatMat = new THREE.MeshLambertMaterial({ color: 0xD4B86A });
+
+  // Piste principale
+  const pisteGeo = new THREE.BoxGeometry(3.4, 0.08, 30);
   const piste = new THREE.Mesh(pisteGeo, pisteMat);
-  piste.position.set(0, -0.05, -5);
+  piste.position.set(0, 0, -5);
   piste.receiveShadow = true;
   scene.add(piste);
 
-  // Rigoles (côtés)
-  const rigoleMat = new THREE.MeshLambertMaterial({ color: 0x333355 });
-  [-2.1, 2.1].forEach(x => {
-    const rigoleGeo = new THREE.BoxGeometry(0.6, 0.08, 25);
-    const rigole = new THREE.Mesh(rigoleGeo, rigoleMat);
-    rigole.position.set(x, -0.06, -5);
-    rigole.receiveShadow = true;
-    scene.add(rigole);
+  // Pistes latérales (décoratives)
+  [-5.8, 5.8].forEach(x => {
+    const pisteLat = new THREE.Mesh(pisteGeo.clone(), pisteLatMat);
+    pisteLat.position.set(x, 0, -5);
+    pisteLat.receiveShadow = true;
+    scene.add(pisteLat);
   });
 
-  // Ligne de lancer
-  const ligneMat = new THREE.MeshLambertMaterial({ color: 0xFF4444 });
-  const ligneGeo = new THREE.BoxGeometry(3.6, 0.02, 0.05);
-  const ligne = new THREE.Mesh(ligneGeo, ligneMat);
-  ligne.position.set(0, 0.01, 5.5);
-  scene.add(ligne);
-
-  // Flèches directionnelles sur la piste
-  const flecheMat = new THREE.MeshLambertMaterial({ color: 0xcc8800 });
-  for (let i = -1; i <= 1; i++) {
-    const fGeo = new THREE.ConeGeometry(0.05, 0.2, 3);
-    const fleche = new THREE.Mesh(fGeo, flecheMat);
-    fleche.rotation.x = Math.PI;
-    fleche.position.set(i * 0.6, 0.02, 2);
-    scene.add(fleche);
+  // === LIGNES EN BOIS sur les pistes ===
+  const lignesBoisMat = new THREE.MeshLambertMaterial({ color: 0xC8A850 });
+  for (let z = -18; z < 10; z += 0.8) {
+    [-5.8, 0, 5.8].forEach(x => {
+      const lGeo = new THREE.BoxGeometry(3.38, 0.005, 0.03);
+      const l = new THREE.Mesh(lGeo, lignesBoisMat);
+      l.position.set(x, 0.042, z);
+      scene.add(l);
+    });
   }
 
-  // Fond (mur arrière)
-  const murMat = new THREE.MeshLambertMaterial({ color: 0x222244 });
-  const murGeo = new THREE.BoxGeometry(6, 4, 0.2);
-  const mur = new THREE.Mesh(murGeo, murMat);
-  mur.position.set(0, 2, -18);
-  scene.add(mur);
-
-  // Tribunes (gradins sur les côtés)
-  const gradin = new THREE.MeshLambertMaterial({ color: 0x334466 });
-  [-3.5, 3.5].forEach(cx => {
-    const gradinGeo = new THREE.BoxGeometry(1.5, 1.5, 14);
-    const gradinMesh = new THREE.Mesh(gradinGeo, gradin);
-    gradinMesh.position.set(cx, 0.75, -8);
-    scene.add(gradinMesh);
+  // === RIGOLES ===
+  const rigoleMat = new THREE.MeshLambertMaterial({ color: 0x8899AA });
+  [[-2.5, 0], [2.5, 0], [-8.05, 0], [8.05, 0]].forEach(([x]) => {
+    const rGeo = new THREE.BoxGeometry(0.7, 0.06, 30);
+    const r = new THREE.Mesh(rGeo, rigoleMat);
+    r.position.set(x, -0.01, -5);
+    r.receiveShadow = true;
+    scene.add(r);
   });
 
-  // Spectateurs dans les tribunes (sur les côtés, surélevés)
-  const couleurs = [0xFF6B6B, 0x4ECDC4, 0x45B7D1, 0x96CEB4, 0xFFA07A, 0xFFD93D, 0xC77DFF];
-  for (let i = 0; i < 24; i++) {
-    const c = couleurs[i % couleurs.length];
-    const corpsMat = new THREE.MeshLambertMaterial({ color: c });
+  // === SÉPARATEURS entre pistes ===
+  const sepMat = new THREE.MeshLambertMaterial({ color: 0x556677 });
+  [-3.2, 3.2].forEach(x => {
+    const sGeo = new THREE.BoxGeometry(0.15, 0.25, 30);
+    const s = new THREE.Mesh(sGeo, sepMat);
+    s.position.set(x, 0.1, -5);
+    scene.add(s);
+  });
 
-    // Côté gauche ou droit
-    const cote = i % 2 === 0 ? -4.2 : 4.2;
-    const zPos = -6 - (i % 12) * 1.1;
-    const yPos = 1.2 + Math.floor(i / 12) * 0.6; // rangées surélevées
+  // === LIGNE DE FAUTE (rouge) ===
+  const fauteMat = new THREE.MeshLambertMaterial({ color: 0xFF3333 });
+  const fauteGeo = new THREE.BoxGeometry(3.4, 0.01, 0.06);
+  const faute = new THREE.Mesh(fauteGeo, fauteMat);
+  faute.position.set(0, 0.045, 5.5);
+  scene.add(faute);
 
-    const corpsGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.5, 8);
+  // === FLÈCHES DIRECTIONNELLES AU SOL ===
+  const flechesPisteMat = new THREE.MeshLambertMaterial({ color: 0xCC8833 });
+  for (let i = -1; i <= 1; i++) {
+    const fGeo = new THREE.ConeGeometry(0.06, 0.22, 3);
+    const f = new THREE.Mesh(fGeo, flechesPisteMat);
+    f.rotation.x = -Math.PI / 2;
+    f.position.set(i * 0.55, 0.045, 1.5);
+    scene.add(f);
+  }
+
+  // === MUR DU FOND ===
+  const murFondMat = new THREE.MeshLambertMaterial({ color: 0xDDD0B8 });
+  const murFondGeo = new THREE.BoxGeometry(20, 5, 0.3);
+  const murFond = new THREE.Mesh(murFondGeo, murFondMat);
+  murFond.position.set(0, 2.5, -20.5);
+  scene.add(murFond);
+
+  // Panneau de score au fond
+  const panneauMat = new THREE.MeshLambertMaterial({ color: 0x223355 });
+  const panneauGeo = new THREE.BoxGeometry(4, 1.5, 0.1);
+  const panneau = new THREE.Mesh(panneauGeo, panneauMat);
+  panneau.position.set(0, 4, -20.3);
+  scene.add(panneau);
+
+  // Écran du panneau (bleu clair)
+  const ecranMat = new THREE.MeshLambertMaterial({ color: 0x4488CC, emissive: 0x113366 });
+  const ecranGeo = new THREE.BoxGeometry(3.6, 1.1, 0.05);
+  const ecran = new THREE.Mesh(ecranGeo, ecranMat);
+  ecran.position.set(0, 4, -20.2);
+  scene.add(ecran);
+
+  // === MURS LATÉRAUX ===
+  const murLatMat = new THREE.MeshLambertMaterial({ color: 0xBBAA90 });
+  [-10, 10].forEach(x => {
+    const mGeo = new THREE.BoxGeometry(0.3, 5, 50);
+    const m = new THREE.Mesh(mGeo, murLatMat);
+    m.position.set(x, 2.5, -5);
+    scene.add(m);
+  });
+
+  // === PLAFOND ===
+  const plafondMat = new THREE.MeshLambertMaterial({ color: 0xF0EAD8 });
+  const plafondGeo = new THREE.BoxGeometry(22, 0.2, 50);
+  const plafond = new THREE.Mesh(plafondGeo, plafondMat);
+  plafond.position.set(0, 5, -5);
+  scene.add(plafond);
+
+  // === NÉONS AU PLAFOND ===
+  const neonMat = new THREE.MeshLambertMaterial({ color: 0xFFFFCC, emissive: 0x888844 });
+  for (let z = -15; z < 8; z += 5) {
+    const nGeo = new THREE.BoxGeometry(18, 0.08, 0.12);
+    const n = new THREE.Mesh(nGeo, neonMat);
+    n.position.set(0, 4.85, z);
+    scene.add(n);
+
+    // Lumière ponctuelle sous chaque néon
+    const neonLight = new THREE.PointLight(0xFFFFEE, 0.3, 8);
+    neonLight.position.set(0, 4.5, z);
+    scene.add(neonLight);
+  }
+
+  // === BANCS / CHAISES pour spectateurs ===
+  const bancMat = new THREE.MeshLambertMaterial({ color: 0x8B6914 });
+  [-7, 7].forEach(x => {
+    for (let z = -2; z >= -14; z -= 2.5) {
+      const bGeo = new THREE.BoxGeometry(1.8, 0.15, 0.6);
+      const b = new THREE.Mesh(bGeo, bancMat);
+      b.position.set(x, 0.5, z);
+      scene.add(b);
+    }
+  });
+
+  // === SPECTATEURS (Miis cartoon) ===
+  const couleursMiis = [0xFFCCA0, 0x4488FF, 0xFF6644, 0x44BB44, 0xFFAA22, 0xAA44FF, 0xFF4488];
+  const couleursPeaux = [0xFFCCA0, 0xE8A87C, 0xC68642, 0x8D5524];
+
+  for (let i = 0; i < 20; i++) {
+    const cote = i % 2 === 0 ? -7 : 7;
+    const zPos = -2 - (i % 10) * 1.4;
+    const yBase = 0.65 + Math.floor(i / 10) * 0.5;
+    const couleurCorps = couleursMiis[i % couleursMiis.length];
+    const couleurPeau = couleursPeaux[i % couleursPeaux.length];
+
+    const corpsMat = new THREE.MeshLambertMaterial({ color: couleurCorps });
+    const peauMat = new THREE.MeshLambertMaterial({ color: couleurPeau });
+
+    // Corps
+    const corpsGeo = new THREE.CylinderGeometry(0.15, 0.2, 0.45, 8);
     const corps = new THREE.Mesh(corpsGeo, corpsMat);
-    corps.position.set(cote, yPos, zPos);
+    corps.position.set(cote, yBase, zPos);
     scene.add(corps);
 
-    // Tête grosse cartoon
-    const teteGeo = new THREE.SphereGeometry(0.22, 8, 8);
-    const tete = new THREE.Mesh(teteGeo, corpsMat);
-    tete.position.set(cote, yPos + 0.42, zPos);
+    // Grosse tête (style Mii)
+    const teteGeo = new THREE.SphereGeometry(0.22, 10, 10);
+    const tete = new THREE.Mesh(teteGeo, peauMat);
+    tete.scale.y = 1.1;
+    tete.position.set(cote, yBase + 0.44, zPos);
     scene.add(tete);
+
+    // Cheveux
+    const chevMat = new THREE.MeshLambertMaterial({ color: [0x3B2314, 0xFFCC44, 0xCC3300, 0x111111][i % 4] });
+    const chevGeo = new THREE.SphereGeometry(0.23, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+    const chev = new THREE.Mesh(chevGeo, chevMat);
+    chev.position.set(cote, yBase + 0.55, zPos);
+    scene.add(chev);
+
+    // Yeux
+    const oeilMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    [-0.07, 0.07].forEach(ox => {
+      const oGeo = new THREE.SphereGeometry(0.035, 6, 6);
+      const oeil = new THREE.Mesh(oGeo, oeilMat);
+      oeil.position.set(cote + ox, yBase + 0.46, zPos - 0.19);
+      scene.add(oeil);
+    });
   }
+
+  // === PERSONNAGE JOUEUR (Mii derrière la boule) ===
+  const joueurPeauMat = new THREE.MeshLambertMaterial({ color: 0xFFCCA0 });
+  const joueurHautMat = new THREE.MeshLambertMaterial({ color: 0x2255CC }); // chemise bleue
+  const joueurBasMat  = new THREE.MeshLambertMaterial({ color: 0xEEEEEE }); // pantalon blanc
+
+  // Torse
+  const torsoGeo = new THREE.BoxGeometry(0.5, 0.55, 0.3);
+  const torso = new THREE.Mesh(torsoGeo, joueurHautMat);
+  torso.position.set(0, 0.85, 7.2);
+  scene.add(torso);
+
+  // Tête grosse
+  const teteJGeo = new THREE.SphereGeometry(0.28, 12, 12);
+  const teteJ = new THREE.Mesh(teteJGeo, joueurPeauMat);
+  teteJ.scale.y = 1.15;
+  teteJ.position.set(0, 1.55, 7.2);
+  scene.add(teteJ);
+
+  // Cheveux joueur
+  const chevJMat = new THREE.MeshLambertMaterial({ color: 0x3B2314 });
+  const chevJGeo = new THREE.SphereGeometry(0.29, 10, 10, 0, Math.PI * 2, 0, Math.PI / 2);
+  const chevJ = new THREE.Mesh(chevJGeo, chevJMat);
+  chevJ.position.set(0, 1.68, 7.2);
+  scene.add(chevJ);
+
+  // Jambes
+  [[-0.13, 0xEEEEEE], [0.13, 0xEEEEEE]].forEach(([x, c]) => {
+    const jMat = new THREE.MeshLambertMaterial({ color: c });
+    const jGeo = new THREE.CylinderGeometry(0.1, 0.09, 0.45, 8);
+    const j = new THREE.Mesh(jGeo, jMat);
+    j.position.set(x, 0.33, 7.2);
+    scene.add(j);
+  });
+
+  // Bras droit (tenant la boule)
+  const brasMat = new THREE.MeshLambertMaterial({ color: 0x2255CC });
+  const brasGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.45, 8);
+  const bras = new THREE.Mesh(brasGeo, brasMat);
+  bras.rotation.z = -Math.PI / 3;
+  bras.position.set(0.32, 0.72, 7.1);
+  scene.add(bras);
 }
 creerPiste();
 
-// ── Boule de bowling ──
-const bouleMat = new THREE.MeshLambertMaterial({ color: 0x2A5FBF });
+// ── Boule de bowling (bleue style Wii) ──
+const bouleMat = new THREE.MeshLambertMaterial({ color: 0x3366DD });
 const bouleGeo = new THREE.SphereGeometry(0.22, 16, 16);
 const boule = new THREE.Mesh(bouleGeo, bouleMat);
 boule.position.set(0, 0.22, 6);
@@ -602,14 +751,15 @@ scene.add(boule);
 
 // ── Quilles ──
 const POSITIONS_QUILLES = [
-  [0, 0, -12],
-  [-0.3, 0, -12.5], [0.3, 0, -12.5],
-  [-0.6, 0, -13], [0, 0, -13], [0.6, 0, -13],
-  [-0.9, 0, -13.5], [-0.3, 0, -13.5], [0.3, 0, -13.5], [0.9, 0, -13.5]
+  [0,    0, -13],
+  [-0.32, 0, -13.55], [0.32, 0, -13.55],
+  [-0.64, 0, -14.1],  [0,    0, -14.1],  [0.64, 0, -14.1],
+  [-0.96, 0, -14.65], [-0.32, 0, -14.65],[0.32, 0, -14.65],[0.96, 0, -14.65]
 ];
 
 let quilles = [];
 
+// Chaque quille a une vélocité physique pour rouler
 function creerQuilles() {
   quilles.forEach(q => scene.remove(q));
   quilles = [];
@@ -617,32 +767,46 @@ function creerQuilles() {
   POSITIONS_QUILLES.forEach(pos => {
     const groupe = new THREE.Group();
 
-    // Corps de la quille
-    const corpsGeo = new THREE.CylinderGeometry(0.06, 0.1, 0.5, 8);
+    // Corps
+    const corpsGeo = new THREE.CylinderGeometry(0.055, 0.1, 0.48, 10);
     const corpsMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
     const corps = new THREE.Mesh(corpsGeo, corpsMat);
-    corps.position.y = 0.25;
+    corps.position.y = 0.24;
     corps.castShadow = true;
     groupe.add(corps);
 
-    // Tête de la quille
-    const teteGeo = new THREE.SphereGeometry(0.09, 8, 8);
-    const teteMat = new THREE.MeshLambertMaterial({ color: 0xff4444 });
+    // Col
+    const colGeo = new THREE.CylinderGeometry(0.05, 0.055, 0.08, 10);
+    const colMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+    const col = new THREE.Mesh(colGeo, colMat);
+    col.position.y = 0.5;
+    groupe.add(col);
+
+    // Tête
+    const teteGeo = new THREE.SphereGeometry(0.085, 10, 10);
+    const teteMat = new THREE.MeshLambertMaterial({ color: 0xff3333 });
     const tete = new THREE.Mesh(teteGeo, teteMat);
-    tete.position.y = 0.56;
-    tete.castShadow = true;
+    tete.position.y = 0.6;
     groupe.add(tete);
 
-    // Bande rouge
-    const bandeGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.04, 8);
-    const bandeMat = new THREE.MeshLambertMaterial({ color: 0xee2222 });
-    const bande = new THREE.Mesh(bandeGeo, bandeMat);
-    bande.position.y = 0.35;
-    groupe.add(bande);
+    // Bandes rouges
+    [0.18, 0.32].forEach(y => {
+      const bGeo = new THREE.CylinderGeometry(0.072, 0.072, 0.028, 10);
+      const bMat = new THREE.MeshLambertMaterial({ color: 0xdd2222 });
+      const b = new THREE.Mesh(bGeo, bMat);
+      b.position.y = y;
+      groupe.add(b);
+    });
 
     groupe.position.set(...pos);
-    groupe.userData.tombee = false;
-    groupe.userData.posOriginale = new THREE.Vector3(...pos);
+    groupe.userData = {
+      tombee: false,
+      posOriginale: new THREE.Vector3(...pos),
+      velX: 0,   // vélocité physique
+      velZ: 0,
+      enMouvement: false,
+      rotVel: 0, // vitesse de rotation
+    };
     scene.add(groupe);
     quilles.push(groupe);
   });
@@ -695,90 +859,98 @@ function resetBoule() {
   bouleEnVol = false;
   cameraZoom = false;
   ETAT.ballEnMouvement = false;
-  camera.position.set(0, 3, 8);
-  camera.lookAt(0, 0, 0);
+  camera.position.set(0, 1.8, 9.5);
+  camera.lookAt(0, 0.5, 0);
 }
 
 // ============================================
-//  COLLISIONS & EFFET DOMINO EN CHAÎNE
+//  PHYSIQUE DES QUILLES — VRAIE SIMULATION
 // ============================================
 
-// Détection collision boule → quilles
 function checkCollisions() {
   quilles.forEach(quille => {
     if (quille.userData.tombee) return;
     const dist = boule.position.distanceTo(quille.position);
     if (dist < 0.38) {
-      const dirX = quille.position.x - boule.position.x;
-      const dirZ = quille.position.z - boule.position.z;
-      faireTomber(quille, dirX, dirZ, 0);
+      const dirX = (quille.position.x - boule.position.x);
+      const dirZ = (quille.position.z - boule.position.z);
+      const len  = Math.sqrt(dirX*dirX + dirZ*dirZ) || 1;
+      // Impulsion proportionnelle à la vitesse de la boule
+      const force = (Math.abs(bouleVitesse.z) + Math.abs(bouleVitesse.x)) * 3.5;
+      impacterQuille(quille, dirX/len * force, dirZ/len * force);
     }
   });
 }
 
-// Fait tomber une quille et déclenche la chaîne
-function faireTomber(quille, dirX, dirZ, delai) {
+function impacterQuille(quille, vx, vz) {
   if (quille.userData.tombee) return;
-  quille.userData.tombee = true;
-
-  setTimeout(() => {
-    animerChute(quille, dirX, dirZ);
-    // Après que la quille soit bien en train de tomber,
-    // elle pousse ses voisines
-    setTimeout(() => propagerDomino(quille, dirX, dirZ), 120);
-  }, delai);
+  quille.userData.tombee    = true;
+  quille.userData.velX      = vx;
+  quille.userData.velZ      = vz;
+  quille.userData.rotVel    = (Math.abs(vx) + Math.abs(vz)) * 1.8;
+  quille.userData.enMouvement = true;
 }
 
-// Animation de chute réaliste
-function animerChute(quille, dirX, dirZ) {
-  // Direction de chute : angle basé sur la direction de l'impact
-  const angle = Math.atan2(dirX, dirZ);
-  const targetRotZ = (dirX >= 0 ? 1 : -1) * (Math.PI / 2 + Math.random() * 0.3);
-  const targetRotX = Math.sin(angle) * 0.5;
-
-  let progress = 0;
-  const vitesse = 0.06 + Math.random() * 0.04; // légère variation
-
-  function tomber() {
-    progress = Math.min(progress + vitesse, 1);
-
-    // Ease out : rapide au début, ralentit à la fin
-    const eased = 1 - Math.pow(1 - progress, 2);
-
-    quille.rotation.z = targetRotZ * eased;
-    quille.rotation.x = targetRotX * eased;
-
-    // La quille glisse légèrement dans la direction de la chute
-    quille.position.x = quille.userData.posOriginale.x + dirX * 0.08 * eased;
-    quille.position.z = quille.userData.posOriginale.z + dirZ * 0.08 * eased;
-    quille.position.y = Math.max(
-      quille.userData.posOriginale.y - 0.35,
-      quille.userData.posOriginale.y - eased * 0.35
-    );
-
-    if (progress < 1) requestAnimationFrame(tomber);
-  }
-  tomber();
-}
-
-// Réaction en chaîne : une quille tombée pousse ses voisines
-function propagerDomino(quilleSource, dirXOrigine, dirZOrigine) {
-  const RAYON_IMPACT = 0.52; // distance maximale pour toucher une voisine
+// Met à jour TOUTES les quilles en mouvement à chaque frame
+function updateQuilles() {
+  const FRICTION  = 0.88;
+  const RAYON_HIT = 0.38;
 
   quilles.forEach(quille => {
-    if (quille.userData.tombee) return;
+    if (!quille.userData.enMouvement) return;
 
-    const dist = quilleSource.userData.posOriginale.distanceTo(quille.userData.posOriginale);
-    if (dist < RAYON_IMPACT) {
-      // Direction de propagation : depuis la source vers la voisine
-      const dirX = quille.userData.posOriginale.x - quilleSource.userData.posOriginale.x;
-      const dirZ = quille.userData.posOriginale.z - quilleSource.userData.posOriginale.z;
+    const ud = quille.userData;
 
-      // Délai progressif selon la distance (plus loin = plus tard)
-      const delaiPropagation = Math.floor(dist * 180 + Math.random() * 60);
+    // Déplace la quille
+    quille.position.x += ud.velX * 0.016;
+    quille.position.z += ud.velZ * 0.016;
 
-      faireTomber(quille, dirX || dirXOrigine * 0.5, dirZ || dirZOrigine * 0.5, delaiPropagation);
+    // Rotation de chute (tombe progressivement)
+    const speed = Math.sqrt(ud.velX*ud.velX + ud.velZ*ud.velZ);
+    const angleMax = Math.PI / 2;
+    if (quille.rotation.x < angleMax) {
+      quille.rotation.x = Math.min(angleMax, quille.rotation.x + ud.rotVel * 0.016);
     }
+    // Oriente la quille dans sa direction de déplacement
+    if (speed > 0.05) {
+      quille.rotation.y = Math.atan2(ud.velX, ud.velZ);
+    }
+
+    // Friction
+    ud.velX *= FRICTION;
+    ud.velZ *= FRICTION;
+    ud.rotVel *= FRICTION;
+
+    // Descend légèrement au sol
+    if (quille.position.y > -0.1) {
+      quille.position.y = Math.max(-0.1, quille.position.y - 0.008);
+    }
+
+    // Arrêt quand assez lent
+    if (speed < 0.02) {
+      ud.enMouvement = false;
+    }
+
+    // Collision quille → quille (domino en chaîne)
+    quilles.forEach(autre => {
+      if (autre === quille) return;
+      const d = quille.position.distanceTo(autre.position);
+      if (d < RAYON_HIT && speed > 0.3) {
+        const dx = (autre.position.x - quille.position.x) / d;
+        const dz = (autre.position.z - quille.position.z) / d;
+        const force = speed * 0.6;
+        if (!autre.userData.tombee) {
+          impacterQuille(autre, dx * force, dz * force);
+        } else if (autre.userData.enMouvement) {
+          // Quille déjà tombée qui reçoit un choc : accélère
+          autre.userData.velX += dx * force * 0.4;
+          autre.userData.velZ += dz * force * 0.4;
+        }
+        // La quille source perd un peu de vitesse (conservation)
+        ud.velX *= 0.75;
+        ud.velZ *= 0.75;
+      }
+    });
   });
 }
 
@@ -1040,6 +1212,9 @@ function animate() {
 
   // Flèche de visée
   mettreAJourFleche();
+
+  // Physique des quilles
+  updateQuilles();
 
   // Mouvement de la boule
   if (bouleEnVol) {
