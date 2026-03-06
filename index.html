@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Wii Sports Mobile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ── Variables ── */
+    :root {
+      --sky: #6EC6F5;
+      --sky-dark: #3a9fd6;
+      --grass: #7DD87A;
+      --grass-dark: #4db54a;
+      --white: #FFFFFF;
+      --card-shadow: 0 8px 0px rgba(0,0,0,0.18);
+      --bowling-bg: #F5A623;
+      --bowling-dark: #c47d0e;
+      --golf-bg: #5BBF6A;
+      --golf-dark: #3a9448;
+      --tennis-bg: #F5E642;
+      --tennis-dark: #c4b510;
+      --boxing-bg: #F55A5A;
+      --boxing-dark: #c43030;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(180deg, var(--sky) 0%, var(--sky-dark) 40%, var(--grass) 70%, var(--grass-dark) 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── Nuages décoratifs ── */
+    .cloud {
+      position: absolute;
+      background: white;
+      border-radius: 50px;
+      opacity: 0.85;
+      animation: floatCloud linear infinite;
+    }
+    .cloud::before, .cloud::after {
+      content: '';
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+    }
+    .cloud-1 { width: 80px; height: 28px; top: 8%; left: -90px; animation-duration: 22s; animation-delay: 0s; }
+    .cloud-1::before { width: 40px; height: 40px; top: -18px; left: 10px; }
+    .cloud-1::after  { width: 28px; height: 28px; top: -12px; left: 36px; }
+    .cloud-2 { width: 60px; height: 22px; top: 16%; left: -70px; animation-duration: 30s; animation-delay: 5s; }
+    .cloud-2::before { width: 30px; height: 30px; top: -14px; left: 8px; }
+    .cloud-2::after  { width: 22px; height: 22px; top: -10px; left: 28px; }
+    .cloud-3 { width: 100px; height: 32px; top: 5%; left: -110px; animation-duration: 26s; animation-delay: 10s; }
+    .cloud-3::before { width: 50px; height: 50px; top: -22px; left: 12px; }
+    .cloud-3::after  { width: 34px; height: 34px; top: -16px; left: 48px; }
+
+    @keyframes floatCloud {
+      from { transform: translateX(0); }
+      to   { transform: translateX(calc(100vw + 200px)); }
+    }
+
+    /* ── Soleil ── */
+    .sun {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+      width: 52px;
+      height: 52px;
+      background: #FFE135;
+      border-radius: 50%;
+      box-shadow: 0 0 0 8px rgba(255,225,53,0.3), 0 0 0 16px rgba(255,225,53,0.15);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 8px rgba(255,225,53,0.3), 0 0 0 16px rgba(255,225,53,0.15); }
+      50%       { box-shadow: 0 0 0 12px rgba(255,225,53,0.35), 0 0 0 22px rgba(255,225,53,0.18); }
+    }
+
+    /* ── Container principal ── */
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px 40px;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Header / Logo ── */
+    .header {
+      text-align: center;
+      padding: 48px 0 28px;
+      animation: dropIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    .logo-badge {
+      display: inline-block;
+      background: white;
+      border-radius: 24px;
+      padding: 14px 32px;
+      box-shadow: 0 6px 0 rgba(0,0,0,0.15), 0 12px 30px rgba(0,0,0,0.1);
+    }
+    .logo-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.4rem;
+      color: #2A5FBF;
+      line-height: 1;
+      letter-spacing: 1px;
+      text-shadow: 3px 3px 0 rgba(42,95,191,0.2);
+    }
+    .logo-sub {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      color: #7BA7E8;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    @keyframes dropIn {
+      from { opacity: 0; transform: translateY(-40px) scale(0.8); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── Sous-titre ── */
+    .subtitle {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: white;
+      text-shadow: 1px 2px 4px rgba(0,0,0,0.2);
+      margin-bottom: 28px;
+      letter-spacing: 0.5px;
+      animation: dropIn 0.6s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    /* ── Grille des sports ── */
+    .sports-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    /* ── Carte sport ── */
+    .sport-card {
+      border: none;
+      border-radius: 24px;
+      padding: 0;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transform: translateY(0);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    .sport-card:nth-child(1) { animation-delay: 0.15s; }
+    .sport-card:nth-child(2) { animation-delay: 0.25s; }
+    .sport-card:nth-child(3) { animation-delay: 0.35s; }
+    .sport-card:nth-child(4) { animation-delay: 0.45s; }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.6) rotate(-4deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .sport-card:active {
+      transform: translateY(4px) scale(0.97);
+    }
+
+    .card-inner {
+      border-radius: 24px;
+      padding: 22px 16px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
+    /* Couleurs par sport */
+    .bowling .card-inner { background: var(--bowling-bg); box-shadow: 0 7px 0 var(--bowling-dark), var(--card-shadow); }
+    .golf    .card-inner { background: var(--golf-bg);    box-shadow: 0 7px 0 var(--golf-dark),    var(--card-shadow); }
+    .tennis  .card-inner { background: var(--tennis-bg);  box-shadow: 0 7px 0 var(--tennis-dark),  var(--card-shadow); }
+    .boxing  .card-inner { background: var(--boxing-bg);  box-shadow: 0 7px 0 var(--boxing-dark),  var(--card-shadow); }
+
+    .sport-card:active .card-inner {
+      box-shadow: 0 2px 0 rgba(0,0,0,0.25) !important;
+      transform: translateY(5px);
+    }
+
+    /* ── Emoji sport ── */
+    .sport-emoji {
+      font-size: 3.2rem;
+      line-height: 1;
+      filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.15));
+      transition: transform 0.2s ease;
+    }
+    .sport-card:active .sport-emoji {
+      transform: scale(1.2) rotate(10deg);
+    }
+
+    /* ── Nom du sport ── */
+    .sport-name {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      color: white;
+      text-shadow: 1px 2px 0 rgba(0,0,0,0.2);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Badge difficulté ── */
+    .sport-badge {
+      background: rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── Pétales décoratifs sur les cartes ── */
+    .deco-circle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      pointer-events: none;
+    }
+    .deco-circle-1 { width: 60px; height: 60px; top: -20px; right: -20px; }
+    .deco-circle-2 { width: 30px; height: 30px; bottom: 10px; left: -8px; }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 32px;
+      text-align: center;
+      color: rgba(255,255,255,0.75);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      animation: dropIn 0.6s 0.55s both;
+    }
+
+    /* ── Écran de chargement sport ── */
+    .loading-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .loading-screen.active { display: flex; }
+
+    .loading-bg {
+      position: absolute;
+      inset: 0;
+      background: rgba(30,30,60,0.92);
+      backdrop-filter: blur(8px);
+    }
+
+    .loading-content {
+      position: relative;
+      text-align: center;
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .loading-emoji { font-size: 5rem; display: block; margin-bottom: 12px; }
+    .loading-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem;
+      color: white;
+      margin-bottom: 6px;
+    }
+    .loading-sub {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .loader-dots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .loader-dots span {
+      width: 12px; height: 12px;
+      background: white;
+      border-radius: 50%;
+      animation: bounce 0.8s ease-in-out infinite;
+    }
+    .loader-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); opacity: 0.4; }
+      50%       { transform: translateY(-10px); opacity: 1; }
+    }
+
+    /* ── Herbe décorative ── */
+    .grass-deco {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .grass-blade {
+      position: absolute;
+      bottom: 0;
+      width: 12px;
+      background: #4db54a;
+      border-radius: 6px 6px 0 0;
+      transform-origin: bottom center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Décorations fond -->
+  <div class="sun"></div>
+  <div class="cloud cloud-1"></div>
+  <div class="cloud cloud-2"></div>
+  <div class="cloud cloud-3"></div>
+
+  <!-- Herbe en bas -->
+  <svg class="grass-deco" viewBox="0 0 400 48" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,48 Q20,20 40,38 Q60,15 80,36 Q100,18 120,40 Q140,22 160,38 Q180,14 200,36 Q220,20 240,40 Q260,16 280,38 Q300,22 320,36 Q340,14 360,38 Q380,20 400,36 L400,48 Z" fill="#4db54a"/>
+    <path d="M0,48 Q15,28 30,42 Q50,24 70,44 Q90,26 110,42 Q130,20 150,40 Q170,28 190,44 Q210,22 230,42 Q250,28 270,44 Q290,20 310,40 Q330,26 350,44 Q370,22 390,42 L400,48 Z" fill="#5BBF6A" opacity="0.7"/>
+  </svg>
+
+  <!-- Contenu principal -->
+  <div class="container">
+
+    <!-- Logo -->
+    <div class="header">
+      <div class="logo-badge">
+        <div class="logo-title">🏆 Sports</div>
+        <div class="logo-sub">Mobile</div>
+      </div>
+    </div>
+
+    <p class="subtitle">Choisis ton sport !</p>
+
+    <!-- Grille des 4 sports -->
+    <div class="sports-grid">
+
+      <!-- Bowling -->
+      <button class="sport-card bowling" onclick="lancerJeu('bowling', '🎳', 'Bowling', 'Renverse tout !')">
+        <div class="card-inner">
+          <div class="deco-circle deco-circle-1"></div>
+          <div class="deco-circle deco-circle-2"></div>
+          <span class="sport-emoji">🎳</span>
+          <span class="sport-name">Bowling</span>
+          <span class="sport-badge">3 Frames</span>
+        </div>
+      </button>
+
+      <!-- Golf -->
+      <button class="sport-card golf" onclick="lancerJeu('golf', '⛳', 'Golf', '3 trous à jouer')">
+        <div class="card-inner">
+          <div class="deco-circle deco-circle-1"></div>
+          <div class="deco-circle deco-circle-2"></div>
+          <span class="sport-emoji">⛳</span>
+          <span class="sport-name">Golf</span>
+          <span class="sport-badge">3 Trous</span>
+        </div>
+      </button>
+
+      <!-- Tennis -->
+      <button class="sport-card tennis" onclick="lancerJeu('tennis', '🎾', 'Tennis', '3 sets à gagner')">
+        <div class="card-inner">
+          <div class="deco-circle deco-circle-1"></div>
+          <div class="deco-circle deco-circle-2"></div>
+          <span class="sport-emoji">🎾</span>
+          <span class="sport-name">Tennis</span>
+          <span class="sport-badge">3 Sets</span>
+        </div>
+      </button>
+
+      <!-- Boxe -->
+      <button class="sport-card boxing" onclick="lancerJeu('boxing', '🥊', 'Boxe', 'Crie pour frapper !')">
+        <div class="card-inner">
+          <div class="deco-circle deco-circle-1"></div>
+          <div class="deco-circle deco-circle-2"></div>
+          <span class="sport-emoji">🥊</span>
+          <span class="sport-name">Boxe</span>
+          <span class="sport-badge">3 Rounds</span>
+        </div>
+      </button>
+
+    </div>
+
+    <div class="footer">✨ Incline ton téléphone pour jouer ✨</div>
+
+  </div>
+
+  <!-- Écran de chargement -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-bg"></div>
+    <div class="loading-content">
+      <span class="loading-emoji" id="loadingEmoji">🎳</span>
+      <div class="loading-title" id="loadingTitle">Bowling</div>
+      <div class="loading-sub" id="loadingSub">Renverse tout !</div>
+      <div class="loader-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function lancerJeu(sport, emoji, nom, description) {
+      // Affiche l'écran de chargement
+      document.getElementById('loadingEmoji').textContent = emoji;
+      document.getElementById('loadingTitle').textContent = nom;
+      document.getElementById('loadingSub').textContent = description;
+      document.getElementById('loadingScreen').classList.add('active');
+
+      // Redirige vers la page du sport après 1.5s
+      setTimeout(() => {
+        window.location.href = `scenes/${sport}.html`;
+      }, 1500);
+    }
+
+    // Vibration légère au clic (si supportée)
+    document.querySelectorAll('.sport-card').forEach(card => {
+      card.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(30);
+      });
+    });
+  </script>
+
+</body>
+</html>
