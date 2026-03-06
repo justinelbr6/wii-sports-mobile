@@ -699,53 +699,85 @@ function resetBoule() {
   camera.lookAt(0, 0, 0);
 }
 
-// Détection collision simple
-function checkCollisions() {
-  let nouvellesTombees = 0;
+// ============================================
+//  COLLISIONS & EFFET DOMINO EN CHAÎNE
+// ============================================
 
+// Détection collision boule → quilles
+function checkCollisions() {
   quilles.forEach(quille => {
     if (quille.userData.tombee) return;
-
     const dist = boule.position.distanceTo(quille.position);
-    if (dist < 0.4) {
-      // La quille tombe !
-      quille.userData.tombee = true;
-      nouvellesTombees++;
-
-      // Animation de chute
+    if (dist < 0.38) {
       const dirX = quille.position.x - boule.position.x;
-      animerChute(quille, dirX);
-
-      // Effet domino sur les quilles proches
-      setTimeout(() => effetDomino(quille), 150);
+      const dirZ = quille.position.z - boule.position.z;
+      faireTomber(quille, dirX, dirZ, 0);
     }
   });
-
-  return nouvellesTombees;
 }
 
-function animerChute(quille, dirX) {
-  const targetRot = dirX >= 0 ? Math.PI / 2 : -Math.PI / 2;
+// Fait tomber une quille et déclenche la chaîne
+function faireTomber(quille, dirX, dirZ, delai) {
+  if (quille.userData.tombee) return;
+  quille.userData.tombee = true;
+
+  setTimeout(() => {
+    animerChute(quille, dirX, dirZ);
+    // Après que la quille soit bien en train de tomber,
+    // elle pousse ses voisines
+    setTimeout(() => propagerDomino(quille, dirX, dirZ), 120);
+  }, delai);
+}
+
+// Animation de chute réaliste
+function animerChute(quille, dirX, dirZ) {
+  // Direction de chute : angle basé sur la direction de l'impact
+  const angle = Math.atan2(dirX, dirZ);
+  const targetRotZ = (dirX >= 0 ? 1 : -1) * (Math.PI / 2 + Math.random() * 0.3);
+  const targetRotX = Math.sin(angle) * 0.5;
+
   let progress = 0;
-  const startRot = quille.rotation.z;
+  const vitesse = 0.06 + Math.random() * 0.04; // légère variation
 
   function tomber() {
-    progress += 0.08;
-    quille.rotation.z = startRot + (targetRot - startRot) * Math.min(progress, 1);
-    quille.position.y = Math.max(-0.3, quille.userData.posOriginale.y - progress * 0.3);
+    progress = Math.min(progress + vitesse, 1);
+
+    // Ease out : rapide au début, ralentit à la fin
+    const eased = 1 - Math.pow(1 - progress, 2);
+
+    quille.rotation.z = targetRotZ * eased;
+    quille.rotation.x = targetRotX * eased;
+
+    // La quille glisse légèrement dans la direction de la chute
+    quille.position.x = quille.userData.posOriginale.x + dirX * 0.08 * eased;
+    quille.position.z = quille.userData.posOriginale.z + dirZ * 0.08 * eased;
+    quille.position.y = Math.max(
+      quille.userData.posOriginale.y - 0.35,
+      quille.userData.posOriginale.y - eased * 0.35
+    );
+
     if (progress < 1) requestAnimationFrame(tomber);
   }
   tomber();
 }
 
-function effetDomino(quilleSource) {
+// Réaction en chaîne : une quille tombée pousse ses voisines
+function propagerDomino(quilleSource, dirXOrigine, dirZOrigine) {
+  const RAYON_IMPACT = 0.52; // distance maximale pour toucher une voisine
+
   quilles.forEach(quille => {
     if (quille.userData.tombee) return;
-    const dist = quilleSource.position.distanceTo(quille.position);
-    if (dist < 0.5) {
-      quille.userData.tombee = true;
-      const dirX = quille.position.x - quilleSource.position.x;
-      setTimeout(() => animerChute(quille, dirX), Math.random() * 100);
+
+    const dist = quilleSource.userData.posOriginale.distanceTo(quille.userData.posOriginale);
+    if (dist < RAYON_IMPACT) {
+      // Direction de propagation : depuis la source vers la voisine
+      const dirX = quille.userData.posOriginale.x - quilleSource.userData.posOriginale.x;
+      const dirZ = quille.userData.posOriginale.z - quilleSource.userData.posOriginale.z;
+
+      // Délai progressif selon la distance (plus loin = plus tard)
+      const delaiPropagation = Math.floor(dist * 180 + Math.random() * 60);
+
+      faireTomber(quille, dirX || dirXOrigine * 0.5, dirZ || dirZOrigine * 0.5, delaiPropagation);
     }
   });
 }
@@ -936,22 +968,65 @@ function demarrerJeu() {
 }
 
 // ============================================
-//  FLÈCHE DE VISÉE
+//  FLÈCHE DE VISÉE AU SOL (style Wii)
 // ============================================
-const flecheVisee = document.getElementById('direction-arrow');
+const flecheGroupe = new THREE.Group();
+scene.add(flecheGroupe);
+
+// Segments pointillés rouges
+const NB_SEG = 14;
+const segmentsVisee = [];
+for (let i = 0; i < NB_SEG; i++) {
+  const geo = new THREE.BoxGeometry(0.045, 0.008, 0.15);
+  const mat = new THREE.MeshLambertMaterial({
+    color: 0xff2222, transparent: true, opacity: 1 - (i / NB_SEG) * 0.65
+  });
+  const seg = new THREE.Mesh(geo, mat);
+  flecheGroupe.add(seg);
+  segmentsVisee.push(seg);
+}
+// Pointe de la flèche
+const pointeGeo = new THREE.ConeGeometry(0.07, 0.22, 4);
+const pointeMat = new THREE.MeshLambertMaterial({ color: 0xff2222 });
+const pointeVisee = new THREE.Mesh(pointeGeo, pointeMat);
+flecheGroupe.add(pointeVisee);
 
 function mettreAJourFleche() {
   if (ETAT.ballEnMouvement || !ETAT.peutLancer) {
-    flecheVisee.style.opacity = '0';
+    flecheGroupe.visible = false;
     return;
   }
-  const nx = gyro.getNormalizedX(25); // -1 à 1
-  const rotation = nx * 35;           // max 35 degrés
-  flecheVisee.style.opacity = '1';
-  flecheVisee.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+  flecheGroupe.visible = true;
 
-  // Boule qui glisse gauche/droite pour montrer la visée
-  boule.position.x += (nx * 1.2 - boule.position.x) * 0.1;
+  const nx = gyro.getNormalizedX(25);
+  const angle = nx * 0.32; // angle de visée en radians
+
+  // Boule glisse pour montrer la direction
+  boule.position.x += (nx * 1.1 - boule.position.x) * 0.1;
+
+  // Place les segments sur la piste
+  const startZ = boule.position.z - 0.6;
+  const pas = 0.42;
+
+  segmentsVisee.forEach((seg, i) => {
+    const t = i * pas;
+    seg.position.set(
+      boule.position.x + Math.sin(angle) * t,
+      0.012,
+      startZ - Math.cos(angle) * t
+    );
+    seg.rotation.y = angle;
+  });
+
+  // Pointe au bout de la ligne
+  const tFin = NB_SEG * pas;
+  pointeVisee.position.set(
+    boule.position.x + Math.sin(angle) * tFin,
+    0.012,
+    startZ - Math.cos(angle) * tFin
+  );
+  pointeVisee.rotation.set(Math.PI / 2, 0, 0);
+  pointeVisee.rotation.y = angle;
 }
 
 // ============================================
