@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Bowling 🎳</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange: #F5A623;
+      --orange-dark: #c47d0e;
+      --blue: #2A5FBF;
+      --white: #FFFFFF;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+    body {
+      background: #1a1a2e;
+      font-family: 'Nunito', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Canvas Three.js */
+    #gameCanvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      touch-action: none;
+    }
+
+    /* ── HUD (interface en jeu) ── */
+    #hud {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+
+    .hud-card {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 8px 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .hud-label {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+    .hud-value {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem;
+      color: white;
+      line-height: 1.1;
+    }
+    .hud-value.orange { color: var(--orange); }
+
+    /* Frames de score */
+    #frames-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 10;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      padding: 10px 12px;
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .frame {
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      width: 52px;
+      padding: 4px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .frame.active {
+      border-color: var(--orange);
+      background: rgba(245,166,35,0.2);
+    }
+    .frame-num {
+      font-size: 0.55rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 700;
+    }
+    .frame-throws {
+      display: flex;
+      gap: 3px;
+      justify-content: center;
+      min-height: 18px;
+    }
+    .throw-box {
+      background: rgba(255,255,255,0.15);
+      border-radius: 4px;
+      width: 18px;
+      height: 18px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .throw-box.strike { background: var(--orange); }
+    .throw-box.spare  { background: #5BBF6A; }
+    .frame-score {
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.9rem;
+      color: white;
+      min-height: 20px;
+    }
+
+    /* ── Panneau swipe ── */
+    #swipe-zone {
+      position: fixed;
+      bottom: 90px;
+      left: 0; right: 0;
+      height: 200px;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 16px;
+      pointer-events: none;
+    }
+
+    #swipe-hint {
+      background: rgba(245,166,35,0.85);
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1rem;
+      padding: 10px 24px;
+      border-radius: 50px;
+      box-shadow: 0 4px 0 rgba(196,125,14,0.8);
+      animation: bounce 1.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+
+    /* ── Indicateur de direction ── */
+    #direction-arrow {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2.5rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+      z-index: 6;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+    }
+
+    /* ── Overlay résultat ── */
+    #result-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(6px);
+    }
+    #result-overlay.show { display: flex; }
+
+    .result-badge {
+      text-align: center;
+      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .result-emoji { font-size: 5rem; display: block; }
+    .result-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 3rem;
+      color: white;
+      text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+    }
+    .result-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.7);
+      font-weight: 700;
+    }
+
+    .result-btn {
+      background: var(--orange);
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 36px;
+      box-shadow: 0 6px 0 var(--orange-dark);
+      cursor: pointer;
+      animation: popIn 0.4s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .result-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--orange-dark); }
+
+    @keyframes popIn {
+      from { opacity:0; transform: scale(0.5); }
+      to   { opacity:1; transform: scale(1); }
+    }
+
+    /* ── Overlay fin de partie ── */
+    #final-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      background: rgba(10,10,30,0.92);
+      backdrop-filter: blur(10px);
+    }
+    #final-overlay.show { display: flex; }
+
+    .final-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.5rem;
+      color: var(--orange);
+      text-align: center;
+    }
+    .final-score {
+      font-family: 'Fredoka One', cursive;
+      font-size: 5rem;
+      color: white;
+      text-shadow: 4px 4px 0 var(--orange);
+    }
+    .final-vs {
+      display: flex;
+      gap: 30px;
+      align-items: center;
+      background: rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 16px 28px;
+    }
+    .final-player { text-align: center; }
+    .final-player-name {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .final-player-score {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2rem;
+      color: white;
+    }
+    .final-player-score.winner { color: var(--orange); }
+    .final-separator {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.5rem;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Bouton retour */
+    #btn-back {
+      position: fixed;
+      top: 12px;
+      left: 16px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 15;
+      backdrop-filter: blur(10px);
+      color: white;
+      pointer-events: all;
+    }
+
+    /* Écran de démarrage */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      background: linear-gradient(180deg, #1a1a2e 0%, #2d1b69 100%);
+    }
+
+    .start-emoji { font-size: 5rem; animation: bounce 1.5s ease-in-out infinite; }
+    .start-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.8rem;
+      color: white;
+      text-align: center;
+    }
+
+    .adversaire-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 16px 28px;
+      text-align: center;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+    .adversaire-label {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    .adversaire-name {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.8rem;
+      color: var(--orange);
+    }
+    .adversaire-niveau {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    .start-btn {
+      background: var(--orange);
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.4rem;
+      border: none;
+      border-radius: 50px;
+      padding: 16px 48px;
+      box-shadow: 0 8px 0 var(--orange-dark);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .start-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--orange-dark); }
+
+    .gyro-info {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      max-width: 260px;
+      line-height: 1.5;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Bouton retour -->
+<button id="btn-back" onclick="window.location.href='../index.html'">←</button>
+
+<!-- Canvas 3D -->
+<canvas id="gameCanvas"></canvas>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-card">
+    <div class="hud-label">Frame</div>
+    <div class="hud-value orange" id="hud-frame">1 / 3</div>
+  </div>
+  <div class="hud-card">
+    <div class="hud-label">Score</div>
+    <div class="hud-value" id="hud-score">0</div>
+  </div>
+  <div class="hud-card">
+    <div class="hud-label">Quilles</div>
+    <div class="hud-value orange" id="hud-pins">10</div>
+  </div>
+</div>
+
+<!-- Zone de swipe -->
+<div id="swipe-zone">
+  <div id="swipe-hint">👆 Swipe vers le haut pour lancer !</div>
+</div>
+
+<!-- Flèche de direction -->
+<div id="direction-arrow">⬆️</div>
+
+<!-- Barre de frames -->
+<div id="frames-bar" id="frames-bar"></div>
+
+<!-- Overlay résultat (strike / spare / rigole) -->
+<div id="result-overlay">
+  <div class="result-badge">
+    <span class="result-emoji" id="result-emoji">🎳</span>
+    <div class="result-title" id="result-title">STRIKE !</div>
+    <div class="result-sub" id="result-sub">Incroyable !</div>
+  </div>
+  <button class="result-btn" id="result-btn" onclick="nextThrow()">Continuer →</button>
+</div>
+
+<!-- Overlay fin de partie -->
+<div id="final-overlay">
+  <div class="final-title">🏆 Partie terminée !</div>
+  <div class="final-score" id="final-score-display">0</div>
+  <div class="final-vs">
+    <div class="final-player">
+      <div class="final-player-name">Toi</div>
+      <div class="final-player-score" id="final-player">0</div>
+    </div>
+    <div class="final-separator">VS</div>
+    <div class="final-player">
+      <div class="final-player-name" id="final-adv-name">Adversaire</div>
+      <div class="final-player-score" id="final-adv">0</div>
+    </div>
+  </div>
+  <button class="result-btn" onclick="window.location.href='../index.html'">🏠 Menu principal</button>
+  <button class="result-btn" style="background:#2A5FBF;box-shadow:0 6px 0 #1a3f8f" onclick="location.reload()">🔄 Rejouer</button>
+</div>
+
+<!-- Écran de démarrage -->
+<div id="start-screen">
+  <span class="start-emoji">🎳</span>
+  <div class="start-title">Bowling</div>
+  <div class="adversaire-card">
+    <div class="adversaire-label">Ton adversaire</div>
+    <div class="adversaire-name" id="adv-name">Chargement...</div>
+    <div class="adversaire-niveau" id="adv-niveau"></div>
+  </div>
+  <button class="start-btn" id="start-btn" onclick="demarrerJeu()">🎳 Jouer !</button>
+  <p class="gyro-info">📐 Incline ton téléphone pour viser<br>👆 Swipe vers le haut pour lancer</p>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/sensors.js"></script>
+
+<script>
+// ============================================
+//  ÉTAT DU JEU
+// ============================================
+const ETAT = {
+  frameActuelle: 0,       // 0 à 2 (3 frames)
+  lancerActuel: 0,         // 0 ou 1 (2 lancers par frame)
+  quillesTombees: 0,
+  quillesTombeesFrame: 0,
+  scores: [null, null, null],
+  throwsParFrame: [[], [], []],
+  scoreTotal: 0,
+  ballEnMouvement: false,
+  adversaire: null,
+  peutLancer: true,
+};
+
+// ============================================
+//  SUPABASE — Charger l'adversaire
+// ============================================
+async function chargerAdversaire() {
+  const adv = await getAdversaire('bowling');
+  ETAT.adversaire = adv;
+  if (adv) {
+    document.getElementById('adv-name').textContent = `${adv.avatar} ${adv.nom}`;
+    document.getElementById('adv-niveau').textContent = `Niveau : ${adv.bowling}`;
+  } else {
+    document.getElementById('adv-name').textContent = '🤖 CPU';
+    document.getElementById('adv-niveau').textContent = 'Niveau : moyen';
+  }
+}
+chargerAdversaire();
+
+// ============================================
+//  THREE.JS — SCÈNE 3D
+// ============================================
+const canvas = document.getElementById('gameCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+scene.fog = new THREE.Fog(0x1a1a2e, 30, 60);
+
+// Caméra
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 3, 8);
+camera.lookAt(0, 0, 0);
+
+// ── Lumières ──
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+scene.add(ambientLight);
+
+const spotlight = new THREE.SpotLight(0xffffff, 1.5);
+spotlight.position.set(0, 15, 5);
+spotlight.angle = Math.PI / 5;
+spotlight.penumbra = 0.3;
+spotlight.castShadow = true;
+spotlight.shadow.mapSize.width = 1024;
+spotlight.shadow.mapSize.height = 1024;
+scene.add(spotlight);
+
+const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
+fillLight.position.set(-5, 5, 5);
+scene.add(fillLight);
+
+// ── Piste de bowling ──
+function creerPiste() {
+  // Sol principal (bois)
+  const pisteMat = new THREE.MeshLambertMaterial({ color: 0xD4A855 });
+  const pisteGeo = new THREE.BoxGeometry(3.6, 0.1, 25);
+  const piste = new THREE.Mesh(pisteGeo, pisteMat);
+  piste.position.set(0, -0.05, -5);
+  piste.receiveShadow = true;
+  scene.add(piste);
+
+  // Rigoles (côtés)
+  const rigoleMat = new THREE.MeshLambertMaterial({ color: 0x333355 });
+  [-2.1, 2.1].forEach(x => {
+    const rigoleGeo = new THREE.BoxGeometry(0.6, 0.08, 25);
+    const rigole = new THREE.Mesh(rigoleGeo, rigoleMat);
+    rigole.position.set(x, -0.06, -5);
+    rigole.receiveShadow = true;
+    scene.add(rigole);
+  });
+
+  // Ligne de lancer
+  const ligneMat = new THREE.MeshLambertMaterial({ color: 0xFF4444 });
+  const ligneGeo = new THREE.BoxGeometry(3.6, 0.02, 0.05);
+  const ligne = new THREE.Mesh(ligneGeo, ligneMat);
+  ligne.position.set(0, 0.01, 5.5);
+  scene.add(ligne);
+
+  // Flèches directionnelles sur la piste
+  const flecheMat = new THREE.MeshLambertMaterial({ color: 0xcc8800 });
+  for (let i = -1; i <= 1; i++) {
+    const fGeo = new THREE.ConeGeometry(0.05, 0.2, 3);
+    const fleche = new THREE.Mesh(fGeo, flecheMat);
+    fleche.rotation.x = Math.PI;
+    fleche.position.set(i * 0.6, 0.02, 2);
+    scene.add(fleche);
+  }
+
+  // Fond (mur arrière)
+  const murMat = new THREE.MeshLambertMaterial({ color: 0x222244 });
+  const murGeo = new THREE.BoxGeometry(6, 4, 0.2);
+  const mur = new THREE.Mesh(murGeo, murMat);
+  mur.position.set(0, 2, -18);
+  scene.add(mur);
+
+  // Spectateurs (simples formes colorées)
+  const couleurs = [0xFF6B6B, 0x4ECDC4, 0x45B7D1, 0x96CEB4, 0xFFA07A];
+  for (let i = 0; i < 20; i++) {
+    const c = couleurs[i % couleurs.length];
+    const corpsGeo = new THREE.CapsuleGeometry ? 
+      new THREE.CapsuleGeometry(0.2, 0.4, 4, 8) :
+      new THREE.CylinderGeometry(0.2, 0.2, 0.6, 8);
+    const corpsMat = new THREE.MeshLambertMaterial({ color: c });
+    const corps = new THREE.Mesh(corpsGeo, corpsMat);
+    const x = (Math.random() - 0.5) * 8 + (Math.random() > 0.5 ? 4 : -4);
+    corps.position.set(x, 0.3 + Math.random() * 0.5, -10 - Math.random() * 5);
+    scene.add(corps);
+
+    // Tête
+    const teteGeo = new THREE.SphereGeometry(0.25, 8, 8);
+    const tete = new THREE.Mesh(teteGeo, corpsMat);
+    tete.position.set(x, corps.position.y + 0.6, corps.position.z);
+    scene.add(tete);
+  }
+}
+creerPiste();
+
+// ── Boule de bowling ──
+const bouleMat = new THREE.MeshLambertMaterial({ color: 0x2A5FBF });
+const bouleGeo = new THREE.SphereGeometry(0.22, 16, 16);
+const boule = new THREE.Mesh(bouleGeo, bouleMat);
+boule.position.set(0, 0.22, 6);
+boule.castShadow = true;
+scene.add(boule);
+
+// ── Quilles ──
+const POSITIONS_QUILLES = [
+  [0, 0, -12],
+  [-0.3, 0, -12.5], [0.3, 0, -12.5],
+  [-0.6, 0, -13], [0, 0, -13], [0.6, 0, -13],
+  [-0.9, 0, -13.5], [-0.3, 0, -13.5], [0.3, 0, -13.5], [0.9, 0, -13.5]
+];
+
+let quilles = [];
+
+function creerQuilles() {
+  quilles.forEach(q => scene.remove(q));
+  quilles = [];
+
+  POSITIONS_QUILLES.forEach(pos => {
+    const groupe = new THREE.Group();
+
+    // Corps de la quille
+    const corpsGeo = new THREE.CylinderGeometry(0.06, 0.1, 0.5, 8);
+    const corpsMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const corps = new THREE.Mesh(corpsGeo, corpsMat);
+    corps.position.y = 0.25;
+    corps.castShadow = true;
+    groupe.add(corps);
+
+    // Tête de la quille
+    const teteGeo = new THREE.SphereGeometry(0.09, 8, 8);
+    const teteMat = new THREE.MeshLambertMaterial({ color: 0xff4444 });
+    const tete = new THREE.Mesh(teteGeo, teteMat);
+    tete.position.y = 0.56;
+    tete.castShadow = true;
+    groupe.add(tete);
+
+    // Bande rouge
+    const bandeGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.04, 8);
+    const bandeMat = new THREE.MeshLambertMaterial({ color: 0xee2222 });
+    const bande = new THREE.Mesh(bandeGeo, bandeMat);
+    bande.position.y = 0.35;
+    groupe.add(bande);
+
+    groupe.position.set(...pos);
+    groupe.userData.tombee = false;
+    groupe.userData.posOriginale = new THREE.Vector3(...pos);
+    scene.add(groupe);
+    quilles.push(groupe);
+  });
+}
+creerQuilles();
+
+// ============================================
+//  CAPTEURS
+// ============================================
+const gyro = new Gyroscope();
+const swipe = new SwipeDetector(canvas);
+
+// Quand le joueur swipe vers le haut → lancer
+swipe.onSwipe = (direction, puissance) => {
+  if (direction === 'haut' && ETAT.peutLancer && !ETAT.ballEnMouvement) {
+    lancerBoule(puissance);
+  }
+};
+
+// ============================================
+//  LOGIQUE DU JEU
+// ============================================
+
+// Variables de physique de la boule
+let bouleVitesse = { x: 0, z: 0 };
+let bouleEnVol = false;
+let cameraZoom = false;
+
+function lancerBoule(puissance) {
+  if (ETAT.ballEnMouvement) return;
+
+  ETAT.ballEnMouvement = true;
+  ETAT.peutLancer = false;
+  document.getElementById('swipe-hint').style.opacity = '0';
+
+  // Vitesse basée sur la puissance du swipe et l'inclinaison du gyroscope
+  const vitesseZ = -0.08 - (puissance / 100) * 0.12;
+  const vitesseX = gyro.getNormalizedX(25) * 0.04;
+
+  bouleVitesse = { x: vitesseX, z: vitesseZ };
+  bouleEnVol = true;
+
+  // Zoom caméra progressif
+  setTimeout(() => { cameraZoom = true; }, 500);
+}
+
+function resetBoule() {
+  boule.position.set(0, 0.22, 6);
+  bouleVitesse = { x: 0, z: 0 };
+  bouleEnVol = false;
+  cameraZoom = false;
+  ETAT.ballEnMouvement = false;
+  camera.position.set(0, 3, 8);
+  camera.lookAt(0, 0, 0);
+}
+
+// Détection collision simple
+function checkCollisions() {
+  let nouvellesTombees = 0;
+
+  quilles.forEach(quille => {
+    if (quille.userData.tombee) return;
+
+    const dist = boule.position.distanceTo(quille.position);
+    if (dist < 0.4) {
+      // La quille tombe !
+      quille.userData.tombee = true;
+      nouvellesTombees++;
+
+      // Animation de chute
+      const dirX = quille.position.x - boule.position.x;
+      animerChute(quille, dirX);
+
+      // Effet domino sur les quilles proches
+      setTimeout(() => effetDomino(quille), 150);
+    }
+  });
+
+  return nouvellesTombees;
+}
+
+function animerChute(quille, dirX) {
+  const targetRot = dirX >= 0 ? Math.PI / 2 : -Math.PI / 2;
+  let progress = 0;
+  const startRot = quille.rotation.z;
+
+  function tomber() {
+    progress += 0.08;
+    quille.rotation.z = startRot + (targetRot - startRot) * Math.min(progress, 1);
+    quille.position.y = Math.max(-0.3, quille.userData.posOriginale.y - progress * 0.3);
+    if (progress < 1) requestAnimationFrame(tomber);
+  }
+  tomber();
+}
+
+function effetDomino(quilleSource) {
+  quilles.forEach(quille => {
+    if (quille.userData.tombee) return;
+    const dist = quilleSource.position.distanceTo(quille.position);
+    if (dist < 0.5) {
+      quille.userData.tombee = true;
+      const dirX = quille.position.x - quilleSource.position.x;
+      setTimeout(() => animerChute(quille, dirX), Math.random() * 100);
+    }
+  });
+}
+
+function compterQuillesTombees() {
+  return quilles.filter(q => q.userData.tombee).length;
+}
+
+// Fin du lancer
+function finLancer() {
+  const tombees = compterQuillesTombees();
+  const nouvellesTombees = tombees - ETAT.quillesTombeesFrame;
+  ETAT.quillesTombees = tombees;
+
+  const throws = ETAT.throwsParFrame[ETAT.frameActuelle];
+  throws.push(nouvellesTombees);
+  ETAT.quillesTombeesFrame = tombees;
+
+  // Calcule et affiche le résultat
+  afficherResultatLancer(tombees, nouvellesTombees, throws);
+  mettreAJourScore();
+  mettreAJourFramesBar();
+}
+
+function afficherResultatLancer(total, nouvelles, throws) {
+  const overlay = document.getElementById('result-overlay');
+  const emoji = document.getElementById('result-emoji');
+  const titre = document.getElementById('result-title');
+  const sub = document.getElementById('result-sub');
+
+  if (throws.length === 1 && nouvelles === 10) {
+    // STRIKE !
+    emoji.textContent = '🎳';
+    titre.textContent = 'STRIKE !';
+    sub.textContent = 'Toutes les quilles !';
+    titre.style.color = '#F5A623';
+  } else if (throws.length === 2 && total === 10) {
+    // SPARE !
+    emoji.textContent = '✨';
+    titre.textContent = 'SPARE !';
+    sub.textContent = 'Bien joué !';
+    titre.style.color = '#5BBF6A';
+  } else if (nouvelles === 0) {
+    // Dans la rigole
+    emoji.textContent = '😬';
+    titre.textContent = 'Rigole !';
+    sub.textContent = 'Retente ta chance...';
+    titre.style.color = '#F55A5A';
+  } else {
+    emoji.textContent = '👍';
+    titre.textContent = `${nouvelles} quille${nouvelles > 1 ? 's' : ''} !`;
+    sub.textContent = `${10 - total} restante${10 - total > 1 ? 's' : ''}`;
+    titre.style.color = 'white';
+  }
+
+  overlay.classList.add('show');
+}
+
+function nextThrow() {
+  document.getElementById('result-overlay').classList.remove('show');
+
+  const throws = ETAT.throwsParFrame[ETAT.frameActuelle];
+  const strike = throws.length === 1 && throws[0] === 10;
+
+  if (strike || throws.length >= 2) {
+    // Passe à la frame suivante
+    ETAT.frameActuelle++;
+    ETAT.lancerActuel = 0;
+    ETAT.quillesTombeesFrame = 0;
+    creerQuilles(); // Remet toutes les quilles
+
+    if (ETAT.frameActuelle >= 3) {
+      finPartie();
+      return;
+    }
+  } else {
+    // Deuxième lancer de la même frame
+    ETAT.lancerActuel = 1;
+    // Garde les quilles tombées
+  }
+
+  resetBoule();
+  ETAT.peutLancer = true;
+  document.getElementById('swipe-hint').style.opacity = '1';
+  mettreAJourHUD();
+}
+
+function mettreAJourScore() {
+  let total = 0;
+  ETAT.throwsParFrame.forEach(throws => {
+    throws.forEach(t => total += t);
+  });
+  ETAT.scoreTotal = total;
+  document.getElementById('hud-score').textContent = total;
+}
+
+function mettreAJourHUD() {
+  document.getElementById('hud-frame').textContent = `${ETAT.frameActuelle + 1} / 3`;
+  document.getElementById('hud-pins').textContent = 10 - ETAT.quillesTombeesFrame;
+}
+
+function mettreAJourFramesBar() {
+  const bar = document.getElementById('frames-bar');
+  bar.innerHTML = '';
+
+  for (let f = 0; f < 3; f++) {
+    const throws = ETAT.throwsParFrame[f];
+    const div = document.createElement('div');
+    div.className = `frame${f === ETAT.frameActuelle ? ' active' : ''}`;
+
+    const num = document.createElement('div');
+    num.className = 'frame-num';
+    num.textContent = `F${f + 1}`;
+
+    const throwsDiv = document.createElement('div');
+    throwsDiv.className = 'frame-throws';
+
+    throws.forEach((t, i) => {
+      const box = document.createElement('div');
+      box.className = 'throw-box';
+      if (i === 0 && t === 10) {
+        box.textContent = 'X';
+        box.classList.add('strike');
+      } else if (i === 1 && throws[0] + t === 10) {
+        box.textContent = '/';
+        box.classList.add('spare');
+      } else {
+        box.textContent = t;
+      }
+      throwsDiv.appendChild(box);
+    });
+
+    const scoreDiv = document.createElement('div');
+    scoreDiv.className = 'frame-score';
+    if (throws.length > 0) {
+      scoreDiv.textContent = throws.reduce((a, b) => a + b, 0);
+    }
+
+    div.appendChild(num);
+    div.appendChild(throwsDiv);
+    div.appendChild(scoreDiv);
+    bar.appendChild(div);
+  }
+}
+
+// Score IA (simulé selon le niveau)
+function scoreIA() {
+  const niveau = ETAT.adversaire?.bowling || 'moyen';
+  const bases = { facile: [40, 70], moyen: [70, 110], difficile: [110, 150] };
+  const [min, max] = bases[niveau];
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function finPartie() {
+  const scoreJoueur = ETAT.scoreTotal;
+  const scoreAdv = scoreIA();
+  const gagne = scoreJoueur > scoreAdv;
+
+  document.getElementById('final-score-display').textContent = gagne ? '🏆 Victoire !' : '😔 Défaite';
+  document.getElementById('final-player').textContent = scoreJoueur;
+  document.getElementById('final-player').className = `final-player-score${gagne ? ' winner' : ''}`;
+  document.getElementById('final-adv').textContent = scoreAdv;
+  document.getElementById('final-adv').className = `final-player-score${!gagne ? ' winner' : ''}`;
+  document.getElementById('final-adv-name').textContent = ETAT.adversaire?.nom || 'CPU';
+
+  document.getElementById('final-overlay').classList.add('show');
+}
+
+// ============================================
+//  DÉMARRAGE
+// ============================================
+function demarrerJeu() {
+  demanderPermissionIOS(async () => {
+    await gyro.start();
+    document.getElementById('start-screen').style.display = 'none';
+    mettreAJourFramesBar();
+    mettreAJourHUD();
+    ETAT.peutLancer = true;
+  });
+}
+
+// ============================================
+//  BOUCLE DE JEU (Animation)
+// ============================================
+let frameCount = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  frameCount++;
+
+  // Mouvement de la boule
+  if (bouleEnVol) {
+    boule.position.x += bouleVitesse.x;
+    boule.position.z += bouleVitesse.z;
+    boule.rotation.x += 0.1;
+
+    // Collisions
+    if (frameCount % 3 === 0) checkCollisions();
+
+    // Zoom caméra
+    if (cameraZoom && camera.position.z > boule.position.z + 5) {
+      camera.position.z += (boule.position.z + 5 - camera.position.z) * 0.05;
+      camera.position.y += (-0.5 - camera.position.y + 3) * 0.02;
+      camera.lookAt(boule.position);
+    }
+
+    // Fin du parcours
+    if (boule.position.z < -16) {
+      bouleEnVol = false;
+      setTimeout(finLancer, 500);
+    }
+
+    // Boule dans la rigole
+    if (Math.abs(boule.position.x) > 1.8) {
+      boule.position.x = Math.sign(boule.position.x) * 2.1;
+      bouleVitesse.x = 0;
+    }
+  }
+
+  // Oscillation légère des quilles (idle)
+  if (!bouleEnVol && frameCount % 120 === 0) {
+    quilles.forEach((q, i) => {
+      if (!q.userData.tombee) {
+        q.rotation.z = Math.sin(frameCount * 0.01 + i) * 0.02;
+      }
+    });
+  }
+
+  renderer.render(scene, camera);
+}
+
+// Resize
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Lancement
+animate();
+mettreAJourFramesBar();
+</script>
+</body>
+</html>
