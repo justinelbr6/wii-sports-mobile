@@ -697,10 +697,10 @@ function creerPiste() {
     });
   }
 
-  // === PERSONNAGE JOUEUR (Mii derrière la boule) ===
-  const joueurPeauMat = new THREE.MeshLambertMaterial({ color: 0xFFCCA0 });
-  const joueurHautMat = new THREE.MeshLambertMaterial({ color: 0x2255CC }); // chemise bleue
-  const joueurBasMat  = new THREE.MeshLambertMaterial({ color: 0xEEEEEE }); // pantalon blanc
+  // === PERSONNAGE JOUEUR (Mii derrière la boule — semi-transparent) ===
+  const joueurPeauMat = new THREE.MeshLambertMaterial({ color: 0xFFCCA0, transparent: true, opacity: 0.35 });
+  const joueurHautMat = new THREE.MeshLambertMaterial({ color: 0x2255CC, transparent: true, opacity: 0.35 });
+  const joueurBasMat  = new THREE.MeshLambertMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.35 });
 
   // Torse
   const torsoGeo = new THREE.BoxGeometry(0.5, 0.55, 0.3);
@@ -716,7 +716,7 @@ function creerPiste() {
   scene.add(teteJ);
 
   // Cheveux joueur
-  const chevJMat = new THREE.MeshLambertMaterial({ color: 0x3B2314 });
+  const chevJMat = new THREE.MeshLambertMaterial({ color: 0x3B2314, transparent: true, opacity: 0.35 });
   const chevJGeo = new THREE.SphereGeometry(0.29, 10, 10, 0, Math.PI * 2, 0, Math.PI / 2);
   const chevJ = new THREE.Mesh(chevJGeo, chevJMat);
   chevJ.position.set(0, 1.68, 7.2);
@@ -732,7 +732,7 @@ function creerPiste() {
   });
 
   // Bras droit (tenant la boule)
-  const brasMat = new THREE.MeshLambertMaterial({ color: 0x2255CC });
+  const brasMat = new THREE.MeshLambertMaterial({ color: 0x2255CC, transparent: true, opacity: 0.35 });
   const brasGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.45, 8);
   const bras = new THREE.Mesh(brasGeo, brasMat);
   bras.rotation.z = -Math.PI / 3;
@@ -871,63 +871,60 @@ function checkCollisions() {
   quilles.forEach(quille => {
     if (quille.userData.tombee) return;
     const dist = boule.position.distanceTo(quille.position);
-    if (dist < 0.38) {
+    if (dist < 0.4) {
       const dirX = (quille.position.x - boule.position.x);
       const dirZ = (quille.position.z - boule.position.z);
       const len  = Math.sqrt(dirX*dirX + dirZ*dirZ) || 1;
-      // Impulsion proportionnelle à la vitesse de la boule
-      const force = (Math.abs(bouleVitesse.z) + Math.abs(bouleVitesse.x)) * 3.5;
-      impacterQuille(quille, dirX/len * force, dirZ/len * force);
+      // Force fixe forte + bonus vitesse boule
+      const force = 2.5 + (Math.abs(bouleVitesse.z) + Math.abs(bouleVitesse.x)) * 8;
+      impacterQuille(quille, (dirX/len) * force, (dirZ/len) * force);
     }
   });
 }
 
 function impacterQuille(quille, vx, vz) {
   if (quille.userData.tombee) return;
-  quille.userData.tombee    = true;
-  quille.userData.velX      = vx;
-  quille.userData.velZ      = vz;
-  quille.userData.rotVel    = (Math.abs(vx) + Math.abs(vz)) * 1.8;
+  quille.userData.tombee      = true;
+  quille.userData.velX        = vx;
+  quille.userData.velZ        = vz;
+  quille.userData.rotVel      = 3.5; // vitesse de rotation fixe rapide
   quille.userData.enMouvement = true;
 }
 
 // Met à jour TOUTES les quilles en mouvement à chaque frame
 function updateQuilles() {
-  const FRICTION  = 0.88;
-  const RAYON_HIT = 0.38;
+  const FRICTION  = 0.92;
+  const RAYON_HIT = 0.42;
 
   quilles.forEach(quille => {
     if (!quille.userData.enMouvement) return;
 
     const ud = quille.userData;
+    const speed = Math.sqrt(ud.velX*ud.velX + ud.velZ*ud.velZ);
 
     // Déplace la quille
-    quille.position.x += ud.velX * 0.016;
-    quille.position.z += ud.velZ * 0.016;
+    quille.position.x += ud.velX * 0.04;
+    quille.position.z += ud.velZ * 0.04;
 
-    // Rotation de chute (tombe progressivement)
-    const speed = Math.sqrt(ud.velX*ud.velX + ud.velZ*ud.velZ);
+    // Rotation de chute — rapide et visible
     const angleMax = Math.PI / 2;
-    if (quille.rotation.x < angleMax) {
-      quille.rotation.x = Math.min(angleMax, quille.rotation.x + ud.rotVel * 0.016);
-    }
-    // Oriente la quille dans sa direction de déplacement
-    if (speed > 0.05) {
+    quille.rotation.x = Math.min(angleMax, quille.rotation.x + ud.rotVel * 0.04);
+
+    // Oriente dans la direction du mouvement
+    if (speed > 0.1) {
       quille.rotation.y = Math.atan2(ud.velX, ud.velZ);
     }
 
-    // Friction
-    ud.velX *= FRICTION;
-    ud.velZ *= FRICTION;
+    // Friction progressive
+    ud.velX   *= FRICTION;
+    ud.velZ   *= FRICTION;
     ud.rotVel *= FRICTION;
 
-    // Descend légèrement au sol
-    if (quille.position.y > -0.1) {
-      quille.position.y = Math.max(-0.1, quille.position.y - 0.008);
-    }
+    // Descend au sol
+    quille.position.y = Math.max(-0.15, quille.position.y - 0.015);
 
-    // Arrêt quand assez lent
-    if (speed < 0.02) {
+    // Arrêt
+    if (speed < 0.05 && quille.rotation.x >= angleMax - 0.05) {
       ud.enMouvement = false;
     }
 
@@ -935,20 +932,18 @@ function updateQuilles() {
     quilles.forEach(autre => {
       if (autre === quille) return;
       const d = quille.position.distanceTo(autre.position);
-      if (d < RAYON_HIT && speed > 0.3) {
-        const dx = (autre.position.x - quille.position.x) / d;
-        const dz = (autre.position.z - quille.position.z) / d;
-        const force = speed * 0.6;
+      if (d < RAYON_HIT && speed > 0.4) {
+        const dx = (autre.position.x - quille.position.x) / (d || 1);
+        const dz = (autre.position.z - quille.position.z) / (d || 1);
+        const force = speed * 0.7;
         if (!autre.userData.tombee) {
           impacterQuille(autre, dx * force, dz * force);
         } else if (autre.userData.enMouvement) {
-          // Quille déjà tombée qui reçoit un choc : accélère
-          autre.userData.velX += dx * force * 0.4;
-          autre.userData.velZ += dz * force * 0.4;
+          autre.userData.velX += dx * force * 0.5;
+          autre.userData.velZ += dz * force * 0.5;
         }
-        // La quille source perd un peu de vitesse (conservation)
-        ud.velX *= 0.75;
-        ud.velZ *= 0.75;
+        ud.velX *= 0.8;
+        ud.velZ *= 0.8;
       }
     });
   });
