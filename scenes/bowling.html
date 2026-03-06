@@ -558,23 +558,35 @@ function creerPiste() {
   mur.position.set(0, 2, -18);
   scene.add(mur);
 
-  // Spectateurs (simples formes colorées)
-  const couleurs = [0xFF6B6B, 0x4ECDC4, 0x45B7D1, 0x96CEB4, 0xFFA07A];
-  for (let i = 0; i < 20; i++) {
+  // Tribunes (gradins sur les côtés)
+  const gradin = new THREE.MeshLambertMaterial({ color: 0x334466 });
+  [-3.5, 3.5].forEach(cx => {
+    const gradinGeo = new THREE.BoxGeometry(1.5, 1.5, 14);
+    const gradinMesh = new THREE.Mesh(gradinGeo, gradin);
+    gradinMesh.position.set(cx, 0.75, -8);
+    scene.add(gradinMesh);
+  });
+
+  // Spectateurs dans les tribunes (sur les côtés, surélevés)
+  const couleurs = [0xFF6B6B, 0x4ECDC4, 0x45B7D1, 0x96CEB4, 0xFFA07A, 0xFFD93D, 0xC77DFF];
+  for (let i = 0; i < 24; i++) {
     const c = couleurs[i % couleurs.length];
-    const corpsGeo = new THREE.CapsuleGeometry ? 
-      new THREE.CapsuleGeometry(0.2, 0.4, 4, 8) :
-      new THREE.CylinderGeometry(0.2, 0.2, 0.6, 8);
     const corpsMat = new THREE.MeshLambertMaterial({ color: c });
+
+    // Côté gauche ou droit
+    const cote = i % 2 === 0 ? -4.2 : 4.2;
+    const zPos = -6 - (i % 12) * 1.1;
+    const yPos = 1.2 + Math.floor(i / 12) * 0.6; // rangées surélevées
+
+    const corpsGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.5, 8);
     const corps = new THREE.Mesh(corpsGeo, corpsMat);
-    const x = (Math.random() - 0.5) * 8 + (Math.random() > 0.5 ? 4 : -4);
-    corps.position.set(x, 0.3 + Math.random() * 0.5, -10 - Math.random() * 5);
+    corps.position.set(cote, yPos, zPos);
     scene.add(corps);
 
-    // Tête
-    const teteGeo = new THREE.SphereGeometry(0.25, 8, 8);
+    // Tête grosse cartoon
+    const teteGeo = new THREE.SphereGeometry(0.22, 8, 8);
     const tete = new THREE.Mesh(teteGeo, corpsMat);
-    tete.position.set(x, corps.position.y + 0.6, corps.position.z);
+    tete.position.set(cote, yPos + 0.42, zPos);
     scene.add(tete);
   }
 }
@@ -906,23 +918,53 @@ function finPartie() {
 //  DÉMARRAGE
 // ============================================
 function demarrerJeu() {
-  demanderPermissionIOS(async () => {
+  // Cache l'écran de démarrage immédiatement
+  document.getElementById('start-screen').style.display = 'none';
+
+  const lancer = async () => {
     await gyro.start();
-    document.getElementById('start-screen').style.display = 'none';
     mettreAJourFramesBar();
     mettreAJourHUD();
     ETAT.peutLancer = true;
-  });
+  };
+
+  demanderPermissionIOS(lancer);
+
+  // Android / desktop → pas besoin de permission, démarre direct
+  const estIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (!estIOS) lancer();
 }
 
 // ============================================
-//  BOUCLE DE JEU (Animation)
+//  FLÈCHE DE VISÉE
+// ============================================
+const flecheVisee = document.getElementById('direction-arrow');
+
+function mettreAJourFleche() {
+  if (ETAT.ballEnMouvement || !ETAT.peutLancer) {
+    flecheVisee.style.opacity = '0';
+    return;
+  }
+  const nx = gyro.getNormalizedX(25); // -1 à 1
+  const rotation = nx * 35;           // max 35 degrés
+  flecheVisee.style.opacity = '1';
+  flecheVisee.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+
+  // Boule qui glisse gauche/droite pour montrer la visée
+  boule.position.x += (nx * 1.2 - boule.position.x) * 0.1;
+}
+
+// ============================================
+//  BOUCLE DE JEU
 // ============================================
 let frameCount = 0;
 
 function animate() {
   requestAnimationFrame(animate);
   frameCount++;
+
+  // Flèche de visée
+  mettreAJourFleche();
 
   // Mouvement de la boule
   if (bouleEnVol) {
