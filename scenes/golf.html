@@ -412,132 +412,316 @@ function phong(color, shininess=80, specular=0x333333) {
   return new THREE.MeshPhongMaterial({ color, shininess, specular });
 }
 
+// ══════════════════════════════════════════
+//  MIIS SPECTATEURS
+// ══════════════════════════════════════════
+let spectateursMiis = []; // [{groupe, brasG, brasD}]
+
+function creerMiiSpectateur(x, y, z, couleurCorps, couleurPeau, angleY) {
+  const g = new THREE.Group();
+  function mat(c) { return new THREE.MeshPhongMaterial({ color:c, shininess:40 }); }
+
+  // Corps
+  const corps = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.7, 0.35), mat(couleurCorps));
+  corps.position.y = 0.7; g.add(corps);
+  // Tête
+  const tete  = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 10), mat(couleurPeau));
+  tete.position.y = 1.42; g.add(tete);
+  // Yeux
+  [-0.1, 0.1].forEach(ex => {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), mat(0x222244));
+    eye.position.set(ex, 1.47, 0.26); g.add(eye);
+  });
+  // Jambes
+  [-0.13, 0.13].forEach(jx => {
+    const j = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.52, 0.25), mat(0x1a1a2e));
+    j.position.set(jx, 0.24, 0); g.add(j);
+  });
+
+  // Bras gauche et droit (pivots pour animation)
+  const brasG = new THREE.Group(); brasG.position.set(-0.38, 1.05, 0);
+  const bGm   = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.48, 0.18), mat(couleurCorps));
+  bGm.position.set(0, -0.2, 0); brasG.add(bGm); g.add(brasG);
+
+  const brasD = new THREE.Group(); brasD.position.set(0.38, 1.05, 0);
+  const bDm   = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.48, 0.18), mat(couleurCorps));
+  bDm.position.set(0, -0.2, 0); brasD.add(bDm); g.add(brasD);
+
+  g.position.set(x, y, z);
+  g.rotation.y = angleY;
+  g.castShadow = true;
+  terrainGroupe.add(g);
+  return { groupe:g, brasG, brasD };
+}
+
+function placerSpectateursParcours(dist, config) {
+  spectateursMiis = [];
+  // config = [{x, zFrac, angle, corps, peau}]  zFrac = 0..1 le long du parcours
+  const couleursPeau = [0xfad9b4, 0xd4956a, 0xf5c8a0, 0xe8b080, 0xc47a45];
+  const couleursCorps = [0xe53935,0x1976D2,0xF57C00,0x7B1FA2,0x00796B,0x558B2F,0xFF4081,0x0097A7];
+
+  config.forEach((c, i) => {
+    const peau  = couleursPeau[i % couleursPeau.length];
+    const corps = couleursCorps[i % couleursCorps.length];
+    const zPos  = 8 - c.zFrac * (dist + 8); // de z=8 (tee) vers z=-dist (trou)
+    const spec  = creerMiiSpectateur(c.x, 0.05, zPos, corps, peau, c.angle);
+    spectateursMiis.push(spec);
+  });
+}
+
+// ── Son applaudissements (WebAudio synthétique) ──
+let audioCtx = null;
+function jouerApplaudissements(duree = 2.5) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = audioCtx;
+    const nb  = Math.floor(duree * 18);
+    for (let i = 0; i < nb; i++) {
+      const t = i / 18;
+      // Bruit blanc court = clap
+      const buf  = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let j = 0; j < data.length; j++) data[j] = (Math.random()*2-1) * Math.exp(-j/800);
+      const src  = ctx.createBufferSource();
+      src.buffer = buf;
+      // Filtre passe-haut pour le croustillant des applauds
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'highpass'; filt.frequency.value = 1200;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.4 + Math.random() * 0.3;
+      src.connect(filt); filt.connect(gain); gain.connect(ctx.destination);
+      src.start(ctx.currentTime + t + Math.random() * 0.04);
+    }
+  } catch(e) {}
+}
+
+// ── Animation spectateurs : applaudissements ──
+function animerApplaudissementsSpec(duree = 2500) {
+  const fin = Date.now() + duree;
+  ETAT.animSpec = {
+    type: 'applauds',
+    fin,
+    fn: () => {
+      const phase = Date.now() * 0.008;
+      spectateursMiis.forEach((s, i) => {
+        const offset = i * 0.4;
+        const beat   = Math.abs(Math.sin((phase + offset) * 2.5));
+        // Bras qui battent
+        s.brasG.rotation.z =  0.3 + beat * 1.2;
+        s.brasD.rotation.z = -0.3 - beat * 1.2;
+        // Petit sautillement
+        s.groupe.position.y = 0.05 + beat * 0.12;
+      });
+    }
+  };
+}
+
+// ── Spectateurs au repos : regardent légèrement ──
+function animerSpectateurRepos() {
+  spectateursMiis.forEach(s => {
+    s.brasG.rotation.z =  0.15;
+    s.brasD.rotation.z = -0.15;
+  });
+}
+
+// ══════════════════════════════════════════
+//  CONSTRUCTION DES TROUS — LEVEL DESIGN
+// ══════════════════════════════════════════
+function ajouterArbre(x, z, h) {
+  const trunkMat = phong(0x6D4C41, 40, 0x332211);
+  const leafMats = [phong(0x388E3C,20), phong(0x2E7D32,20), phong(0x43A047,20)];
+  const tronc = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.22,h,7), trunkMat);
+  tronc.position.set(x, h/2, z); tronc.castShadow=true; terrainGroupe.add(tronc);
+  [0,0.9,1.6].forEach((dy,li) => {
+    const r = 1.6 - li*0.35;
+    const c = new THREE.Mesh(new THREE.ConeGeometry(r,1.5,8), leafMats[li%3]);
+    c.position.set(x, h+dy+0.5, z); c.castShadow=true; terrainGroupe.add(c);
+  });
+}
+
+function ajouterBunker(x, z, r) {
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(r,r,0.11,14), phong(0xF4E088,15,0xAA9944));
+  b.position.set(x, 0.01, z); terrainGroupe.add(b);
+}
+
 function construireTrou(indexTrou) {
-  // Nettoie la scène
   if (terrainGroupe) scene.remove(terrainGroupe);
   terrainGroupe = new THREE.Group();
+  spectateursMiis = [];
 
-  const cfg = TROUS[indexTrou];
+  const cfg  = TROUS[indexTrou];
   const dist = cfg.distance;
   distanceTrou = dist;
   scene.background = new THREE.Color(cfg.bg);
-  scene.fog = new THREE.FogExp2(cfg.bg, 0.010);
+  scene.fog = new THREE.FogExp2(cfg.bg, 0.008);
 
-  // ── Fairway principal ──
   const fairwayMat = phong(cfg.couleur, 20, 0x224422);
-  const fGeo = new THREE.BoxGeometry(14, 0.18, dist + 30);
-  const fairway = new THREE.Mesh(fGeo, fairwayMat);
-  fairway.position.set(0, 0, -(dist/2 - 10));
-  fairway.receiveShadow = true;
-  terrainGroupe.add(fairway);
+  const roughMat   = phong(0x1B5E20, 8, 0x112211);
+  const sandMat    = phong(0xF4E088, 15, 0xAA9944);
+  const greenMat   = phong(0x66BB6A, 30, 0x335533);
+  const solMat     = phong(0x2d5a1b, 5, 0x112200);
 
-  // ── Rough (bordures plus sombres) ──
-  const roughMat = phong(0x1B5E20, 10, 0x112211);
-  [-10, 10].forEach(x => {
-    const rG = new THREE.BoxGeometry(8, 0.15, dist + 30);
-    const r = new THREE.Mesh(rG, roughMat);
-    r.position.set(x + Math.sign(x)*4, 0, -(dist/2 - 10));
-    r.receiveShadow = true;
-    terrainGroupe.add(r);
-  });
+  // Grand sol de fond
+  const sol = new THREE.Mesh(new THREE.BoxGeometry(250,0.1,500), solMat);
+  sol.position.set(0,-0.06,-dist/2); sol.receiveShadow=true; terrainGroupe.add(sol);
 
-  // ── Grand sol de fond ──
-  const solG = new THREE.BoxGeometry(200, 0.1, 400);
-  const sol  = new THREE.Mesh(solG, phong(0x33691E, 5, 0x112200));
-  sol.position.set(0, -0.05, -(dist/2));
-  sol.receiveShadow = true;
-  terrainGroupe.add(sol);
-
-  // ── Bunkers (sable) selon le trou ──
-  const sandMat = phong(0xF4E088, 15, 0xAA9944);
-  if (indexTrou >= 1) {
-    [[-4, -dist*0.45], [3.5, -dist*0.6]].forEach(([x, z]) => {
-      const bG = new THREE.CylinderGeometry(2.5, 2.5, 0.12, 14);
-      const b  = new THREE.Mesh(bG, sandMat);
-      b.position.set(x, 0.01, z);
-      b.receiveShadow = true;
-      terrainGroupe.add(b);
+  // ════════════════════════════════════════
+  if (indexTrou === 0) {
+    // ── TROU 1 : Prairie directe — chemin large et droit ──
+    // Fairway large central
+    const fw = new THREE.Mesh(new THREE.BoxGeometry(16,0.20,dist+24), fairwayMat);
+    fw.position.set(0,0,-(dist/2-10)); fw.receiveShadow=true; terrainGroupe.add(fw);
+    // Rough latéral
+    [-13,13].forEach(x => {
+      const r = new THREE.Mesh(new THREE.BoxGeometry(10,0.15,dist+30), roughMat);
+      r.position.set(x,0,-(dist/2-10)); terrainGroupe.add(r);
     });
-  }
-  if (indexTrou >= 2) {
-    [[-5, -dist*0.3], [5, -dist*0.5], [0, -dist*0.7]].forEach(([x,z]) => {
-      const bG = new THREE.CylinderGeometry(3, 3, 0.12, 14);
-      const b  = new THREE.Mesh(bG, sandMat);
-      b.position.set(x, 0.01, z);
-      terrainGroupe.add(b);
+    // Quelques fleurs décoratives (petits cubes colorés)
+    const fleurCols = [0xFFD700, 0xFF69B4, 0xFF6347, 0xFFFFAA];
+    for (let i=0; i<18; i++) {
+      const fc = new THREE.Mesh(new THREE.BoxGeometry(0.18,0.18,0.18), phong(fleurCols[i%4],60));
+      fc.position.set((Math.random()-0.5)*14, 0.2, 8 - Math.random()*(dist+4));
+      terrainGroupe.add(fc);
+    }
+    // 1 bunker central pas trop gênant
+    ajouterBunker(-3, -dist*0.5, 2.2);
+    // Arbres côté
+    [[-10,0.2],[-11,0.45],[-9,0.7],[10,0.15],[11,0.4],[10,0.65],[-10,0.88],[10,0.9]].forEach(([xi,zf])=>
+      ajouterArbre(xi, 8-zf*(dist+8), 3+Math.random()*2));
+
+    // Spectateurs — 2 groupes de 4 de chaque côté
+    placerSpectateursParcours(dist, [
+      {x:-8, zFrac:0.2, angle: 0.3}, {x:-8.5, zFrac:0.35, angle:0.2},
+      {x:-7.5,zFrac:0.5, angle: 0.1}, {x:-8,  zFrac:0.65, angle:0.25},
+      {x: 8,  zFrac:0.2, angle:-0.3}, {x: 8.5, zFrac:0.35, angle:-0.2},
+      {x: 7.5,zFrac:0.5, angle:-0.15},{x: 8,   zFrac:0.65, angle:-0.25},
+    ]);
+
+  } else if (indexTrou === 1) {
+    // ── TROU 2 : Forêt — chemin en S avec obstacles ──
+    // Segment 1 : droit puis décale à gauche
+    const seg1 = new THREE.Mesh(new THREE.BoxGeometry(12,0.20,dist*0.4+4), fairwayMat);
+    seg1.position.set(0,0, 8-dist*0.2); seg1.receiveShadow=true; terrainGroupe.add(seg1);
+    // Segment 2 : décalé à gauche (-5)
+    const seg2 = new THREE.Mesh(new THREE.BoxGeometry(12,0.20,dist*0.35+4), fairwayMat);
+    seg2.position.set(-5,0, -(dist*0.4+dist*0.18)); seg2.receiveShadow=true; terrainGroupe.add(seg2);
+    // Virage entre seg1 et seg2 (carré de connexion)
+    const virg = new THREE.Mesh(new THREE.BoxGeometry(18,0.20,18), fairwayMat);
+    virg.position.set(-2.5,0, -(dist*0.38)); terrainGroupe.add(virg);
+    // Segment 3 : revient au centre vers le trou
+    const seg3 = new THREE.Mesh(new THREE.BoxGeometry(12,0.20,dist*0.35+4), fairwayMat);
+    seg3.position.set(0,0, -(dist*0.72+dist*0.15)); terrainGroupe.add(seg3);
+    const virg2 = new THREE.Mesh(new THREE.BoxGeometry(16,0.20,16), fairwayMat);
+    virg2.position.set(-2,0, -(dist*0.73)); terrainGroupe.add(virg2);
+
+    // Rough de fond
+    const rfond = new THREE.Mesh(new THREE.BoxGeometry(60,0.14,dist+40), roughMat);
+    rfond.position.set(0,-0.02,-(dist/2-8)); terrainGroupe.add(rfond);
+
+    // Bunkers stratégiques
+    ajouterBunker(4,-dist*0.28,2.5); ajouterBunker(-8,-dist*0.55,2.0);
+    ajouterBunker(3,-dist*0.75,2.2);
+
+    // Haie (mur de buissons) qui force à contourner
+    for (let zi=0; zi<4; zi++) {
+      const haie = new THREE.Mesh(new THREE.BoxGeometry(1.2,1.5,1.2),phong(0x1a4a1a,20));
+      haie.position.set(5+zi*0.2, 0.75, -dist*0.35 - zi*0.5);
+      haie.castShadow=true; terrainGroupe.add(haie);
+    }
+
+    // Arbres denses de forêt
+    [[-14,0.1],[-13,0.3],[-14,0.55],[-12,0.75],[-13,0.9],
+     [10,0.15],[12,0.4],[11,0.6],[13,0.78],[11,0.92]].forEach(([xi,zf])=>
+      ajouterArbre(xi, 8-zf*(dist+8), 4+Math.random()*3));
+
+    // Spectateurs groupés en 3 petits groupes
+    placerSpectateursParcours(dist, [
+      {x:-10,zFrac:0.15,angle:0.4},{x:-10.5,zFrac:0.25,angle:0.3},
+      {x: 10,zFrac:0.15,angle:-0.4},{x:10.5,zFrac:0.25,angle:-0.3},
+      {x:-12,zFrac:0.55,angle:0.2},{x:-11,zFrac:0.65,angle:0.1},
+      {x: 9, zFrac:0.55,angle:-0.2},{x:9.5, zFrac:0.65,angle:-0.1},
+      {x:-10,zFrac:0.87,angle:0.35},{x:10,  zFrac:0.87,angle:-0.35},
+    ]);
+
+  } else {
+    // ── TROU 3 : Montagne — parcours en Z avec reliefs ──
+    // Segment aller à droite
+    const s1 = new THREE.Mesh(new THREE.BoxGeometry(10,0.20,dist*0.3+4), fairwayMat);
+    s1.position.set(6,0, 8-dist*0.15); terrainGroupe.add(s1);
+    // Virage droite
+    const v1 = new THREE.Mesh(new THREE.BoxGeometry(20,0.20,16), fairwayMat);
+    v1.position.set(4,0, -(dist*0.28)); terrainGroupe.add(v1);
+    // Segment vers la gauche
+    const s2 = new THREE.Mesh(new THREE.BoxGeometry(10,0.20,dist*0.3+4), fairwayMat);
+    s2.position.set(-5,0, -(dist*0.45+dist*0.15)); terrainGroupe.add(s2);
+    // Virage gauche
+    const v2 = new THREE.Mesh(new THREE.BoxGeometry(22,0.20,18), fairwayMat);
+    v2.position.set(0,0, -(dist*0.59)); terrainGroupe.add(v2);
+    // Segment final droit vers le trou
+    const s3 = new THREE.Mesh(new THREE.BoxGeometry(10,0.20,dist*0.32+4), fairwayMat);
+    s3.position.set(0,0, -(dist*0.76+dist*0.16)); terrainGroupe.add(s3);
+
+    // Rough
+    const rfond3 = new THREE.Mesh(new THREE.BoxGeometry(70,0.14,dist+50), roughMat);
+    rfond3.position.set(0,-0.02,-(dist/2-8)); terrainGroupe.add(rfond3);
+
+    // Collines / reliefs (demi-sphères)
+    [[-18,-dist*0.2,20],[18,-dist*0.35,18],[0,-dist+10,22],
+     [-20,-dist*0.6,15],[15,-dist*0.75,16]].forEach(([x,z,r]) => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r,12,8,0,Math.PI*2,0,Math.PI/2),phong(0x4a7a3a,5));
+      m.position.set(x,-1,z); terrainGroupe.add(m);
     });
-  }
 
-  // ── Arbres décoratifs ──
-  const trunkMat  = phong(0x6D4C41, 40, 0x332211);
-  const leafMats  = [phong(0x388E3C,20), phong(0x2E7D32,20), phong(0x43A047,20), phong(0x1B5E20,20)];
-  const nbTrees   = 8 + indexTrou * 6;
-  for (let i = 0; i < nbTrees; i++) {
-    const side = i % 2 === 0 ? -1 : 1;
-    const xPos = side * (9 + Math.random() * 8);
-    const zPos = -Math.random() * (dist + 10);
-    const h    = 3 + Math.random() * 3;
-    // Tronc
-    const tG = new THREE.CylinderGeometry(0.18, 0.25, h, 7);
-    const t  = new THREE.Mesh(tG, trunkMat);
-    t.position.set(xPos, h/2, zPos);
-    t.castShadow = true;
-    terrainGroupe.add(t);
-    // Feuillage (3 cônes)
-    const lMat = leafMats[i % leafMats.length];
-    [0, 0.9, 1.7].forEach((dy, li) => {
-      const r = 1.8 - li * 0.4;
-      const cG = new THREE.ConeGeometry(r, 1.6, 8);
-      const c  = new THREE.Mesh(cG, lMat);
-      c.position.set(xPos, h + dy + 0.6, zPos);
-      c.castShadow = true;
-      terrainGroupe.add(c);
+    // Murs / obstacles rocheux
+    [[8,-dist*0.3,phong(0x78909C,40)],[{w:1.5,d:5},-dist*0.5,phong(0x607D8B,40)]].forEach((_,i)=>{});
+    // Rochers
+    [[7,-dist*0.28,0x78909C],[6.5,-dist*0.31,0x90A4AE],
+     [-6,-dist*0.58,0x78909C],[-7,-dist*0.62,0x546E7A]].forEach(([x,z,c]) => {
+      const roc = new THREE.Mesh(new THREE.DodecahedronGeometry(1.1+Math.random()*0.6,0),phong(c,20));
+      roc.position.set(x, 0.5, z); roc.rotation.y=Math.random()*Math.PI;
+      roc.castShadow=true; terrainGroupe.add(roc);
     });
+
+    // Bunkers multiples
+    ajouterBunker(3,-dist*0.22,2); ajouterBunker(-4,-dist*0.5,2.5);
+    ajouterBunker(2,-dist*0.7,2); ajouterBunker(-3,-dist*0.85,2);
+
+    // Arbres montagnards (plus denses)
+    [[-14,0.05],[-15,0.2],[-13,0.38],[-14,0.55],[-15,0.7],[-13,0.85],[-14,0.95],
+     [13,0.1],[14,0.28],[13,0.45],[15,0.6],[14,0.8],[13,0.92]].forEach(([xi,zf])=>
+      ajouterArbre(xi, 8-zf*(dist+8), 4+Math.random()*4));
+
+    // Spectateurs répartis sur le long parcours — 4 groupes
+    placerSpectateursParcours(dist, [
+      {x:-10,zFrac:0.12,angle:0.4},{x:-10.5,zFrac:0.20,angle:0.3},
+      {x: 10,zFrac:0.12,angle:-0.4},{x:10.5, zFrac:0.20,angle:-0.3},
+      {x:-11,zFrac:0.45,angle:0.35},{x:-10,  zFrac:0.53,angle:0.2},
+      {x: 10,zFrac:0.45,angle:-0.3},{x:11,   zFrac:0.53,angle:-0.2},
+      {x:-10,zFrac:0.72,angle:0.4}, {x:-11,  zFrac:0.80,angle:0.25},
+      {x: 10,zFrac:0.72,angle:-0.4},{x:11,   zFrac:0.80,angle:-0.25},
+    ]);
   }
 
-  // ── Collines arrière (montagnes simplifiées) ──
-  if (indexTrou === 2) {
-    [[-20, -dist-20, 25], [20, -dist-15, 20], [0, -dist-30, 30]].forEach(([x,z,r]) => {
-      const mG = new THREE.SphereGeometry(r, 12, 8, 0, Math.PI*2, 0, Math.PI/2);
-      const m  = new THREE.Mesh(mG, phong(0x5D8A5E, 5));
-      m.position.set(x, -2, z);
-      terrainGroupe.add(m);
-    });
-  }
+  // ── Green commun ──
+  const green = new THREE.Mesh(new THREE.CylinderGeometry(5.5,5.5,0.24,22), greenMat);
+  green.position.set(0,0.01,-dist); green.receiveShadow=true; terrainGroupe.add(green);
 
-  // ── Green (zone autour du trou) ──
-  const greenMat = phong(0x66BB6A, 30, 0x335533);
-  const greenG = new THREE.CylinderGeometry(5, 5, 0.22, 20);
-  const green  = new THREE.Mesh(greenG, greenMat);
-  green.position.set(0, 0.01, -dist);
-  green.receiveShadow = true;
-  terrainGroupe.add(green);
-
-  // ── Trou dans le green ──
-  const trouG = new THREE.CylinderGeometry(0.22, 0.22, 0.3, 14);
-  trou3D = new THREE.Mesh(trouG, phong(0x111111, 5));
-  trou3D.position.set(0, 0.1, -dist);
-  terrainGroupe.add(trou3D);
+  // ── Trou ──
+  trou3D = new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.24,0.3,14), phong(0x111111,5));
+  trou3D.position.set(0,0.10,-dist); terrainGroupe.add(trou3D);
 
   // ── Drapeau ──
-  const matFlagMat = phong(0xCCCCCC, 120, 0xAAAAAA);
-  const polGeo = new THREE.CylinderGeometry(0.04, 0.04, 2.8, 8);
-  const pol = new THREE.Mesh(polGeo, matFlagMat);
-  pol.position.set(0.3, 1.4, -dist);
-  terrainGroupe.add(pol);
+  const pol = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,3.0,8), phong(0xCCCCCC,120,0xAAAAAA));
+  pol.position.set(0.35,1.5,-dist); terrainGroupe.add(pol);
+  flagMesh = new THREE.Mesh(new THREE.BoxGeometry(0.65,0.42,0.03), phong(0xFF2222,40,0x881111));
+  flagMesh.position.set(0.65,2.7,-dist); terrainGroupe.add(flagMesh);
 
-  const flagGeo = new THREE.BoxGeometry(0.6, 0.4, 0.02);
-  flagMesh = new THREE.Mesh(flagGeo, phong(0xFF2222, 40, 0x881111));
-  flagMesh.position.set(0.6, 2.5, -dist);
-  terrainGroupe.add(flagMesh);
-
-  // ── Tee de départ (carré blanc) ──
-  const teeG = new THREE.BoxGeometry(2, 0.05, 2);
-  const tee  = new THREE.Mesh(teeG, phong(0xFFFFFF, 30, 0xAAAA88));
-  tee.position.set(0, 0.12, 8);
-  terrainGroupe.add(tee);
+  // ── Tee de départ ──
+  const tee = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.06,2.2), phong(0xFFFFFF,30,0xAAAA88));
+  tee.position.set(0,0.13,8); terrainGroupe.add(tee);
 
   scene.add(terrainGroupe);
+  animerSpectateurRepos();
 }
 
 // ══════════════════════════════════════════
@@ -836,11 +1020,14 @@ function checkDansTrou() {
 }
 
 function balleTombeDansTrou() {
-  ETAT.inTrou   = true;
+  ETAT.inTrou    = true;
   ETAT.ballEnVol = false;
   if (balleMesh) balleMesh.visible = false;
-  // Animation balle qui tombe dans le trou
-  setTimeout(() => afficherResultatTrou(), 600);
+  // 🎉 Applaudissements !
+  jouerApplaudissements(2.8);
+  animerApplaudissementsSpec(2800);
+  if (navigator.vibrate) navigator.vibrate([50,30,50,30,100]);
+  setTimeout(() => afficherResultatTrou(), 700);
 }
 
 // ══════════════════════════════════════════
@@ -1017,6 +1204,21 @@ function animate() {
 
   // Drapeau qui flotte
   if (flagMesh) flagMesh.rotation.y = Math.sin(frameCount * 0.05) * 0.3;
+
+  // Animation spectateurs
+  if (ETAT.animSpec) {
+    ETAT.animSpec.fn();
+    if (Date.now() >= ETAT.animSpec.fin) {
+      ETAT.animSpec = null;
+      animerSpectateurRepos();
+    }
+  } else {
+    // Légère respiration au repos
+    const t = frameCount * 0.012;
+    spectateursMiis.forEach((s, i) => {
+      s.groupe.position.y = 0.05 + Math.sin(t + i) * 0.02;
+    });
+  }
 
   // Physique balle
   if (ETAT.ballEnVol && balleMesh) {
