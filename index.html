@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wii Sports Mobile</title>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
   <style>
@@ -12,7 +12,9 @@
       font-family: 'Baloo 2', cursive;
       background: linear-gradient(160deg, #a8e4f7 0%, #6ec6f0 35%, #b8ecff 100%);
       min-height: 100vh;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       position: relative;
     }
 
@@ -24,13 +26,16 @@
         radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.2) 0%, transparent 50%),
         linear-gradient(160deg, #a8e4f7 0%, #5bbde8 40%, #a0d8f0 100%);
       z-index: 0;
+      pointer-events: none;
     }
 
     .bubble {
-      position: absolute;
+      position: fixed;
       border-radius: 50%;
       background: rgba(255,255,255,0.15);
       animation: floatUp linear infinite;
+      pointer-events: none;
+      z-index: 0;
     }
     @keyframes floatUp {
       0%   { transform: translateY(100vh) scale(0); opacity: 0; }
@@ -53,49 +58,30 @@
       color: rgba(255,255,255,0.7);
       font-weight: 700;
     }
-    .logo-right {
-      text-align: right;
-    }
+    .logo-right { text-align: right; }
     .logo-wii-line {
-      font-size: 1rem;
-      font-weight: 800;
-      color: #555;
-      line-height: 1;
+      font-size: 1rem; font-weight: 800; color: #555; line-height: 1;
     }
-    .logo-wii-line em {
-      font-style: italic;
-      color: #1a6aaa;
-    }
+    .logo-wii-line em { font-style: italic; color: #1a6aaa; }
     .logo-sports-line {
-      font-size: 1.6rem;
-      font-weight: 800;
-      font-style: italic;
-      color: #1a6aaa;
-      line-height: 1;
-      letter-spacing: -0.5px;
+      font-size: 1.6rem; font-weight: 800; font-style: italic;
+      color: #1a6aaa; line-height: 1; letter-spacing: -0.5px;
     }
     .logo-badge {
-      display: inline-block;
-      background: #2a82c4;
-      color: white;
-      font-size: 0.5rem;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 20px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-top: 2px;
+      display: inline-block; background: #2a82c4; color: white;
+      font-size: 0.5rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px;
     }
 
-    /* ── Layout ── */
+    /* ── Layout scrollable ── */
     .main-layout {
       position: relative;
       z-index: 2;
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 72px);
-      padding: 8px 12px 12px;
+      padding: 8px 12px 32px;
       gap: 8px;
+      min-height: calc(100vh - 72px);
     }
 
     /* ── Preview ── */
@@ -104,24 +90,19 @@
       backdrop-filter: blur(14px);
       border: 2px solid rgba(255,255,255,0.75);
       border-radius: 20px;
-      flex: 1;
+      min-height: 180px;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      box-shadow:
-        inset 0 2px 10px rgba(255,255,255,0.6),
-        0 4px 20px rgba(0,80,180,0.12);
+      box-shadow: inset 0 2px 10px rgba(255,255,255,0.6), 0 4px 20px rgba(0,80,180,0.12);
     }
-
     .preview-content {
-      text-align: center;
-      padding: 12px;
+      text-align: center; padding: 12px;
       transition: opacity 0.15s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
     }
     .preview-emoji {
-      font-size: 4.5rem;
-      display: block;
+      font-size: 4.5rem; display: block;
       filter: drop-shadow(0 4px 12px rgba(0,0,0,0.12));
       animation: floatAnim 3s ease-in-out infinite;
     }
@@ -129,226 +110,99 @@
       0%,100% { transform: translateY(0) rotate(-2deg); }
       50%      { transform: translateY(-8px) rotate(2deg); }
     }
-    .preview-title {
-      font-size: 2rem;
-      font-weight: 800;
-      color: #1a5fa0;
-      text-shadow: 1px 2px 0 rgba(255,255,255,0.9);
-      margin-top: 4px;
-      line-height: 1;
-    }
-    .preview-desc {
-      font-size: 0.82rem;
-      color: #3a7abf;
-      font-weight: 700;
-      margin-top: 4px;
-    }
-    .preview-tags {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
+    .preview-title { font-size: 2rem; font-weight: 800; color: #1a5fa0; text-shadow: 1px 2px 0 rgba(255,255,255,0.9); margin-top: 4px; line-height: 1; }
+    .preview-desc  { font-size: 0.82rem; color: #3a7abf; font-weight: 700; margin-top: 4px; }
+    .preview-tags  { display: flex; gap: 6px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
     .tag {
-      background: rgba(42,130,196,0.13);
-      border: 1.5px solid rgba(42,130,196,0.28);
-      border-radius: 20px;
-      padding: 3px 10px;
-      font-size: 0.68rem;
-      font-weight: 700;
-      color: #1a5fa0;
+      background: rgba(42,130,196,0.13); border: 1.5px solid rgba(42,130,196,0.28);
+      border-radius: 20px; padding: 3px 10px; font-size: 0.68rem; font-weight: 700; color: #1a5fa0;
     }
 
-    /* ── Boutons sports (style liste Wii) ── */
-    .sports-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    /* ── Sports list ── */
+    .sports-list { display: flex; flex-direction: column; gap: 6px; }
 
     .sport-btn {
-      background: linear-gradient(180deg,
-        rgba(255,255,255,0.92) 0%,
-        rgba(215,238,255,0.88) 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(215,238,255,0.88) 100%);
       border: 2px solid rgba(255,255,255,0.95);
-      border-radius: 16px;
-      padding: 0;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      box-shadow:
-        0 3px 0 rgba(140,195,235,0.7),
-        0 5px 14px rgba(0,60,140,0.1);
-      transition: transform 0.1s, box-shadow 0.1s;
-      outline: none;
+      border-radius: 16px; padding: 0; cursor: pointer;
+      position: relative; overflow: hidden;
+      box-shadow: 0 3px 0 rgba(140,195,235,0.7), 0 5px 14px rgba(0,60,140,0.1);
+      transition: transform 0.1s, box-shadow 0.1s; outline: none;
     }
-
-    /* Reflet brillant */
     .sport-btn::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 45%;
-      background: rgba(255,255,255,0.4);
-      border-radius: 14px 14px 0 0;
-      pointer-events: none;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45%;
+      background: rgba(255,255,255,0.4); border-radius: 14px 14px 0 0; pointer-events: none;
     }
-
     .sport-btn.selected {
-      background: linear-gradient(180deg,
-        rgba(180,225,255,0.97) 0%,
-        rgba(110,190,240,0.92) 100%);
+      background: linear-gradient(180deg, rgba(180,225,255,0.97) 0%, rgba(110,190,240,0.92) 100%);
       border-color: rgba(42,130,196,0.85);
-      box-shadow:
-        0 3px 0 rgba(20,90,170,0.45),
-        0 0 0 3px rgba(42,130,196,0.22);
+      box-shadow: 0 3px 0 rgba(20,90,170,0.45), 0 0 0 3px rgba(42,130,196,0.22);
     }
-
-    /* Crochets Wii */
     .sport-btn.selected .bracket-left,
-    .sport-btn.selected .bracket-right {
-      opacity: 1;
-    }
+    .sport-btn.selected .bracket-right { opacity: 1; }
     .bracket-left, .bracket-right {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 7px;
-      height: 65%;
-      border: 2.5px solid rgba(30,100,190,0.6);
-      border-radius: 2px;
-      opacity: 0;
-      transition: opacity 0.2s;
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 7px; height: 65%; border: 2.5px solid rgba(30,100,190,0.6);
+      border-radius: 2px; opacity: 0; transition: opacity 0.2s;
     }
     .bracket-left  { left: 5px;  border-right: none; }
     .bracket-right { right: 5px; border-left: none; }
+    .sport-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(140,195,235,0.7); }
 
-    .sport-btn:active {
-      transform: translateY(2px);
-      box-shadow: 0 1px 0 rgba(140,195,235,0.7);
-    }
-
-    .sport-btn-inner {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 9px 18px 9px 14px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .sport-btn-emoji {
-      font-size: 1.7rem;
-      flex-shrink: 0;
-      filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.08));
-    }
-    .sport-btn-info { flex: 1; text-align: left; }
-    .sport-btn-name {
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: #1a4a80;
-      line-height: 1.1;
-    }
+    .sport-btn-inner { display: flex; align-items: center; gap: 12px; padding: 9px 18px 9px 14px; position: relative; z-index: 1; }
+    .sport-btn-emoji { font-size: 1.7rem; flex-shrink: 0; filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.08)); }
+    .sport-btn-info  { flex: 1; text-align: left; }
+    .sport-btn-name  { font-size: 1.1rem; font-weight: 800; color: #1a4a80; line-height: 1.1; }
     .sport-btn.selected .sport-btn-name { color: #0d3060; }
-    .sport-btn-detail {
-      font-size: 0.68rem;
-      color: #5a90c0;
-      font-weight: 700;
-    }
-    .sport-btn-arrow {
-      font-size: 1.1rem;
-      color: rgba(42,130,196,0.4);
-      font-weight: 800;
-      transition: transform 0.2s, color 0.2s;
-    }
-    .sport-btn.selected .sport-btn-arrow {
-      color: #2a82c4;
-      transform: translateX(3px);
-    }
+    .sport-btn-detail { font-size: 0.68rem; color: #5a90c0; font-weight: 700; }
+    .sport-btn-arrow  { font-size: 1.1rem; color: rgba(42,130,196,0.4); font-weight: 800; transition: transform 0.2s, color 0.2s; }
+    .sport-btn.selected .sport-btn-arrow { color: #2a82c4; transform: translateX(3px); }
 
-    /* ── Bouton Jouer ── */
+    /* ── Bouton jouer ── */
     .play-btn {
       width: 100%;
       background: linear-gradient(180deg, #55c0f5 0%, #2a82c4 50%, #1a65a8 100%);
-      border: none;
-      border-radius: 16px;
-      padding: 14px;
-      cursor: pointer;
+      border: none; border-radius: 16px; padding: 14px; cursor: pointer;
       box-shadow: 0 5px 0 #0e4a8a, 0 8px 20px rgba(0,70,160,0.25);
-      transition: transform 0.1s, box-shadow 0.1s;
-      position: relative;
-      overflow: hidden;
-      outline: none;
+      transition: transform 0.1s, box-shadow 0.1s; position: relative; overflow: hidden; outline: none;
     }
     .play-btn::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 50%;
-      background: rgba(255,255,255,0.22);
-      border-radius: 16px 16px 0 0;
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 50%;
+      background: rgba(255,255,255,0.22); border-radius: 16px 16px 0 0;
     }
-    .play-btn:active {
-      transform: translateY(4px);
-      box-shadow: 0 1px 0 #0e4a8a;
-    }
-    .play-btn-text {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: white;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      position: relative;
-      z-index: 1;
-      letter-spacing: 1px;
-    }
+    .play-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #0e4a8a; }
+    .play-btn-text { font-size: 1.15rem; font-weight: 800; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.2); position: relative; z-index: 1; letter-spacing: 1px; }
 
     /* ── Loading ── */
     .loading-screen {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+      display: none; position: fixed; inset: 0; z-index: 100;
+      align-items: center; justify-content: center; flex-direction: column;
       background: linear-gradient(160deg, #a8e4f7 0%, #5bbde8 100%);
     }
     .loading-screen.active { display: flex; }
     .loading-card {
-      background: rgba(255,255,255,0.5);
-      backdrop-filter: blur(12px);
-      border: 2px solid rgba(255,255,255,0.8);
-      border-radius: 24px;
-      padding: 28px 44px;
-      text-align: center;
+      background: rgba(255,255,255,0.5); backdrop-filter: blur(12px);
+      border: 2px solid rgba(255,255,255,0.8); border-radius: 24px;
+      padding: 28px 44px; text-align: center;
       animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
     }
-    @keyframes popIn {
-      from { transform: scale(0.6); opacity: 0; }
-      to   { transform: scale(1);   opacity: 1; }
-    }
+    @keyframes popIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .loading-emoji { font-size: 4rem; display: block; margin-bottom: 8px; }
     .loading-title { font-size: 1.8rem; font-weight: 800; color: #1a5fa0; }
-    .loader-dots { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+    .loader-dots   { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
     .loader-dots span {
-      width: 10px; height: 10px;
-      background: #2a82c4; border-radius: 50%;
+      width: 10px; height: 10px; background: #2a82c4; border-radius: 50%;
       animation: dotBounce 0.8s ease-in-out infinite;
     }
     .loader-dots span:nth-child(2) { animation-delay: 0.15s; }
     .loader-dots span:nth-child(3) { animation-delay: 0.30s; }
-    @keyframes dotBounce {
-      0%,100% { transform: translateY(0); opacity: 0.4; }
-      50%      { transform: translateY(-8px); opacity: 1; }
-    }
+    @keyframes dotBounce { 0%,100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-8px); opacity: 1; } }
   </style>
 </head>
 <body>
 
 <div class="wii-bg"></div>
 
-<!-- Logo -->
 <div class="logo-area">
   <div class="logo-left">Main Menu</div>
   <div class="logo-right">
@@ -358,10 +212,8 @@
   </div>
 </div>
 
-<!-- Layout principal -->
 <div class="main-layout">
 
-  <!-- Preview sport -->
   <div class="preview-panel">
     <div class="preview-content" id="previewContent">
       <span class="preview-emoji" id="prevEmoji">🎳</span>
@@ -375,13 +227,11 @@
     </div>
   </div>
 
-  <!-- Liste sports -->
   <div class="sports-list">
 
     <button class="sport-btn selected" id="btn-bowling"
       onclick="selectionner('bowling','🎳','Bowling','Renverse toutes les quilles !','3 Frames','2 lancers / frame','📐 Gyroscope')">
-      <div class="bracket-left"></div>
-      <div class="bracket-right"></div>
+      <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">🎳</span>
         <div class="sport-btn-info">
@@ -394,8 +244,7 @@
 
     <button class="sport-btn" id="btn-golf"
       onclick="selectionner('golf','⛳','Golf','Mets la balle dans le trou !','3 Trous','Par / Score','📐 Gyroscope')">
-      <div class="bracket-left"></div>
-      <div class="bracket-right"></div>
+      <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">⛳</span>
         <div class="sport-btn-info">
@@ -408,8 +257,7 @@
 
     <button class="sport-btn" id="btn-tennis"
       onclick="selectionner('tennis','🎾','Tennis','Gagne les 3 sets !','3 Sets','15·30·40·Jeu','📐 Gyroscope')">
-      <div class="bracket-left"></div>
-      <div class="bracket-right"></div>
+      <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">🎾</span>
         <div class="sport-btn-info">
@@ -422,8 +270,7 @@
 
     <button class="sport-btn" id="btn-boxing"
       onclick="selectionner('boxing','🥊','Boxe','Crie pour frapper plus fort !','3 Rounds','Barre de vie','🎤 Micro')">
-      <div class="bracket-left"></div>
-      <div class="bracket-right"></div>
+      <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">🥊</span>
         <div class="sport-btn-info">
@@ -436,14 +283,12 @@
 
   </div>
 
-  <!-- Bouton jouer -->
   <button class="play-btn" onclick="lancerJeu()">
     <div class="play-btn-text">▶&nbsp; Jouer !</div>
   </button>
 
 </div>
 
-<!-- Écran chargement -->
 <div class="loading-screen" id="loadingScreen">
   <div class="loading-card">
     <span class="loading-emoji" id="loadingEmoji">🎳</span>
@@ -453,7 +298,6 @@
 </div>
 
 <script>
-  // Bulles flottantes
   for (let i = 0; i < 8; i++) {
     const b = document.createElement('div');
     b.className = 'bubble';
@@ -474,10 +318,8 @@
     sportActuel = sport;
     document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById(`btn-${sport}`).classList.add('selected');
-
     const c = document.getElementById('previewContent');
-    c.style.opacity = '0';
-    c.style.transform = 'scale(0.88)';
+    c.style.opacity = '0'; c.style.transform = 'scale(0.88)';
     setTimeout(() => {
       document.getElementById('prevEmoji').textContent = emoji;
       document.getElementById('prevTitle').textContent = nom;
@@ -486,11 +328,11 @@
       document.getElementById('prevTag2').textContent  = t2;
       document.getElementById('prevTag3').textContent  = t3;
       c.style.transition = 'all 0.28s cubic-bezier(0.34,1.56,0.64,1)';
-      c.style.opacity = '1';
-      c.style.transform = 'scale(1)';
+      c.style.opacity = '1'; c.style.transform = 'scale(1)';
     }, 140);
-
     if (navigator.vibrate) navigator.vibrate(20);
+    // Scroll vers le bouton Jouer
+    setTimeout(() => document.querySelector('.play-btn').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
   }
 
   function lancerJeu() {
@@ -502,6 +344,5 @@
     setTimeout(() => { window.location.href = `scenes/${sportActuel}.html`; }, 1600);
   }
 </script>
-
 </body>
 </html>
