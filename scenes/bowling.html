@@ -627,32 +627,44 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a2e);
-scene.fog = new THREE.Fog(0x1a1a2e, 30, 60);
+scene.background = new THREE.Color(0xB8D4F0); // ciel bleu clair Wii
+scene.fog = new THREE.FogExp2(0xC8E0F8, 0.018);
 
-// Caméra
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
 camera.position.set(0, 1.8, 9.5);
 camera.lookAt(0, 0.5, 0);
 
-// ── Lumières ──
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+// ── Éclairage style Nintendo — doux, global, chaud ──
+const ambientLight = new THREE.AmbientLight(0xfff8f0, 0.75);
 scene.add(ambientLight);
 
-const spotlight = new THREE.SpotLight(0xffffff, 1.5);
-spotlight.position.set(0, 15, 5);
-spotlight.angle = Math.PI / 5;
-spotlight.penumbra = 0.3;
-spotlight.castShadow = true;
-spotlight.shadow.mapSize.width = 1024;
-spotlight.shadow.mapSize.height = 1024;
-scene.add(spotlight);
+// Lumière principale douce depuis le haut
+const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.1);
+sunLight.position.set(3, 12, 8);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.camera.near = 0.5;
+sunLight.shadow.camera.far = 60;
+sunLight.shadow.camera.left = -15;
+sunLight.shadow.camera.right = 15;
+sunLight.shadow.camera.top = 20;
+sunLight.shadow.camera.bottom = -20;
+sunLight.shadow.bias = -0.0005;
+scene.add(sunLight);
 
-const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
-fillLight.position.set(-5, 5, 5);
+// Fill light bleu doux (côté ombre)
+const fillLight = new THREE.DirectionalLight(0xd0e8ff, 0.45);
+fillLight.position.set(-5, 6, -3);
 scene.add(fillLight);
+
+// Rim light arrière chaud
+const rimLight = new THREE.DirectionalLight(0xffe8c0, 0.3);
+rimLight.position.set(0, 3, -15);
+scene.add(rimLight);
 
 // ── Variables globales pour animations ──
 const spectateurs = [];          // groupes Mii spectateurs
@@ -660,264 +672,389 @@ const joueurMii   = new THREE.Group(); // groupe Mii joueur
 const joueurBras  = new THREE.Group(); // bras du joueur (pivot épaule)
 let animSpectateurs = null;       // animation en cours
 
-// ── Piste de bowling style Wii ──
+// ── Piste de bowling style Wii Sports ──
 function creerPiste() {
+  // Helper matériaux Phong brillants
+  const phong = (color, shininess = 80, specular = 0x444444) =>
+    new THREE.MeshPhongMaterial({ color, shininess, specular });
+  const phongFlat = (color, shininess = 30) =>
+    new THREE.MeshPhongMaterial({ color, shininess, specular: 0x222222 });
 
-  // === SOL GÉNÉRAL (béton beige) ===
-  const solMat = new THREE.MeshLambertMaterial({ color: 0xC8B89A });
-  const solGeo = new THREE.BoxGeometry(40, 0.1, 50);
+  // === SOL PRINCIPAL — carrelage beige clair ===
+  const solMat = phong(0xF2ECD8, 15, 0x333322);
+  const solGeo = new THREE.BoxGeometry(50, 0.12, 60);
   const sol = new THREE.Mesh(solGeo, solMat);
-  sol.position.set(0, -0.06, -5);
+  sol.position.set(0, -0.07, -5);
   sol.receiveShadow = true;
   scene.add(sol);
 
-  // === PISTES ADJACENTES (gauche et droite, décoratives) ===
-  const pisteMat = new THREE.MeshLambertMaterial({ color: 0xE8C97A });
-  const pisteLatMat = new THREE.MeshLambertMaterial({ color: 0xD4B86A });
-
-  // Piste principale
-  const pisteGeo = new THREE.BoxGeometry(3.4, 0.08, 30);
-  const piste = new THREE.Mesh(pisteGeo, pisteMat);
-  piste.position.set(0, 0, -5);
-  piste.receiveShadow = true;
-  scene.add(piste);
-
-  // Pistes latérales (décoratives)
-  [-5.8, 5.8].forEach(x => {
-    const pisteLat = new THREE.Mesh(pisteGeo.clone(), pisteLatMat);
-    pisteLat.position.set(x, 0, -5);
-    pisteLat.receiveShadow = true;
-    scene.add(pisteLat);
-  });
-
-  // === LIGNES EN BOIS sur les pistes ===
-  const lignesBoisMat = new THREE.MeshLambertMaterial({ color: 0xC8A850 });
-  for (let z = -18; z < 10; z += 0.8) {
-    [-5.8, 0, 5.8].forEach(x => {
-      const lGeo = new THREE.BoxGeometry(3.38, 0.005, 0.03);
-      const l = new THREE.Mesh(lGeo, lignesBoisMat);
-      l.position.set(x, 0.042, z);
-      scene.add(l);
-    });
+  // Carreaux alternés
+  const carreauMat = phong(0xE8DFC8, 8);
+  for (let x = -12; x <= 12; x += 2) {
+    for (let z = -20; z <= 10; z += 2) {
+      if ((Math.floor(x/2) + Math.floor(z/2)) % 2 === 0) continue;
+      const cGeo = new THREE.BoxGeometry(1.98, 0.01, 1.98);
+      const c = new THREE.Mesh(cGeo, carreauMat);
+      c.position.set(x, -0.01, z);
+      scene.add(c);
+    }
   }
 
-  // === RIGOLES ===
-  const rigoleMat = new THREE.MeshLambertMaterial({ color: 0x8899AA });
-  [[-2.5, 0], [2.5, 0], [-8.05, 0], [8.05, 0]].forEach(([x]) => {
-    const rGeo = new THREE.BoxGeometry(0.7, 0.06, 30);
+  // === PISTE PRINCIPALE — bois clair brillant ===
+  const pisteMat = phong(0xF0D878, 120, 0x888844); // bois poli très brillant
+  const pisteGeo = new THREE.BoxGeometry(3.5, 0.09, 32);
+  const piste = new THREE.Mesh(pisteGeo, pisteMat);
+  piste.position.set(0, 0.01, -4);
+  piste.receiveShadow = true;
+  piste.castShadow = false;
+  scene.add(piste);
+
+  // Veinage du bois (lignes fines)
+  const veinMat = phong(0xD4B850, 60, 0x888833);
+  for (let z = -19; z < 10; z += 0.55) {
+    const vGeo = new THREE.BoxGeometry(3.48, 0.003, 0.02);
+    const v = new THREE.Mesh(vGeo, veinMat);
+    v.position.set(0, 0.056, z);
+    scene.add(v);
+  }
+
+  // Lignes de pointé au sol (style Wii)
+  const pointsMat = phong(0xCC8822, 40);
+  for (let i = -1; i <= 1; i++) {
+    for (let z = -1; z >= -5; z -= 0.7) {
+      const pGeo = new THREE.BoxGeometry(0.04, 0.004, 0.35);
+      const p = new THREE.Mesh(pGeo, pointsMat);
+      p.position.set(i * 0.5, 0.057, z);
+      scene.add(p);
+    }
+  }
+
+  // === PISTES ADJACENTES décoratives ===
+  const pisteLat1Mat = phong(0xE8CC6A, 100, 0x776633);
+  const pisteLat2Mat = phong(0xD8BC5A, 100, 0x665522);
+  [-5.8, 5.8].forEach((x, idx) => {
+    const pLat = new THREE.Mesh(pisteGeo.clone(), idx === 0 ? pisteLat1Mat : pisteLat2Mat);
+    pLat.position.set(x, 0.005, -4);
+    pLat.receiveShadow = true;
+    scene.add(pLat);
+  });
+
+  // === RIGOLES — bleu-gris satiné ===
+  const rigoleMat = phong(0x7A9BB8, 40, 0x334455);
+  [[-2.5], [2.5], [-8.4], [8.4]].forEach(([x]) => {
+    const rGeo = new THREE.BoxGeometry(0.75, 0.07, 32);
     const r = new THREE.Mesh(rGeo, rigoleMat);
-    r.position.set(x, -0.01, -5);
+    r.position.set(x, -0.02, -4);
     r.receiveShadow = true;
     scene.add(r);
   });
 
-  // === SÉPARATEURS entre pistes ===
-  const sepMat = new THREE.MeshLambertMaterial({ color: 0x556677 });
-  [-3.2, 3.2].forEach(x => {
-    const sGeo = new THREE.BoxGeometry(0.15, 0.25, 30);
+  // === SÉPARATEURS — plastique blanc brillant ===
+  const sepMat = phong(0xFFFFFF, 150, 0xaaaaaa);
+  [-3.25, 3.25].forEach(x => {
+    const sGeo = new THREE.BoxGeometry(0.18, 0.32, 32);
     const s = new THREE.Mesh(sGeo, sepMat);
-    s.position.set(x, 0.1, -5);
+    s.position.set(x, 0.12, -4);
+    s.castShadow = true;
     scene.add(s);
   });
 
-  // === LIGNE DE FAUTE (rouge) ===
-  const fauteMat = new THREE.MeshLambertMaterial({ color: 0xFF3333 });
-  const fauteGeo = new THREE.BoxGeometry(3.4, 0.01, 0.06);
+  // === LIGNE DE FAUTE — rouge brillant ===
+  const fauteMat = phong(0xFF2222, 80, 0x881111);
+  const fauteGeo = new THREE.BoxGeometry(3.5, 0.012, 0.1);
   const faute = new THREE.Mesh(fauteGeo, fauteMat);
-  faute.position.set(0, 0.045, 5.5);
+  faute.position.set(0, 0.056, 5.5);
   scene.add(faute);
 
-  // === FLÈCHES DIRECTIONNELLES AU SOL ===
-  const flechesPisteMat = new THREE.MeshLambertMaterial({ color: 0xCC8833 });
-  for (let i = -1; i <= 1; i++) {
-    const fGeo = new THREE.ConeGeometry(0.06, 0.22, 3);
-    const f = new THREE.Mesh(fGeo, flechesPisteMat);
-    f.rotation.x = -Math.PI / 2;
-    f.position.set(i * 0.55, 0.045, 1.5);
+  // Texte "FOUL" simulé par 3 petits carrés
+  [-0.3, 0, 0.3].forEach(x => {
+    const fGeo = new THREE.BoxGeometry(0.06, 0.013, 0.06);
+    const f = new THREE.Mesh(fGeo, fauteMat);
+    f.position.set(x, 0.058, 5.5);
     scene.add(f);
-  }
-
-  // === MUR DU FOND ===
-  const murFondMat = new THREE.MeshLambertMaterial({ color: 0xDDD0B8 });
-  const murFondGeo = new THREE.BoxGeometry(20, 5, 0.3);
-  const murFond = new THREE.Mesh(murFondGeo, murFondMat);
-  murFond.position.set(0, 2.5, -20.5);
-  scene.add(murFond);
-
-  // Panneau de score au fond
-  const panneauMat = new THREE.MeshLambertMaterial({ color: 0x223355 });
-  const panneauGeo = new THREE.BoxGeometry(4, 1.5, 0.1);
-  const panneau = new THREE.Mesh(panneauGeo, panneauMat);
-  panneau.position.set(0, 4, -20.3);
-  scene.add(panneau);
-
-  // Écran du panneau (bleu clair)
-  const ecranMat = new THREE.MeshLambertMaterial({ color: 0x4488CC, emissive: 0x113366 });
-  const ecranGeo = new THREE.BoxGeometry(3.6, 1.1, 0.05);
-  const ecran = new THREE.Mesh(ecranGeo, ecranMat);
-  ecran.position.set(0, 4, -20.2);
-  scene.add(ecran);
-
-  // === MURS LATÉRAUX ===
-  const murLatMat = new THREE.MeshLambertMaterial({ color: 0xBBAA90 });
-  [-10, 10].forEach(x => {
-    const mGeo = new THREE.BoxGeometry(0.3, 5, 50);
-    const m = new THREE.Mesh(mGeo, murLatMat);
-    m.position.set(x, 2.5, -5);
-    scene.add(m);
   });
 
-  // === PLAFOND ===
-  const plafondMat = new THREE.MeshLambertMaterial({ color: 0xF0EAD8 });
-  const plafondGeo = new THREE.BoxGeometry(22, 0.2, 50);
+  // === FLÈCHES DIRECTIONNELLES AU SOL ===
+  const flechesMat = phong(0xFF8800, 60, 0x884400);
+  [-0.9, -0.45, 0, 0.45, 0.9].forEach(x => {
+    const fGeo = new THREE.ConeGeometry(0.07, 0.25, 4);
+    const f = new THREE.Mesh(fGeo, flechesMat);
+    f.rotation.x = -Math.PI / 2;
+    f.position.set(x, 0.057, 1.0);
+    scene.add(f);
+  });
+
+  // === MURS LATÉRAUX — blanc satiné avec liseré coloré ===
+  const murMat = phong(0xF8F4EE, 20, 0x333322);
+  const murBasMat = phong(0x4488DD, 60, 0x224488); // liseré bleu style Wii
+  [-11, 11].forEach(x => {
+    // Mur principal
+    const mGeo = new THREE.BoxGeometry(0.35, 6, 60);
+    const m = new THREE.Mesh(mGeo, murMat);
+    m.position.set(x, 3, -5);
+    m.castShadow = false;
+    m.receiveShadow = true;
+    scene.add(m);
+    // Liseré bas coloré
+    const lGeo = new THREE.BoxGeometry(0.36, 0.5, 60);
+    const l = new THREE.Mesh(lGeo, murBasMat);
+    l.position.set(x, 0.25, -5);
+    scene.add(l);
+  });
+
+  // === MUR DU FOND — arrondi, blanc ===
+  const fondMat = phong(0xF0ECE4, 15, 0x222211);
+  const fondGeo = new THREE.BoxGeometry(24, 7, 0.4);
+  const fond = new THREE.Mesh(fondGeo, fondMat);
+  fond.position.set(0, 3.5, -21);
+  fond.receiveShadow = true;
+  scene.add(fond);
+
+  // Bande bleue en bas du fond
+  const fondBasMat = phong(0x3377CC, 80, 0x113366);
+  const fondBasGeo = new THREE.BoxGeometry(24, 0.8, 0.3);
+  const fondBas = new THREE.Mesh(fondBasGeo, fondBasMat);
+  fondBas.position.set(0, 0.4, -21);
+  scene.add(fondBas);
+
+  // === PLAFOND — blanc cassé ===
+  const plafondMat = phongFlat(0xF8F6F0, 5);
+  const plafondGeo = new THREE.BoxGeometry(25, 0.25, 60);
   const plafond = new THREE.Mesh(plafondGeo, plafondMat);
-  plafond.position.set(0, 5, -5);
+  plafond.position.set(0, 6, -5);
   scene.add(plafond);
 
-  // === NÉONS AU PLAFOND ===
-  const neonMat = new THREE.MeshLambertMaterial({ color: 0xFFFFCC, emissive: 0x888844 });
-  for (let z = -15; z < 8; z += 5) {
-    const nGeo = new THREE.BoxGeometry(18, 0.08, 0.12);
+  // === NÉONS AU PLAFOND — lumineux jaune-blanc ===
+  const neonMat = new THREE.MeshPhongMaterial({
+    color: 0xFFFFEE, emissive: 0xFFFFAA, emissiveIntensity: 0.8, shininess: 0
+  });
+  for (let z = -16; z < 9; z += 5) {
+    const nGeo = new THREE.BoxGeometry(20, 0.1, 0.25);
     const n = new THREE.Mesh(nGeo, neonMat);
-    n.position.set(0, 4.85, z);
+    n.position.set(0, 5.85, z);
     scene.add(n);
-
-    // Lumière ponctuelle sous chaque néon
-    const neonLight = new THREE.PointLight(0xFFFFEE, 0.3, 8);
-    neonLight.position.set(0, 4.5, z);
-    scene.add(neonLight);
+    // Lumière douce sous chaque néon
+    const nLight = new THREE.PointLight(0xFFFFF0, 0.5, 12);
+    nLight.position.set(0, 5.5, z);
+    scene.add(nLight);
   }
 
-  // === BANCS / CHAISES pour spectateurs ===
-  const bancMat = new THREE.MeshLambertMaterial({ color: 0x8B6914 });
-  [-7, 7].forEach(x => {
-    for (let z = -2; z >= -14; z -= 2.5) {
-      const bGeo = new THREE.BoxGeometry(1.8, 0.15, 0.6);
+  // === PANNEAU DE SCORE AU FOND — écran LED style Wii ===
+  const panCadreMat = phong(0x222244, 120, 0x4444aa);
+  const panCadreGeo = new THREE.BoxGeometry(5.5, 2.2, 0.25);
+  const panCadre = new THREE.Mesh(panCadreGeo, panCadreMat);
+  panCadre.position.set(0, 5.2, -20.8);
+  scene.add(panCadre);
+
+  const ecranMat = new THREE.MeshPhongMaterial({
+    color: 0x0044AA, emissive: 0x001133, emissiveIntensity: 1,
+    shininess: 200, specular: 0x4488FF
+  });
+  const ecranGeo = new THREE.BoxGeometry(5.0, 1.7, 0.1);
+  const ecran = new THREE.Mesh(ecranGeo, ecranMat);
+  ecran.position.set(0, 5.2, -20.65);
+  scene.add(ecran);
+
+  // Liseré lumineux autour de l'écran
+  const ledMat = new THREE.MeshPhongMaterial({ color: 0x44AAFF, emissive: 0x2266CC, emissiveIntensity: 1 });
+  [[-2.6, 0, 0.06], [2.6, 0, 0.06], [0, 0.9, 0.06], [0, -0.9, 0.06]].forEach(([x, y]) => {
+    const lW = x === 0 ? 5.0 : 0.1;
+    const lH = y === 0 ? 0.1 : 1.7;
+    const lGeo = new THREE.BoxGeometry(lW, lH, 0.05);
+    const lMesh = new THREE.Mesh(lGeo, ledMat);
+    lMesh.position.set(x, 5.2 + y, -20.62);
+    scene.add(lMesh);
+  });
+
+  // === BANCS — bois chaud ===
+  const bancMat = phong(0xA07840, 40, 0x553311);
+  const bancPiedMat = phong(0x707070, 60, 0x444444);
+  [-8.2, 8.2].forEach(x => {
+    for (let z = -1; z >= -15; z -= 2.2) {
+      // Assise
+      const bGeo = new THREE.BoxGeometry(2.2, 0.14, 0.7);
       const b = new THREE.Mesh(bGeo, bancMat);
-      b.position.set(x, 0.5, z);
+      b.position.set(x, 0.56, z);
+      b.castShadow = true;
+      b.receiveShadow = true;
       scene.add(b);
+      // Pieds
+      [-0.8, 0.8].forEach(dx => {
+        const pGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.55, 6);
+        const p = new THREE.Mesh(pGeo, bancPiedMat);
+        p.position.set(x + dx, 0.28, z);
+        scene.add(p);
+      });
+    }
+  });
+
+  // === DOSSIERS des bancs ===
+  const dossierMat = phong(0xB08850, 35, 0x664422);
+  [-8.2, 8.2].forEach(x => {
+    for (let z = -1; z >= -15; z -= 2.2) {
+      const dGeo = new THREE.BoxGeometry(2.2, 0.55, 0.1);
+      const d = new THREE.Mesh(dGeo, dossierMat);
+      d.position.set(x, 0.97, z + (x < 0 ? 0.3 : -0.3));
+      d.castShadow = true;
+      scene.add(d);
     }
   });
 
   // === SPECTATEURS (Miis cartoon) avec groupes animables ===
-  const couleursMiis = [0x4488FF, 0xFF6644, 0x44BB44, 0xFFAA22, 0xAA44FF, 0xFF4488, 0x44CCBB];
-  const couleursPeaux = [0xFFCCA0, 0xE8A87C, 0xC68642, 0x8D5524];
+  const couleursMiis  = [0x4499FF, 0xFF5533, 0x44CC55, 0xFFBB11, 0xCC44FF, 0xFF4499, 0x33CCCC, 0xFF8833];
+  const couleursPeaux = [0xFFCCA0, 0xF0A870, 0xC07840, 0x8D5524];
 
-  for (let i = 0; i < 20; i++) {
-    const cote = i % 2 === 0 ? -7 : 7;
-    const zPos = -2 - (i % 10) * 1.4;
-    const yBase = 0.65 + Math.floor(i / 10) * 0.5;
-    const couleurCorps = couleursMiis[i % couleursMiis.length];
-    const couleurPeau  = couleursPeaux[i % couleursPeaux.length];
+  for (let i = 0; i < 24; i++) {
+    const cote  = i % 2 === 0 ? -8.2 : 8.2;
+    const zPos  = -1 - (i % 12) * 1.3;
+    const yBase = 0.7 + Math.floor(i / 12) * 0.55;
+    const cCorps = couleursMiis[i % couleursMiis.length];
+    const cPeau  = couleursPeaux[i % couleursPeaux.length];
 
-    // Groupe global du Mii (pour rotation sur lui-même)
     const miiGroupe = new THREE.Group();
     miiGroupe.position.set(cote, yBase, zPos);
     miiGroupe.userData = { yBase, cote, zPos, index: i };
+    // Oriente vers la piste
+    miiGroupe.rotation.y = cote < 0 ? Math.PI * 0.08 : -Math.PI * 0.08;
     scene.add(miiGroupe);
     spectateurs.push(miiGroupe);
 
-    const corpsMat = new THREE.MeshLambertMaterial({ color: couleurCorps });
-    const peauMat  = new THREE.MeshLambertMaterial({ color: couleurPeau });
+    const corpsMat = new THREE.MeshPhongMaterial({ color: cCorps, shininess: 90, specular: 0x446688 });
+    const peauMat  = new THREE.MeshPhongMaterial({ color: cPeau,  shininess: 60, specular: 0x443322 });
+    const oeilMat  = new THREE.MeshPhongMaterial({ color: 0x111122, shininess: 120, specular: 0x888888 });
 
-    // Corps
-    const corpsGeo = new THREE.CylinderGeometry(0.15, 0.2, 0.45, 8);
-    const corps = new THREE.Mesh(corpsGeo, corpsMat);
-    corps.position.y = 0;
-    miiGroupe.add(corps);
+    // Corps arrondi style Mii (capsule = cylindre + 2 demi-sphères)
+    const torsoGeo = new THREE.CylinderGeometry(0.16, 0.20, 0.42, 10);
+    const torso = new THREE.Mesh(torsoGeo, corpsMat);
+    torso.position.y = 0.02;
+    miiGroupe.add(torso);
 
-    // Tête
-    const teteGeo = new THREE.SphereGeometry(0.22, 10, 10);
+    // Bas arrondi
+    const baseGeo = new THREE.SphereGeometry(0.20, 10, 6, 0, Math.PI*2, Math.PI/2, Math.PI/2);
+    const base = new THREE.Mesh(baseGeo, corpsMat);
+    base.position.y = -0.18;
+    miiGroupe.add(base);
+
+    // Tête — grosse sphère légèrement ovale style Mii
+    const teteGeo = new THREE.SphereGeometry(0.24, 14, 12);
     const tete = new THREE.Mesh(teteGeo, peauMat);
-    tete.scale.y = 1.1;
-    tete.position.y = 0.44;
+    tete.scale.set(1.05, 1.12, 1.0);
+    tete.position.y = 0.52;
+    tete.castShadow = true;
     miiGroupe.add(tete);
 
-    // Cheveux
-    const chevMat = new THREE.MeshLambertMaterial({ color: [0x3B2314, 0xFFCC44, 0xCC3300, 0x111111][i % 4] });
-    const chevGeo = new THREE.SphereGeometry(0.23, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+    // Cheveux (calotte)
+    const chevCouleurs = [0x3B2314, 0xFFCC44, 0xCC4400, 0x111111, 0x884422, 0x444444];
+    const chevMat = new THREE.MeshPhongMaterial({ color: chevCouleurs[i % chevCouleurs.length], shininess: 50 });
+    const chevGeo = new THREE.SphereGeometry(0.245, 12, 8, 0, Math.PI*2, 0, Math.PI/2);
     const chev = new THREE.Mesh(chevGeo, chevMat);
-    chev.position.y = 0.55;
+    chev.position.y = 0.60;
     miiGroupe.add(chev);
 
-    // Yeux
-    const oeilMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-    [-0.07, 0.07].forEach(ox => {
-      const oGeo = new THREE.SphereGeometry(0.03, 6, 6);
+    // Yeux brillants
+    [-0.09, 0.09].forEach(ox => {
+      const oGeo = new THREE.SphereGeometry(0.038, 8, 8);
       const oeil = new THREE.Mesh(oGeo, oeilMat);
-      // Oriente les yeux vers la piste
-      const dirZ = cote > 0 ? -0.19 : -0.19;
-      oeil.position.set(ox, 0.46, dirZ);
+      oeil.position.set(ox, 0.54, -0.20);
       miiGroupe.add(oeil);
+      // Reflet
+      const rGeo = new THREE.SphereGeometry(0.012, 6, 6);
+      const rMat = new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0xffffff });
+      const reflet = new THREE.Mesh(rGeo, rMat);
+      reflet.position.set(ox + 0.015, 0.558, -0.232);
+      miiGroupe.add(reflet);
     });
 
-    // Bras gauche (pivot depuis l'épaule)
-    const brasGaucheGroupe = new THREE.Group();
-    brasGaucheGroupe.position.set(-0.22, 0.2, 0);
-    const brasGGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.38, 8);
-    const brasG = new THREE.Mesh(brasGGeo, corpsMat);
-    brasG.position.y = -0.19;
-    brasGaucheGroupe.add(brasG);
-    miiGroupe.add(brasGaucheGroupe);
-    miiGroupe.userData.brasGauche = brasGaucheGroupe;
+    // Bouche (sourire petit arc)
+    const boucheMat = new THREE.MeshPhongMaterial({ color: 0x883322 });
+    const boucheGeo = new THREE.BoxGeometry(0.09, 0.025, 0.02);
+    const bouche = new THREE.Mesh(boucheGeo, boucheMat);
+    bouche.position.set(0, 0.42, -0.22);
+    miiGroupe.add(bouche);
+
+    // Bras gauche (pivot épaule)
+    const brasGaucheG = new THREE.Group();
+    brasGaucheG.position.set(-0.23, 0.22, 0);
+    const bGGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.40, 10);
+    const bG = new THREE.Mesh(bGGeo, corpsMat);
+    bG.position.y = -0.20;
+    brasGaucheG.add(bG);
+    // Main gauche
+    const mainGGeo = new THREE.SphereGeometry(0.06, 8, 8);
+    const mainG = new THREE.Mesh(mainGGeo, peauMat);
+    mainG.position.y = -0.42;
+    brasGaucheG.add(mainG);
+    miiGroupe.add(brasGaucheG);
+    miiGroupe.userData.brasGauche = brasGaucheG;
 
     // Bras droit
-    const brasDroitGroupe = new THREE.Group();
-    brasDroitGroupe.position.set(0.22, 0.2, 0);
-    const brasDGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.38, 8);
-    const brasD = new THREE.Mesh(brasDGeo, corpsMat);
-    brasD.position.y = -0.19;
-    brasDroitGroupe.add(brasD);
-    miiGroupe.add(brasDroitGroupe);
-    miiGroupe.userData.brasDroit = brasDroitGroupe;
+    const brasDroitG = new THREE.Group();
+    brasDroitG.position.set(0.23, 0.22, 0);
+    const bDGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.40, 10);
+    const bD = new THREE.Mesh(bDGeo, corpsMat);
+    bD.position.y = -0.20;
+    brasDroitG.add(bD);
+    const mainDGeo = new THREE.SphereGeometry(0.06, 8, 8);
+    const mainD = new THREE.Mesh(mainDGeo, peauMat);
+    mainD.position.y = -0.42;
+    brasDroitG.add(mainD);
+    miiGroupe.add(brasDroitG);
+    miiGroupe.userData.brasDroit = brasDroitG;
   }
 
-  // === PERSONNAGE JOUEUR (Mii transparent) ===
-  const joueurPeauMat = new THREE.MeshLambertMaterial({ color: 0xFFCCA0, transparent: true, opacity: 0.38 });
-  const joueurHautMat = new THREE.MeshLambertMaterial({ color: 0x2255CC, transparent: true, opacity: 0.38 });
+  // === PERSONNAGE JOUEUR (Mii transparent, plastique brillant) ===
+  const jPeauMat = new THREE.MeshPhongMaterial({ color: 0xFFCCA0, transparent: true, opacity: 0.42, shininess: 60 });
+  const jHautMat = new THREE.MeshPhongMaterial({ color: 0x2266EE, transparent: true, opacity: 0.42, shininess: 90, specular: 0x4477CC });
+  const jBasMat  = new THREE.MeshPhongMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.42, shininess: 60 });
+  const jChevMat = new THREE.MeshPhongMaterial({ color: 0x3B2314, transparent: true, opacity: 0.42, shininess: 50 });
 
-  // Groupe global joueur
+  const jChevMat = new THREE.MeshPhongMaterial({ color: 0x3B2314, transparent: true, opacity: 0.42, shininess: 50 });
+
   joueurMii.position.set(0, 0, 7.2);
   scene.add(joueurMii);
 
   // Torse
-  const torsoGeo = new THREE.BoxGeometry(0.5, 0.55, 0.3);
-  const torso = new THREE.Mesh(torsoGeo, joueurHautMat);
-  torso.position.set(0, 0.85, 0);
-  joueurMii.add(torso);
+  const jTorsoGeo = new THREE.CylinderGeometry(0.22, 0.26, 0.52, 12);
+  const jTorso = new THREE.Mesh(jTorsoGeo, jHautMat);
+  jTorso.position.set(0, 0.82, 0);
+  jTorso.castShadow = true;
+  joueurMii.add(jTorso);
 
   // Tête
-  const teteJGeo = new THREE.SphereGeometry(0.28, 12, 12);
-  const teteJ = new THREE.Mesh(teteJGeo, joueurPeauMat);
-  teteJ.scale.y = 1.15;
-  teteJ.position.set(0, 1.55, 0);
-  joueurMii.add(teteJ);
+  const jTeteGeo = new THREE.SphereGeometry(0.30, 14, 12);
+  const jTete = new THREE.Mesh(jTeteGeo, jPeauMat);
+  jTete.scale.set(1.05, 1.12, 1.0);
+  jTete.position.set(0, 1.60, 0);
+  jTete.castShadow = true;
+  joueurMii.add(jTete);
 
-  // Cheveux
-  const chevJMat = new THREE.MeshLambertMaterial({ color: 0x3B2314, transparent: true, opacity: 0.38 });
-  const chevJGeo = new THREE.SphereGeometry(0.29, 10, 10, 0, Math.PI * 2, 0, Math.PI / 2);
-  const chevJ = new THREE.Mesh(chevJGeo, chevJMat);
-  chevJ.position.set(0, 1.68, 0);
-  joueurMii.add(chevJ);
+  // Cheveux joueur
+  const jChevGeo = new THREE.SphereGeometry(0.31, 12, 8, 0, Math.PI*2, 0, Math.PI/2);
+  const jChev = new THREE.Mesh(jChevGeo, jChevMat);
+  jChev.position.set(0, 1.71, 0);
+  joueurMii.add(jChev);
 
   // Jambes
-  [-0.13, 0.13].forEach(x => {
-    const jMat = new THREE.MeshLambertMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.38 });
-    const jGeo = new THREE.CylinderGeometry(0.1, 0.09, 0.45, 8);
-    const j = new THREE.Mesh(jGeo, jMat);
-    j.position.set(x, 0.33, 0);
+  [-0.14, 0.14].forEach(x => {
+    const jGeo = new THREE.CylinderGeometry(0.11, 0.10, 0.50, 10);
+    const j = new THREE.Mesh(jGeo, jBasMat);
+    j.position.set(x, 0.30, 0);
     joueurMii.add(j);
   });
 
-  // Bras droit (pivot depuis épaule pour animation de lancer)
-  joueurBras.position.set(0.3, 1.1, 0); // pivot à l'épaule
+  // Bras droit joueur (pivot épaule)
+  joueurBras.position.set(0.32, 1.12, 0);
   joueurMii.add(joueurBras);
-  const brasMat = new THREE.MeshLambertMaterial({ color: 0x2255CC, transparent: true, opacity: 0.38 });
-  const brasGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.45, 8);
-  const brasM = new THREE.Mesh(brasGeo, brasMat);
-  brasM.position.set(0, -0.22, 0); // pend vers le bas depuis le pivot
-  joueurBras.add(brasM);
-  joueurBras.rotation.z = -0.4; // position repos
+  const jBrasGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.48, 10);
+  const jBrasMesh = new THREE.Mesh(jBrasGeo, jHautMat);
+  jBrasMesh.position.set(0, -0.24, 0);
+  joueurBras.add(jBrasMesh);
+  // Main
+  const jMainGeo = new THREE.SphereGeometry(0.09, 10, 10);
+  const jMain = new THREE.Mesh(jMainGeo, jPeauMat);
+  jMain.position.set(0, -0.50, 0);
+  joueurBras.add(jMain);
+  joueurBras.rotation.z = -0.4;
 }
 creerPiste();
 
@@ -947,25 +1084,26 @@ function animerApplaudissements(duree = 2500) {
   ETAT.animSpec = { type: 'applaudir', fn: frame, fin: Date.now() + duree };
 }
 
-// 2. ROTATION (rigole)
-function animerRotation(duree = 2000) {
+// 2. ROTATION + SAUT (rigole)
+function animerRotation(duree = 2200) {
   if (animSpectateurs) clearTimeout(animSpectateurs);
   let t = 0;
 
   function frame() {
-    t += 0.08;
+    t += 0.1;
     spectateurs.forEach((mii, i) => {
-      const phase = t + i * 0.2;
-      mii.rotation.y = phase; // tourne sur lui-même
-      // Bras tendus sur les côtés
+      const phase = t + i * 0.25;
+      mii.rotation.y = phase * 1.2;
+      // Bras tendus sur les côtés en croix
       if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z =  Math.PI / 2;
       if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = -Math.PI / 2;
+      // Saut synchronisé avec la rotation
+      mii.position.y = mii.userData.yBase + Math.abs(Math.sin(phase * 1.5)) * 0.18;
     });
   }
 
   ETAT.animSpec = { type: 'tourner', fn: frame, fin: Date.now() + duree };
 
-  // Remet en position neutre après
   setTimeout(() => {
     spectateurs.forEach(mii => {
       mii.rotation.y = 0;
@@ -974,7 +1112,7 @@ function animerRotation(duree = 2000) {
       mii.position.y = mii.userData.yBase;
     });
     ETAT.animSpec = null;
-  }, duree);
+  }, duree + 100);
 }
 
 // 3. ANIMATION DU BRAS DU JOUEUR (lancer)
@@ -998,13 +1136,24 @@ function animerLancer() {
   frame();
 }
 
-// ── Boule de bowling (bleue style Wii) ──
-const bouleMat = new THREE.MeshLambertMaterial({ color: 0x3366DD });
-const bouleGeo = new THREE.SphereGeometry(0.22, 16, 16);
+// ── Boule de bowling — plastique brillant bleu Wii ──
+const bouleMat = new THREE.MeshPhongMaterial({
+  color: 0x2255EE, shininess: 180, specular: 0x88AAFF
+});
+const bouleGeo = new THREE.SphereGeometry(0.22, 20, 20);
 const boule = new THREE.Mesh(bouleGeo, bouleMat);
 boule.position.set(0, 0.22, 6);
 boule.castShadow = true;
 scene.add(boule);
+
+// Trous de la boule
+const trouMat = new THREE.MeshPhongMaterial({ color: 0x001133, shininess: 20 });
+[[-0.08, 0.12, -0.18], [0, 0.05, -0.20], [0.08, 0.12, -0.18]].forEach(([x,y,z]) => {
+  const tGeo = new THREE.SphereGeometry(0.028, 8, 8);
+  const t = new THREE.Mesh(tGeo, trouMat);
+  t.position.set(x, y + 0.22, z);
+  scene.add(t);
+});
 
 // ── Quilles ──
 const POSITIONS_QUILLES = [
@@ -1024,33 +1173,33 @@ function creerQuilles() {
   POSITIONS_QUILLES.forEach(pos => {
     const groupe = new THREE.Group();
 
-    // Corps
-    const corpsGeo = new THREE.CylinderGeometry(0.055, 0.1, 0.48, 10);
-    const corpsMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    // Corps — plastique blanc très brillant
+    const corpsGeo = new THREE.CylinderGeometry(0.052, 0.10, 0.50, 12);
+    const corpsMat = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, shininess: 160, specular: 0xBBBBBB });
     const corps = new THREE.Mesh(corpsGeo, corpsMat);
-    corps.position.y = 0.24;
+    corps.position.y = 0.25;
     corps.castShadow = true;
     groupe.add(corps);
 
     // Col
-    const colGeo = new THREE.CylinderGeometry(0.05, 0.055, 0.08, 10);
-    const colMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee });
+    const colGeo = new THREE.CylinderGeometry(0.048, 0.052, 0.09, 12);
+    const colMat = new THREE.MeshPhongMaterial({ color: 0xF8F8F8, shininess: 140, specular: 0xAAAAAA });
     const col = new THREE.Mesh(colGeo, colMat);
-    col.position.y = 0.5;
+    col.position.y = 0.52;
     groupe.add(col);
 
-    // Tête
-    const teteGeo = new THREE.SphereGeometry(0.085, 10, 10);
-    const teteMat = new THREE.MeshLambertMaterial({ color: 0xff3333 });
+    // Tête ronde
+    const teteGeo = new THREE.SphereGeometry(0.09, 12, 12);
+    const teteMat = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, shininess: 160, specular: 0xBBBBBB });
     const tete = new THREE.Mesh(teteGeo, teteMat);
-    tete.position.y = 0.6;
+    tete.position.y = 0.63;
     groupe.add(tete);
 
-    // Bandes rouges
-    [0.18, 0.32].forEach(y => {
-      const bGeo = new THREE.CylinderGeometry(0.072, 0.072, 0.028, 10);
-      const bMat = new THREE.MeshLambertMaterial({ color: 0xdd2222 });
-      const b = new THREE.Mesh(bGeo, bMat);
+    // Bande rouge brillante (signature Wii)
+    const bandeMat = new THREE.MeshPhongMaterial({ color: 0xFF2222, shininess: 120, specular: 0xFF8888 });
+    [0.19, 0.33].forEach(y => {
+      const bGeo = new THREE.CylinderGeometry(0.075, 0.075, 0.032, 12);
+      const b = new THREE.Mesh(bGeo, bandeMat);
       b.position.y = y;
       groupe.add(b);
     });
@@ -1059,10 +1208,9 @@ function creerQuilles() {
     groupe.userData = {
       tombee: false,
       posOriginale: new THREE.Vector3(...pos),
-      velX: 0,   // vélocité physique
-      velZ: 0,
+      velX: 0, velZ: 0,
       enMouvement: false,
-      rotVel: 0, // vitesse de rotation
+      rotVel: 0,
     };
     scene.add(groupe);
     quilles.push(groupe);
@@ -1091,6 +1239,23 @@ swipe.onSwipe = (direction, puissance) => {
 let bouleVitesse = { x: 0, z: 0 };
 let bouleEnVol = false;
 let cameraZoom = false;
+let cameraMode = 'jeu'; // 'jeu' | 'public' | 'reset'
+const CAM_JEU    = { x: 0, y: 1.8, z: 9.5,  lx: 0, ly: 0.5,  lz: 0 };
+const CAM_PUBLIC = { x: 0, y: 2.5, z: 2.0,  lx: 0, ly: 1.2,  lz: -6 };
+
+function zoomVersCrowd(duree = 2800) {
+  cameraMode = 'public';
+  setTimeout(() => { cameraMode = 'reset'; }, duree);
+}
+
+function lerpCam(from, to, t) {
+  camera.position.x += (to.x - camera.position.x) * t;
+  camera.position.y += (to.y - camera.position.y) * t;
+  camera.position.z += (to.z - camera.position.z) * t;
+  const lx = camera.position.x + (to.lx - camera.position.x - 0) * t;
+  const ly = (to.ly - 0) * t + 0;
+  camera.lookAt(to.lx, to.ly, to.lz);
+}
 
 function lancerBoule(puissance) {
   if (ETAT.ballEnMouvement) return;
@@ -1236,26 +1401,26 @@ function afficherResultatLancer(total, nouvelles, throws) {
   const sub = document.getElementById('result-sub');
 
   if (throws.length === 1 && nouvelles === 10) {
-    // STRIKE !
     emoji.textContent = '🎳';
     titre.textContent = 'STRIKE !';
     sub.textContent = 'Toutes les quilles !';
     titre.style.color = '#F5A623';
     animerApplaudissements(3000);
+    zoomVersCrowd(3000);
   } else if (throws.length === 2 && total === 10) {
-    // SPARE !
     emoji.textContent = '✨';
     titre.textContent = 'SPARE !';
     sub.textContent = 'Bien joué !';
     titre.style.color = '#5BBF6A';
     animerApplaudissements(2500);
+    zoomVersCrowd(2500);
   } else if (nouvelles === 0) {
-    // Dans la rigole
     emoji.textContent = '😬';
     titre.textContent = 'Rigole !';
     sub.textContent = 'Retente ta chance...';
     titre.style.color = '#F55A5A';
-    animerRotation(2000);
+    animerRotation(2200);
+    zoomVersCrowd(2200);
   } else {
     emoji.textContent = '👍';
     titre.textContent = `${nouvelles} quille${nouvelles > 1 ? 's' : ''} !`;
@@ -1683,13 +1848,6 @@ function animate() {
     // Collisions
     if (frameCount % 3 === 0) checkCollisions();
 
-    // Zoom caméra
-    if (cameraZoom && camera.position.z > boule.position.z + 5) {
-      camera.position.z += (boule.position.z + 5 - camera.position.z) * 0.05;
-      camera.position.y += (-0.5 - camera.position.y + 3) * 0.02;
-      camera.lookAt(boule.position);
-    }
-
     // Fin du parcours
     if (boule.position.z < -16) {
       bouleEnVol = false;
@@ -1701,6 +1859,24 @@ function animate() {
       boule.position.x = Math.sign(boule.position.x) * 2.1;
       bouleVitesse.x = 0;
     }
+  }
+
+  // Gestion caméra (hors du bloc bouleEnVol)
+  if (cameraMode === 'public') {
+    camera.position.x += (CAM_PUBLIC.x - camera.position.x) * 0.04;
+    camera.position.y += (CAM_PUBLIC.y - camera.position.y) * 0.04;
+    camera.position.z += (CAM_PUBLIC.z - camera.position.z) * 0.04;
+    camera.lookAt(CAM_PUBLIC.lx, CAM_PUBLIC.ly, CAM_PUBLIC.lz);
+  } else if (cameraMode === 'reset') {
+    camera.position.x += (CAM_JEU.x - camera.position.x) * 0.05;
+    camera.position.y += (CAM_JEU.y - camera.position.y) * 0.05;
+    camera.position.z += (CAM_JEU.z - camera.position.z) * 0.05;
+    camera.lookAt(CAM_JEU.lx, CAM_JEU.ly, CAM_JEU.lz);
+    if (Math.abs(camera.position.z - CAM_JEU.z) < 0.05) cameraMode = 'jeu';
+  } else if (bouleEnVol && cameraZoom && camera.position.z > boule.position.z + 5) {
+    camera.position.z += (boule.position.z + 5 - camera.position.z) * 0.05;
+    camera.position.y += (2.5 - camera.position.y) * 0.02;
+    camera.lookAt(boule.position);
   }
 
   // Oscillation légère des quilles (idle)
