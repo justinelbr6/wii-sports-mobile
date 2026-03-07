@@ -3,560 +3,304 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-  <title>Bowling 🎳</title>
+  <title>Golf ⛳</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --orange: #F5A623;
-      --orange-dark: #c47d0e;
-      --blue: #2A5FBF;
-      --white: #FFFFFF;
+      --green:      #2E7D32;
+      --green-l:    #4CAF50;
+      --green-dark: #1B5E20;
+      --sky:        #87CEEB;
+      --orange:     #F5A623;
+      --orange-d:   #c47d0e;
+      --white:      #FFFFFF;
     }
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { background:#1a2e1a; font-family:'Nunito',sans-serif; overflow:hidden; height:100vh; width:100vw; }
+    #gameCanvas { position:fixed; top:0; left:0; width:100%; height:100%; touch-action:none; }
 
-    body {
-      background: #1a1a2e;
-      font-family: 'Nunito', sans-serif;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-    }
-
-    /* Canvas Three.js */
-    #gameCanvas {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      touch-action: none;
-    }
-
-    /* ── HUD (interface en jeu) ── */
+    /* HUD */
     #hud {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 10;
-      padding: 12px 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      pointer-events: none;
+      position:fixed; top:0; left:0; right:0; z-index:10;
+      padding:12px 16px; display:flex; justify-content:space-between; align-items:flex-start;
+      pointer-events:none;
     }
-
     .hud-card {
-      background: rgba(255,255,255,0.12);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 8px 14px;
-      border: 1px solid rgba(255,255,255,0.2);
+      background:rgba(255,255,255,0.15); backdrop-filter:blur(10px);
+      border-radius:16px; padding:8px 14px; border:1px solid rgba(255,255,255,0.25);
     }
+    .hud-label { font-size:0.62rem; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+    .hud-value { font-family:'Fredoka One',cursive; font-size:1.4rem; color:white; line-height:1.1; }
+    .hud-value.green { color:#88EE88; }
+    .hud-value.red   { color:#FF8888; }
 
-    .hud-label {
-      font-size: 0.65rem;
-      color: rgba(255,255,255,0.6);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 700;
-    }
-    .hud-value {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.4rem;
-      color: white;
-      line-height: 1.1;
-    }
-    .hud-value.orange { color: var(--orange); }
-
-    /* Frames de score */
-    #frames-bar {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      z-index: 10;
-      background: rgba(0,0,0,0.6);
-      backdrop-filter: blur(10px);
-      padding: 10px 12px;
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .frame {
-      background: rgba(255,255,255,0.1);
-      border: 2px solid rgba(255,255,255,0.15);
-      border-radius: 10px;
-      width: 52px;
-      padding: 4px;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
-    .frame.active {
-      border-color: var(--orange);
-      background: rgba(245,166,35,0.2);
-    }
-    .frame-num {
-      font-size: 0.55rem;
-      color: rgba(255,255,255,0.4);
-      font-weight: 700;
-    }
-    .frame-throws {
-      display: flex;
-      gap: 3px;
-      justify-content: center;
-      min-height: 18px;
-    }
-    .throw-box {
-      background: rgba(255,255,255,0.15);
-      border-radius: 4px;
-      width: 18px;
-      height: 18px;
-      font-size: 0.65rem;
-      font-weight: 800;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .throw-box.strike { background: var(--orange); }
-    .throw-box.spare  { background: #5BBF6A; }
-    .frame-score {
-      font-family: 'Fredoka One', cursive;
-      font-size: 0.9rem;
-      color: white;
-      min-height: 20px;
-    }
-
-    /* ── Panneau swipe ── */
-    #swipe-zone {
-      position: fixed;
-      bottom: 90px;
-      left: 0; right: 0;
-      height: 200px;
-      z-index: 5;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      padding-bottom: 16px;
-      pointer-events: none;
-    }
-
-    #swipe-hint {
-      background: rgba(245,166,35,0.85);
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1rem;
-      padding: 10px 24px;
-      border-radius: 50px;
-      box-shadow: 0 4px 0 rgba(196,125,14,0.8);
-      animation: bounce 1.5s ease-in-out infinite;
-      pointer-events: none;
-    }
-    @keyframes bounce {
-      0%,100% { transform: translateY(0); }
-      50%      { transform: translateY(-6px); }
-    }
-
-    /* ── Indicateur de direction ── */
-    #direction-arrow {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 2.5rem;
-      opacity: 0;
-      transition: opacity 0.2s;
-      pointer-events: none;
-      z-index: 6;
-      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
-    }
-
-    /* ── Overlay résultat ── */
-    #result-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 20;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 16px;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(6px);
-    }
-    #result-overlay.show { display: flex; }
-
-    .result-badge {
-      text-align: center;
-      animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
-    }
-    .result-emoji { font-size: 5rem; display: block; }
-    .result-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 3rem;
-      color: white;
-      text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
-    }
-    .result-sub {
-      font-size: 1rem;
-      color: rgba(255,255,255,0.7);
-      font-weight: 700;
-    }
-
-    .result-btn {
-      background: var(--orange);
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 50px;
-      padding: 14px 36px;
-      box-shadow: 0 6px 0 var(--orange-dark);
-      cursor: pointer;
-      animation: popIn 0.4s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
-    }
-    .result-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--orange-dark); }
-
-    @keyframes popIn {
-      from { opacity:0; transform: scale(0.5); }
-      to   { opacity:1; transform: scale(1); }
-    }
-
-    /* ── Overlay fin de partie ── */
-    #final-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 30;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      gap: 20px;
-      background: rgba(10,10,30,0.92);
-      backdrop-filter: blur(10px);
-    }
-    #final-overlay.show { display: flex; }
-
-    .final-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 2.5rem;
-      color: var(--orange);
-      text-align: center;
-    }
-    .final-score {
-      font-family: 'Fredoka One', cursive;
-      font-size: 5rem;
-      color: white;
-      text-shadow: 4px 4px 0 var(--orange);
-    }
-    .final-vs {
-      display: flex;
-      gap: 30px;
-      align-items: center;
-      background: rgba(255,255,255,0.08);
-      border-radius: 20px;
-      padding: 16px 28px;
-    }
-    .final-player { text-align: center; }
-    .final-player-name {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.5);
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-    .final-player-score {
-      font-family: 'Fredoka One', cursive;
-      font-size: 2rem;
-      color: white;
-    }
-    .final-player-score.winner { color: var(--orange); }
-    .final-separator {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.5rem;
-      color: rgba(255,255,255,0.3);
-    }
-
-    /* Bouton retour */
-    #btn-back {
-      position: fixed;
-      top: 12px;
-      left: 16px;
-      background: rgba(255,255,255,0.15);
-      border: none;
-      border-radius: 50%;
-      width: 40px; height: 40px;
-      font-size: 1.2rem;
-      cursor: pointer;
-      z-index: 15;
-      backdrop-filter: blur(10px);
-      color: white;
-      pointer-events: all;
-    }
-
-    /* Écran de démarrage */
-    #start-screen {
-      position: fixed;
-      inset: 0;
-      z-index: 25;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      background: linear-gradient(180deg, #1a1a2e 0%, #2d1b69 100%);
-    }
-
-    .start-emoji { font-size: 5rem; animation: bounce 1.5s ease-in-out infinite; }
-    .start-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 2.8rem;
-      color: white;
-      text-align: center;
-    }
-
-    .adversaire-card {
-      background: rgba(255,255,255,0.1);
-      border-radius: 20px;
-      padding: 16px 28px;
-      text-align: center;
-      border: 2px solid rgba(255,255,255,0.2);
-    }
-    .adversaire-label {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.5);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-weight: 700;
-    }
-    .adversaire-name {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.8rem;
-      color: var(--orange);
-    }
-    .adversaire-niveau {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.5);
-      font-weight: 700;
-      margin-top: 2px;
-    }
-
-    .start-btn {
-      background: var(--orange);
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.4rem;
-      border: none;
-      border-radius: 50px;
-      padding: 16px 48px;
-      box-shadow: 0 8px 0 var(--orange-dark);
-      cursor: pointer;
-      transition: transform 0.1s;
-    }
-    .start-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--orange-dark); }
-
-    .gyro-info {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.4);
-      text-align: center;
-      max-width: 260px;
-      line-height: 1.5;
-      font-weight: 700;
-    }
-
-    /* ── Boutons de niveau ── */
-    .niveau-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,0.1);
-      border: 2px solid rgba(255,255,255,0.2);
-      border-radius: 16px;
-      padding: 12px 18px;
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      width: 100%;
-    }
-    .niveau-btn:active { transform: scale(0.97); }
-    .niveau-btn.selected {
-      background: rgba(245,166,35,0.3);
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(245,166,35,0.2);
-    }
-    .niveau-btn span:nth-child(2) { flex: 1; text-align: left; }
-
-    /* ── HUD adversaire (score en direct) ── */
+    /* Adversaire */
     #hud-adv {
-      position: fixed;
-      top: 80px;
-      left: 0; right: 0;
-      z-index: 10;
-      display: flex;
-      justify-content: center;
-      pointer-events: none;
+      position:fixed; top:78px; left:0; right:0; z-index:10;
+      display:flex; justify-content:center; pointer-events:none;
     }
-    .adv-score-card {
-      background: rgba(245,90,90,0.2);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(245,90,90,0.4);
-      border-radius: 14px;
-      padding: 6px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .adv-card {
+      background:rgba(46,125,50,0.25); backdrop-filter:blur(10px);
+      border:1px solid rgba(76,175,80,0.4); border-radius:14px;
+      padding:6px 16px; display:flex; align-items:center; gap:10px;
     }
-    .adv-avatar { font-size: 1.1rem; }
-    .adv-info { text-align: left; }
-    .adv-name-hud {
-      font-size: 0.65rem;
-      color: rgba(255,255,255,0.6);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .adv-score-hud {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.1rem;
-      color: #FF7777;
-      line-height: 1;
-    }
-    .adv-score-hud.danger { color: #FF4444; animation: scoreUp 0.4s ease; }
-    @keyframes scoreUp {
-      0%   { transform: scale(1); }
-      50%  { transform: scale(1.4); color: #FF2222; }
-      100% { transform: scale(1); }
+    .adv-name-lbl { font-size:0.62rem; color:rgba(255,255,255,0.6); font-weight:700; text-transform:uppercase; letter-spacing:1px; }
+    .adv-score-val { font-family:'Fredoka One',cursive; font-size:1.1rem; color:#88EE88; line-height:1; }
+    .adv-score-val.worse { color:#FF8888; animation:scoreUp .4s ease; }
+    @keyframes scoreUp { 0%{transform:scale(1)} 50%{transform:scale(1.4)} 100%{transform:scale(1)} }
+
+    /* Bulle provoc */
+    #provoc {
+      position:fixed; top:128px; left:50%; transform:translateX(-50%);
+      background:rgba(46,125,50,0.92); color:white;
+      font-family:'Fredoka One',cursive; font-size:0.85rem;
+      padding:8px 18px; border-radius:20px; z-index:11;
+      display:none; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.3);
+      animation:popIn .3s cubic-bezier(0.34,1.56,0.64,1);
     }
 
-    /* Bulle de provocation */
-    #provoc-bubble {
-      position: fixed;
-      top: 130px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255,60,60,0.9);
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 0.85rem;
-      padding: 8px 16px;
-      border-radius: 20px;
-      z-index: 11;
-      display: none;
-      white-space: nowrap;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    /* Barre de puissance */
+    #power-bar-wrap {
+      position:fixed; bottom:110px; right:16px; z-index:10;
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+      opacity:0; transition:opacity .3s; pointer-events:none;
     }
+    #power-bar-wrap.show { opacity:1; }
+    .pb-label { font-family:'Fredoka One',cursive; font-size:0.75rem; color:rgba(255,255,255,0.7); }
+    #power-track {
+      width:28px; height:160px; background:rgba(0,0,0,0.35);
+      border-radius:14px; border:2px solid rgba(255,255,255,0.2);
+      overflow:hidden; position:relative;
+    }
+    #power-fill {
+      position:absolute; bottom:0; left:0; right:0;
+      background:linear-gradient(0deg,#44FF44,#FFFF44,#FF4444);
+      transition:height .05s; border-radius:12px;
+    }
+    #power-val { font-family:'Fredoka One',cursive; font-size:1.1rem; color:white; }
+
+    /* Zone swipe */
+    #swipe-zone { position:fixed; inset:0; z-index:5; }
+    #swipe-hint {
+      position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+      background:rgba(46,125,50,0.9); color:white;
+      font-family:'Fredoka One',cursive; font-size:1rem;
+      padding:10px 24px; border-radius:50px;
+      box-shadow:0 4px 0 rgba(27,94,32,0.8);
+      animation:bounce 1.5s ease-in-out infinite; pointer-events:none; z-index:10;
+      white-space:nowrap;
+    }
+    @keyframes bounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-6px)} }
+
+    /* Score bar */
+    #score-bar {
+      position:fixed; bottom:0; left:0; right:0; z-index:10;
+      background:rgba(0,0,0,0.6); backdrop-filter:blur(10px);
+      padding:10px 12px; display:flex; gap:6px; justify-content:center;
+    }
+    .hole-card {
+      background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.15);
+      border-radius:10px; width:70px; padding:5px; text-align:center;
+      transition:all .3s;
+    }
+    .hole-card.active { border-color:var(--green-l); background:rgba(76,175,80,0.2); }
+    .hole-num  { font-size:0.55rem; color:rgba(255,255,255,0.4); font-weight:700; }
+    .hole-par  { font-size:0.6rem; color:rgba(255,255,255,0.5); font-weight:700; }
+    .hole-coup { font-family:'Fredoka One',cursive; font-size:1.1rem; color:white; min-height:24px; }
+    .hole-coup.eagle  { color:#FFD700; }
+    .hole-coup.birdie { color:#88FF88; }
+    .hole-coup.bogey  { color:#FF8888; }
+    .hole-coup.double { color:#FF4444; }
+
+    /* Overlay résultat trou */
+    #result-overlay {
+      position:fixed; inset:0; z-index:20; display:none;
+      align-items:center; justify-content:center; flex-direction:column; gap:14px;
+      background:rgba(0,0,0,0.55); backdrop-filter:blur(8px);
+    }
+    #result-overlay.show { display:flex; }
+    .result-badge { text-align:center; animation:popIn .4s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .result-emoji { font-size:5rem; display:block; }
+    .result-title { font-family:'Fredoka One',cursive; font-size:3rem; color:white; text-shadow:3px 3px 0 rgba(0,0,0,0.3); }
+    .result-sub   { font-size:1rem; color:rgba(255,255,255,0.7); font-weight:700; }
+    .result-btn {
+      background:var(--green); color:white; font-family:'Fredoka One',cursive;
+      font-size:1.2rem; border:none; border-radius:50px; padding:14px 36px;
+      box-shadow:0 6px 0 var(--green-dark); cursor:pointer;
+      animation:popIn .4s .2s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    .result-btn:active { transform:translateY(4px); box-shadow:0 2px 0 var(--green-dark); }
+
+    /* Overlay fin */
+    #final-overlay {
+      position:fixed; inset:0; z-index:30; display:none;
+      align-items:center; justify-content:center; flex-direction:column; gap:20px;
+      background:rgba(10,25,10,0.93); backdrop-filter:blur(10px);
+    }
+    #final-overlay.show { display:flex; }
+    .final-title  { font-family:'Fredoka One',cursive; font-size:2.5rem; color:var(--orange); text-align:center; }
+    .final-score-big { font-family:'Fredoka One',cursive; font-size:4.5rem; color:white; text-shadow:4px 4px 0 var(--green); }
+    .final-vs { display:flex; gap:28px; align-items:center; background:rgba(255,255,255,0.07); border-radius:20px; padding:16px 28px; }
+    .final-player { text-align:center; }
+    .final-player-name { font-size:0.78rem; color:rgba(255,255,255,0.5); font-weight:700; text-transform:uppercase; }
+    .final-player-score { font-family:'Fredoka One',cursive; font-size:2rem; color:white; }
+    .final-player-score.winner { color:var(--orange); }
+    .final-sep { font-family:'Fredoka One',cursive; font-size:1.5rem; color:rgba(255,255,255,0.3); }
+    .f-btn {
+      background:var(--green); color:white; font-family:'Fredoka One',cursive;
+      font-size:1.1rem; border:none; border-radius:50px; padding:14px 32px;
+      box-shadow:0 6px 0 var(--green-dark); cursor:pointer;
+    }
+    .f-btn.blue { background:#2A5FBF; box-shadow:0 6px 0 #1a3f8f; }
+
+    /* Écran démarrage */
+    #start-screen {
+      position:fixed; inset:0; z-index:25; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:18px;
+      background:linear-gradient(180deg,#1a2e1a 0%,#0d1f0d 100%);
+    }
+    .start-emoji  { font-size:5rem; animation:bounce 1.5s ease-in-out infinite; }
+    .start-title  { font-family:'Fredoka One',cursive; font-size:2.8rem; color:white; }
+    .niveau-btn {
+      display:flex; align-items:center; gap:10px;
+      background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.2);
+      border-radius:16px; padding:12px 18px; color:white;
+      font-family:'Fredoka One',cursive; font-size:1.1rem; cursor:pointer;
+      transition:all .15s; width:100%; max-width:300px;
+    }
+    .niveau-btn:active { transform:scale(0.97); }
+    .niveau-btn.selected { background:rgba(76,175,80,0.3); border-color:var(--green-l); box-shadow:0 0 0 3px rgba(76,175,80,0.2); }
+    .niveau-btn span:nth-child(2) { flex:1; text-align:left; }
+    .adv-card-start { background:rgba(255,255,255,0.1); border-radius:18px; padding:14px 24px; text-align:center; border:2px solid rgba(255,255,255,0.18); }
+    .adv-lbl  { font-size:0.72rem; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px; font-weight:700; }
+    .adv-nom  { font-family:'Fredoka One',cursive; font-size:1.7rem; color:var(--orange); }
+    .start-btn {
+      background:var(--green); color:white; font-family:'Fredoka One',cursive;
+      font-size:1.4rem; border:none; border-radius:50px; padding:16px 48px;
+      box-shadow:0 8px 0 var(--green-dark); cursor:pointer; transition:transform .1s;
+    }
+    .start-btn:active { transform:translateY(4px); box-shadow:0 4px 0 var(--green-dark); }
+    .gyro-info { font-size:0.78rem; color:rgba(255,255,255,0.4); text-align:center; max-width:260px; line-height:1.5; font-weight:700; }
+
+    @keyframes popIn { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
   </style>
 </head>
 <body>
 
 <!-- Bouton retour -->
-<button id="btn-back" onclick="window.location.href='../index.html'">←</button>
+<button style="position:fixed;top:12px;left:16px;background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:40px;height:40px;font-size:1.2rem;cursor:pointer;z-index:15;color:white;" onclick="window.location.href='../index.html'">←</button>
 
-<!-- HUD adversaire (score en direct) -->
+<!-- HUD adversaire -->
 <div id="hud-adv" style="display:none;">
-  <div class="adv-score-card">
-    <span class="adv-avatar" id="adv-avatar-hud">🤖</span>
-    <div class="adv-info">
-      <div class="adv-name-hud" id="adv-name-hud">Adversaire</div>
-      <div class="adv-score-hud" id="adv-score-hud">0 pts</div>
+  <div class="adv-card">
+    <span id="adv-avatar-hud">🤖</span>
+    <div>
+      <div class="adv-name-lbl" id="adv-name-hud">Adversaire</div>
+      <div class="adv-score-val" id="adv-score-hud">0 coups</div>
     </div>
   </div>
 </div>
+<div id="provoc"></div>
 
-<!-- Bulle de provocation -->
-<div id="provoc-bubble"></div>
-
-<!-- Canvas 3D -->
+<!-- Canvas -->
 <canvas id="gameCanvas"></canvas>
 
-<!-- HUD -->
+<!-- HUD principal -->
 <div id="hud">
   <div class="hud-card">
-    <div class="hud-label">Frame</div>
-    <div class="hud-value orange" id="hud-frame">1 / 3</div>
+    <div class="hud-label">Trou</div>
+    <div class="hud-value green" id="hud-hole">1 / 3</div>
   </div>
   <div class="hud-card">
-    <div class="hud-label">Score</div>
-    <div class="hud-value" id="hud-score">0</div>
+    <div class="hud-label">Coups</div>
+    <div class="hud-value" id="hud-shots">0</div>
   </div>
   <div class="hud-card">
-    <div class="hud-label">Quilles</div>
-    <div class="hud-value orange" id="hud-pins">10</div>
+    <div class="hud-label">Par</div>
+    <div class="hud-value" id="hud-par">3</div>
   </div>
 </div>
 
-<!-- Zone de swipe -->
+<!-- Barre de puissance -->
+<div id="power-bar-wrap">
+  <div class="pb-label">Force</div>
+  <div id="power-track"><div id="power-fill" style="height:0%"></div></div>
+  <div class="pb-label" id="power-val">0%</div>
+</div>
+
+<!-- Zone swipe -->
 <div id="swipe-zone">
-  <div id="swipe-hint">👆 Swipe vers le haut pour lancer !</div>
+  <div id="swipe-hint">⛳ Swipe vers le haut pour frapper !</div>
 </div>
 
-<!-- Flèche de direction -->
-<div id="direction-arrow">⬆️</div>
+<!-- Score bar -->
+<div id="score-bar">
+  <div class="hole-card active" id="hcard-0">
+    <div class="hole-num">T1</div>
+    <div class="hole-par">Par 3</div>
+    <div class="hole-coup" id="hcoup-0"></div>
+  </div>
+  <div class="hole-card" id="hcard-1">
+    <div class="hole-num">T2</div>
+    <div class="hole-par">Par 4</div>
+    <div class="hole-coup" id="hcoup-1"></div>
+  </div>
+  <div class="hole-card" id="hcard-2">
+    <div class="hole-num">T3</div>
+    <div class="hole-par">Par 5</div>
+    <div class="hole-coup" id="hcoup-2"></div>
+  </div>
+</div>
 
-<!-- Barre de frames -->
-<div id="frames-bar" id="frames-bar"></div>
-
-<!-- Overlay résultat (strike / spare / rigole) -->
+<!-- Overlay résultat trou -->
 <div id="result-overlay">
   <div class="result-badge">
-    <span class="result-emoji" id="result-emoji">🎳</span>
-    <div class="result-title" id="result-title">STRIKE !</div>
-    <div class="result-sub" id="result-sub">Incroyable !</div>
+    <span class="result-emoji" id="res-emoji">⛳</span>
+    <div class="result-title" id="res-title">Birdie !</div>
+    <div class="result-sub"   id="res-sub">−1 sous le par</div>
   </div>
-  <button class="result-btn" id="result-btn" onclick="nextThrow()">Continuer →</button>
+  <button class="result-btn" onclick="troupSuivant()">Continuer →</button>
 </div>
 
 <!-- Overlay fin de partie -->
 <div id="final-overlay">
-  <div class="final-title">🏆 Partie terminée !</div>
-  <div class="final-score" id="final-score-display">0</div>
+  <div class="final-title">🏌️ Partie terminée !</div>
+  <div class="final-score-big" id="f-score-label">E</div>
   <div class="final-vs">
     <div class="final-player">
       <div class="final-player-name">Toi</div>
-      <div class="final-player-score" id="final-player">0</div>
+      <div class="final-player-score" id="f-joueur">0</div>
     </div>
-    <div class="final-separator">VS</div>
+    <div class="final-sep">VS</div>
     <div class="final-player">
-      <div class="final-player-name" id="final-adv-name">Adversaire</div>
-      <div class="final-player-score" id="final-adv">0</div>
+      <div class="final-player-name" id="f-adv-name">CPU</div>
+      <div class="final-player-score" id="f-adv">0</div>
     </div>
   </div>
-  <button class="result-btn" onclick="window.location.href='../index.html'">🏠 Menu principal</button>
-  <button class="result-btn" style="background:#2A5FBF;box-shadow:0 6px 0 #1a3f8f" onclick="location.reload()">🔄 Rejouer</button>
+  <button class="f-btn" onclick="window.location.href='../index.html'">🏠 Menu</button>
+  <button class="f-btn blue" onclick="location.reload()">🔄 Rejouer</button>
 </div>
 
-<!-- Écran de démarrage avec choix de niveau -->
+<!-- Écran démarrage -->
 <div id="start-screen">
-  <span class="start-emoji">🎳</span>
-  <div class="start-title">Bowling</div>
+  <span class="start-emoji">⛳</span>
+  <div class="start-title">Golf</div>
 
-  <!-- Choix du niveau -->
-  <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px;">
-    <div style="font-family:'Fredoka One',cursive; color:rgba(255,255,255,0.7); font-size:0.85rem; text-align:center; letter-spacing:2px; text-transform:uppercase;">Choisis ton niveau</div>
-
-    <button class="niveau-btn" id="btn-facile" onclick="choisirNiveau('facile')">
-      <span>😊</span> <span>Facile</span>
-      <span style="font-size:0.7rem; opacity:0.7;">Adversaires débutants</span>
-    </button>
-    <button class="niveau-btn" id="btn-moyen" onclick="choisirNiveau('moyen')">
-      <span>😤</span> <span>Moyen</span>
-      <span style="font-size:0.7rem; opacity:0.7;">Adversaires expérimentés</span>
-    </button>
-    <button class="niveau-btn" id="btn-difficile" onclick="choisirNiveau('difficile')">
-      <span>💀</span> <span>Difficile</span>
-      <span style="font-size:0.7rem; opacity:0.7;">Adversaires redoutables</span>
-    </button>
+  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;">
+    <div style="font-family:'Fredoka One',cursive;color:rgba(255,255,255,0.6);font-size:0.82rem;text-align:center;letter-spacing:2px;text-transform:uppercase;">Choisir ton niveau</div>
+    <button class="niveau-btn" id="btn-facile"    onclick="choisirNiveau('facile')"><span>😊</span><span>Facile</span><span style="font-size:.7rem;opacity:.6">Adversaires débutants</span></button>
+    <button class="niveau-btn" id="btn-moyen"     onclick="choisirNiveau('moyen')"><span>😤</span><span>Moyen</span><span style="font-size:.7rem;opacity:.6">Adversaires expérimentés</span></button>
+    <button class="niveau-btn" id="btn-difficile" onclick="choisirNiveau('difficile')"><span>💀</span><span>Difficile</span><span style="font-size:.7rem;opacity:.6">Adversaires redoutables</span></button>
   </div>
 
-  <!-- Adversaire (affiché après choix du niveau) -->
-  <div class="adversaire-card" id="adv-card" style="display:none;">
-    <div class="adversaire-label">Ton adversaire</div>
-    <div class="adversaire-name" id="adv-name">Chargement...</div>
-    <div class="adversaire-niveau" id="adv-niveau"></div>
+  <div class="adv-card-start" id="adv-card-start" style="display:none;">
+    <div class="adv-lbl">Ton adversaire</div>
+    <div class="adv-nom" id="adv-nom-start">Chargement...</div>
+    <div style="font-size:.78rem;color:rgba(255,255,255,.45);font-weight:700;margin-top:2px;" id="adv-niv-start"></div>
   </div>
 
-  <button class="start-btn" id="start-btn" style="display:none;" onclick="demarrerJeu()">🎳 C'est parti !</button>
-  <p class="gyro-info">📐 Incline ton téléphone pour viser<br>👆 Swipe vers le haut pour lancer</p>
+  <button class="start-btn" id="start-btn" style="display:none;" onclick="demarrerJeu()">⛳ C'est parti !</button>
+  <p class="gyro-info">📐 Incline ton téléphone pour viser<br>👆 Swipe vers le haut pour frapper</p>
 </div>
 
 <!-- Scripts -->
@@ -566,1180 +310,531 @@
 <script src="../js/sensors.js"></script>
 
 <script>
-// ============================================
+// ══════════════════════════════════════════
+//  CONFIGURATION DES 3 TROUS
+// ══════════════════════════════════════════
+const TROUS = [
+  { par:3, distance:80,  couleur:0x4CAF50, nom:'Trou 1 — Prairie',   bg:0x87CEEB },
+  { par:4, distance:130, couleur:0x388E3C, nom:'Trou 2 — Forêt',     bg:0x6AB7E8 },
+  { par:5, distance:180, couleur:0x2E7D32, nom:'Trou 3 — Montagne',  bg:0x5aa0d4 },
+];
+
+// ══════════════════════════════════════════
 //  ÉTAT DU JEU
-// ============================================
+// ══════════════════════════════════════════
 const ETAT = {
-  frameActuelle: 0,
-  lancerActuel: 0,
-  quillesTombees: 0,
-  quillesTombeesFrame: 0,
-  scores: [null, null, null],
-  throwsParFrame: [[], [], []],
-  scoreTotal: 0,
-  ballEnMouvement: false,
-  adversaire: null,
-  peutLancer: true,
-  // Nouveau :
+  trou:         0,
+  coupsTotal:   0,      // coups total joueur
+  coupsParTrou: [0,0,0],
+  ballEnVol:    false,
+  peutFrapper:  true,
+  inTrou:       false,
+  adversaire:   null,
   niveauChoisi: null,
-  scoreTotalAdv: 0,
-  scoresAdv: [],
+  coupsAdvTotal:   0,
+  coupsAdvParTrou: [0,0,0],
+  animSpec:     null,
 };
 
-// ============================================
+// ══════════════════════════════════════════
 //  CHOIX DU NIVEAU
-// ============================================
+// ══════════════════════════════════════════
 async function choisirNiveau(niveau) {
   ETAT.niveauChoisi = niveau;
-
-  // Highlight bouton sélectionné
   document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById(`btn-${niveau}`).classList.add('selected');
-
-  // Charge l'adversaire selon le niveau
-  document.getElementById('adv-name').textContent = 'Recherche...';
-  document.getElementById('adv-card').style.display = 'block';
+  document.getElementById('adv-nom-start').textContent = 'Recherche...';
+  document.getElementById('adv-card-start').style.display = 'block';
   document.getElementById('start-btn').style.display = 'none';
 
-  const adv = await getAdversaire('bowling', niveau);
+  const adv = await getAdversaire('golf', niveau);
   ETAT.adversaire = adv;
-
   if (adv) {
-    document.getElementById('adv-name').textContent = `${adv.avatar} ${adv.nom}`;
-    document.getElementById('adv-niveau').textContent = `Niveau : ${adv.bowling}`;
-    document.getElementById('adv-avatar-hud').textContent = adv.avatar || '🤖';
+    document.getElementById('adv-nom-start').textContent = `${adv.avatar||'🏌️'} ${adv.nom}`;
+    document.getElementById('adv-niv-start').textContent = `Niveau : ${adv.golf||niveau}`;
+    document.getElementById('adv-avatar-hud').textContent = adv.avatar || '🏌️';
     document.getElementById('adv-name-hud').textContent = adv.nom;
   } else {
-    document.getElementById('adv-name').textContent = '🤖 CPU';
-    document.getElementById('adv-niveau').textContent = `Niveau : ${niveau}`;
+    document.getElementById('adv-nom-start').textContent = '🏌️ CPU';
+    document.getElementById('adv-niv-start').textContent = `Niveau : ${niveau}`;
   }
-
   document.getElementById('start-btn').style.display = 'block';
   if (navigator.vibrate) navigator.vibrate(20);
 }
 
-// ============================================
-//  THREE.JS — SCÈNE 3D
-// ============================================
-const canvas = document.getElementById('gameCanvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+// ══════════════════════════════════════════
+//  THREE.JS — SCÈNE
+// ══════════════════════════════════════════
+const canvas   = document.getElementById('gameCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
+renderer.toneMappingExposure = 1.0;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xB8D4F0); // ciel bleu clair Wii
-scene.fog = new THREE.FogExp2(0xC8E0F8, 0.018);
+scene.background = new THREE.Color(0x87CEEB);
+scene.fog = new THREE.FogExp2(0xb8d8f0, 0.012);
 
-const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(0, 1.8, 9.5);
-camera.lookAt(0, 0.5, 0);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 500);
+camera.position.set(0, 3.5, 12);
+camera.lookAt(0, 0, 0);
 
-// ── Éclairage style Nintendo — doux, global, chaud ──
-const ambientLight = new THREE.AmbientLight(0xfff8f0, 0.75);
-scene.add(ambientLight);
+// Lumières
+const sun = new THREE.DirectionalLight(0xfff5e0, 1.2);
+sun.position.set(10, 20, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.far = 300;
+sun.shadow.camera.left = -50; sun.shadow.camera.right = 50;
+sun.shadow.camera.top  =  50; sun.shadow.camera.bottom=-50;
+sun.shadow.bias = -0.0003;
+scene.add(sun);
+scene.add(new THREE.AmbientLight(0xd0e8ff, 0.7));
+const fill = new THREE.DirectionalLight(0xc8e8ff, 0.35);
+fill.position.set(-8, 5, -5); scene.add(fill);
 
-// Lumière principale douce depuis le haut
-const sunLight = new THREE.DirectionalLight(0xfff5e0, 1.1);
-sunLight.position.set(3, 12, 8);
-sunLight.castShadow = true;
-sunLight.shadow.mapSize.set(2048, 2048);
-sunLight.shadow.camera.near = 0.5;
-sunLight.shadow.camera.far = 60;
-sunLight.shadow.camera.left = -15;
-sunLight.shadow.camera.right = 15;
-sunLight.shadow.camera.top = 20;
-sunLight.shadow.camera.bottom = -20;
-sunLight.shadow.bias = -0.0005;
-scene.add(sunLight);
+// ══════════════════════════════════════════
+//  SCÈNE GOLF — CONSTRUCTION PAR TROU
+// ══════════════════════════════════════════
+let balleMesh, flagMesh, trou3D, terrainGroupe;
+let ballePos   = new THREE.Vector3(0, 0.2, 8);
+let balleVel   = new THREE.Vector3();
+let distanceTrou = 0;
+let CAM_BASE   = { x:0, y:3.5, z:12 };
+let cameraMode = 'jeu'; // 'jeu' | 'vol' | 'reset'
 
-// Fill light bleu doux (côté ombre)
-const fillLight = new THREE.DirectionalLight(0xd0e8ff, 0.45);
-fillLight.position.set(-5, 6, -3);
-scene.add(fillLight);
+function phong(color, shininess=80, specular=0x333333) {
+  return new THREE.MeshPhongMaterial({ color, shininess, specular });
+}
 
-// Rim light arrière chaud
-const rimLight = new THREE.DirectionalLight(0xffe8c0, 0.3);
-rimLight.position.set(0, 3, -15);
-scene.add(rimLight);
+function construireTrou(indexTrou) {
+  // Nettoie la scène
+  if (terrainGroupe) scene.remove(terrainGroupe);
+  terrainGroupe = new THREE.Group();
 
-// ── Variables globales pour animations ──
-const spectateurs = [];          // groupes Mii spectateurs
-const joueurMii   = new THREE.Group(); // groupe Mii joueur
-const joueurBras  = new THREE.Group(); // bras du joueur (pivot épaule)
-let animSpectateurs = null;       // animation en cours
+  const cfg = TROUS[indexTrou];
+  const dist = cfg.distance;
+  distanceTrou = dist;
+  scene.background = new THREE.Color(cfg.bg);
+  scene.fog = new THREE.FogExp2(cfg.bg, 0.010);
 
-// ── Piste de bowling style Wii Sports ──
-function creerPiste() {
-  // Helper matériaux Phong brillants
-  const phong = (color, shininess = 80, specular = 0x444444) =>
-    new THREE.MeshPhongMaterial({ color, shininess, specular });
-  const phongFlat = (color, shininess = 30) =>
-    new THREE.MeshPhongMaterial({ color, shininess, specular: 0x222222 });
+  // ── Fairway principal ──
+  const fairwayMat = phong(cfg.couleur, 20, 0x224422);
+  const fGeo = new THREE.BoxGeometry(14, 0.18, dist + 30);
+  const fairway = new THREE.Mesh(fGeo, fairwayMat);
+  fairway.position.set(0, 0, -(dist/2 - 10));
+  fairway.receiveShadow = true;
+  terrainGroupe.add(fairway);
 
-  // === SOL PRINCIPAL — carrelage beige clair ===
-  const solMat = phong(0xF2ECD8, 15, 0x333322);
-  const solGeo = new THREE.BoxGeometry(50, 0.12, 60);
-  const sol = new THREE.Mesh(solGeo, solMat);
-  sol.position.set(0, -0.07, -5);
-  sol.receiveShadow = true;
-  scene.add(sol);
-
-  // Carreaux alternés
-  const carreauMat = phong(0xE8DFC8, 8);
-  for (let x = -12; x <= 12; x += 2) {
-    for (let z = -20; z <= 10; z += 2) {
-      if ((Math.floor(x/2) + Math.floor(z/2)) % 2 === 0) continue;
-      const cGeo = new THREE.BoxGeometry(1.98, 0.01, 1.98);
-      const c = new THREE.Mesh(cGeo, carreauMat);
-      c.position.set(x, -0.01, z);
-      scene.add(c);
-    }
-  }
-
-  // === PISTE PRINCIPALE — bois clair brillant ===
-  const pisteMat = phong(0xF0D878, 120, 0x888844); // bois poli très brillant
-  const pisteGeo = new THREE.BoxGeometry(3.5, 0.09, 32);
-  const piste = new THREE.Mesh(pisteGeo, pisteMat);
-  piste.position.set(0, 0.01, -4);
-  piste.receiveShadow = true;
-  piste.castShadow = false;
-  scene.add(piste);
-
-  // Veinage du bois (lignes fines)
-  const veinMat = phong(0xD4B850, 60, 0x888833);
-  for (let z = -19; z < 10; z += 0.55) {
-    const vGeo = new THREE.BoxGeometry(3.48, 0.003, 0.02);
-    const v = new THREE.Mesh(vGeo, veinMat);
-    v.position.set(0, 0.056, z);
-    scene.add(v);
-  }
-
-  // Lignes de pointé au sol (style Wii)
-  const pointsMat = phong(0xCC8822, 40);
-  for (let i = -1; i <= 1; i++) {
-    for (let z = -1; z >= -5; z -= 0.7) {
-      const pGeo = new THREE.BoxGeometry(0.04, 0.004, 0.35);
-      const p = new THREE.Mesh(pGeo, pointsMat);
-      p.position.set(i * 0.5, 0.057, z);
-      scene.add(p);
-    }
-  }
-
-  // === PISTES ADJACENTES décoratives ===
-  const pisteLat1Mat = phong(0xE8CC6A, 100, 0x776633);
-  const pisteLat2Mat = phong(0xD8BC5A, 100, 0x665522);
-  [-5.8, 5.8].forEach((x, idx) => {
-    const pLat = new THREE.Mesh(pisteGeo.clone(), idx === 0 ? pisteLat1Mat : pisteLat2Mat);
-    pLat.position.set(x, 0.005, -4);
-    pLat.receiveShadow = true;
-    scene.add(pLat);
-  });
-
-  // === RIGOLES — bleu-gris satiné ===
-  const rigoleMat = phong(0x7A9BB8, 40, 0x334455);
-  [[-2.5], [2.5], [-8.4], [8.4]].forEach(([x]) => {
-    const rGeo = new THREE.BoxGeometry(0.75, 0.07, 32);
-    const r = new THREE.Mesh(rGeo, rigoleMat);
-    r.position.set(x, -0.02, -4);
+  // ── Rough (bordures plus sombres) ──
+  const roughMat = phong(0x1B5E20, 10, 0x112211);
+  [-10, 10].forEach(x => {
+    const rG = new THREE.BoxGeometry(8, 0.15, dist + 30);
+    const r = new THREE.Mesh(rG, roughMat);
+    r.position.set(x + Math.sign(x)*4, 0, -(dist/2 - 10));
     r.receiveShadow = true;
-    scene.add(r);
+    terrainGroupe.add(r);
   });
 
-  // === SÉPARATEURS — plastique blanc brillant ===
-  const sepMat = phong(0xFFFFFF, 150, 0xaaaaaa);
-  [-3.25, 3.25].forEach(x => {
-    const sGeo = new THREE.BoxGeometry(0.18, 0.32, 32);
-    const s = new THREE.Mesh(sGeo, sepMat);
-    s.position.set(x, 0.12, -4);
-    s.castShadow = true;
-    scene.add(s);
-  });
+  // ── Grand sol de fond ──
+  const solG = new THREE.BoxGeometry(200, 0.1, 400);
+  const sol  = new THREE.Mesh(solG, phong(0x33691E, 5, 0x112200));
+  sol.position.set(0, -0.05, -(dist/2));
+  sol.receiveShadow = true;
+  terrainGroupe.add(sol);
 
-  // === LIGNE DE FAUTE — rouge brillant ===
-  const fauteMat = phong(0xFF2222, 80, 0x881111);
-  const fauteGeo = new THREE.BoxGeometry(3.5, 0.012, 0.1);
-  const faute = new THREE.Mesh(fauteGeo, fauteMat);
-  faute.position.set(0, 0.056, 5.5);
-  scene.add(faute);
-
-  // Texte "FOUL" simulé par 3 petits carrés
-  [-0.3, 0, 0.3].forEach(x => {
-    const fGeo = new THREE.BoxGeometry(0.06, 0.013, 0.06);
-    const f = new THREE.Mesh(fGeo, fauteMat);
-    f.position.set(x, 0.058, 5.5);
-    scene.add(f);
-  });
-
-  // === FLÈCHES DIRECTIONNELLES AU SOL ===
-  const flechesMat = phong(0xFF8800, 60, 0x884400);
-  [-0.9, -0.45, 0, 0.45, 0.9].forEach(x => {
-    const fGeo = new THREE.ConeGeometry(0.07, 0.25, 4);
-    const f = new THREE.Mesh(fGeo, flechesMat);
-    f.rotation.x = -Math.PI / 2;
-    f.position.set(x, 0.057, 1.0);
-    scene.add(f);
-  });
-
-  // === MURS LATÉRAUX — blanc satiné avec liseré coloré ===
-  const murMat = phong(0xF8F4EE, 20, 0x333322);
-  const murBasMat = phong(0x4488DD, 60, 0x224488); // liseré bleu style Wii
-  [-11, 11].forEach(x => {
-    // Mur principal
-    const mGeo = new THREE.BoxGeometry(0.35, 6, 60);
-    const m = new THREE.Mesh(mGeo, murMat);
-    m.position.set(x, 3, -5);
-    m.castShadow = false;
-    m.receiveShadow = true;
-    scene.add(m);
-    // Liseré bas coloré
-    const lGeo = new THREE.BoxGeometry(0.36, 0.5, 60);
-    const l = new THREE.Mesh(lGeo, murBasMat);
-    l.position.set(x, 0.25, -5);
-    scene.add(l);
-  });
-
-  // === MUR DU FOND — arrondi, blanc ===
-  const fondMat = phong(0xF0ECE4, 15, 0x222211);
-  const fondGeo = new THREE.BoxGeometry(24, 7, 0.4);
-  const fond = new THREE.Mesh(fondGeo, fondMat);
-  fond.position.set(0, 3.5, -21);
-  fond.receiveShadow = true;
-  scene.add(fond);
-
-  // Bande bleue en bas du fond
-  const fondBasMat = phong(0x3377CC, 80, 0x113366);
-  const fondBasGeo = new THREE.BoxGeometry(24, 0.8, 0.3);
-  const fondBas = new THREE.Mesh(fondBasGeo, fondBasMat);
-  fondBas.position.set(0, 0.4, -21);
-  scene.add(fondBas);
-
-  // === PLAFOND — blanc cassé ===
-  const plafondMat = phongFlat(0xF8F6F0, 5);
-  const plafondGeo = new THREE.BoxGeometry(25, 0.25, 60);
-  const plafond = new THREE.Mesh(plafondGeo, plafondMat);
-  plafond.position.set(0, 6, -5);
-  scene.add(plafond);
-
-  // === NÉONS AU PLAFOND — lumineux jaune-blanc ===
-  const neonMat = new THREE.MeshPhongMaterial({
-    color: 0xFFFFEE, emissive: 0xFFFFAA, emissiveIntensity: 0.8, shininess: 0
-  });
-  for (let z = -16; z < 9; z += 5) {
-    const nGeo = new THREE.BoxGeometry(20, 0.1, 0.25);
-    const n = new THREE.Mesh(nGeo, neonMat);
-    n.position.set(0, 5.85, z);
-    scene.add(n);
-    // Lumière douce sous chaque néon
-    const nLight = new THREE.PointLight(0xFFFFF0, 0.5, 12);
-    nLight.position.set(0, 5.5, z);
-    scene.add(nLight);
-  }
-
-  // === PANNEAU DE SCORE AU FOND — écran LED style Wii ===
-  const panCadreMat = phong(0x222244, 120, 0x4444aa);
-  const panCadreGeo = new THREE.BoxGeometry(5.5, 2.2, 0.25);
-  const panCadre = new THREE.Mesh(panCadreGeo, panCadreMat);
-  panCadre.position.set(0, 5.2, -20.8);
-  scene.add(panCadre);
-
-  const ecranMat = new THREE.MeshPhongMaterial({
-    color: 0x0044AA, emissive: 0x001133, emissiveIntensity: 1,
-    shininess: 200, specular: 0x4488FF
-  });
-  const ecranGeo = new THREE.BoxGeometry(5.0, 1.7, 0.1);
-  const ecran = new THREE.Mesh(ecranGeo, ecranMat);
-  ecran.position.set(0, 5.2, -20.65);
-  scene.add(ecran);
-
-  // Liseré lumineux autour de l'écran
-  const ledMat = new THREE.MeshPhongMaterial({ color: 0x44AAFF, emissive: 0x2266CC, emissiveIntensity: 1 });
-  [[-2.6, 0, 0.06], [2.6, 0, 0.06], [0, 0.9, 0.06], [0, -0.9, 0.06]].forEach(([x, y]) => {
-    const lW = x === 0 ? 5.0 : 0.1;
-    const lH = y === 0 ? 0.1 : 1.7;
-    const lGeo = new THREE.BoxGeometry(lW, lH, 0.05);
-    const lMesh = new THREE.Mesh(lGeo, ledMat);
-    lMesh.position.set(x, 5.2 + y, -20.62);
-    scene.add(lMesh);
-  });
-
-  // === BANCS — bois chaud ===
-  const bancMat = phong(0xA07840, 40, 0x553311);
-  const bancPiedMat = phong(0x707070, 60, 0x444444);
-  [-8.2, 8.2].forEach(x => {
-    for (let z = -1; z >= -15; z -= 2.2) {
-      // Assise
-      const bGeo = new THREE.BoxGeometry(2.2, 0.14, 0.7);
-      const b = new THREE.Mesh(bGeo, bancMat);
-      b.position.set(x, 0.56, z);
-      b.castShadow = true;
+  // ── Bunkers (sable) selon le trou ──
+  const sandMat = phong(0xF4E088, 15, 0xAA9944);
+  if (indexTrou >= 1) {
+    [[-4, -dist*0.45], [3.5, -dist*0.6]].forEach(([x, z]) => {
+      const bG = new THREE.CylinderGeometry(2.5, 2.5, 0.12, 14);
+      const b  = new THREE.Mesh(bG, sandMat);
+      b.position.set(x, 0.01, z);
       b.receiveShadow = true;
-      scene.add(b);
-      // Pieds
-      [-0.8, 0.8].forEach(dx => {
-        const pGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.55, 6);
-        const p = new THREE.Mesh(pGeo, bancPiedMat);
-        p.position.set(x + dx, 0.28, z);
-        scene.add(p);
-      });
-    }
-  });
-
-  // === DOSSIERS des bancs ===
-  const dossierMat = phong(0xB08850, 35, 0x664422);
-  [-8.2, 8.2].forEach(x => {
-    for (let z = -1; z >= -15; z -= 2.2) {
-      const dGeo = new THREE.BoxGeometry(2.2, 0.55, 0.1);
-      const d = new THREE.Mesh(dGeo, dossierMat);
-      d.position.set(x, 0.97, z + (x < 0 ? 0.3 : -0.3));
-      d.castShadow = true;
-      scene.add(d);
-    }
-  });
-
-  // === SPECTATEURS (Miis cartoon) avec groupes animables ===
-  const couleursMiis  = [0x4499FF, 0xFF5533, 0x44CC55, 0xFFBB11, 0xCC44FF, 0xFF4499, 0x33CCCC, 0xFF8833];
-  const couleursPeaux = [0xFFCCA0, 0xF0A870, 0xC07840, 0x8D5524];
-
-  for (let i = 0; i < 24; i++) {
-    const cote  = i % 2 === 0 ? -8.2 : 8.2;
-    const zPos  = -1 - (i % 12) * 1.3;
-    const yBase = 0.7 + Math.floor(i / 12) * 0.55;
-    const cCorps = couleursMiis[i % couleursMiis.length];
-    const cPeau  = couleursPeaux[i % couleursPeaux.length];
-
-    const miiGroupe = new THREE.Group();
-    miiGroupe.position.set(cote, yBase, zPos);
-    miiGroupe.userData = { yBase, cote, zPos, index: i };
-    // Oriente vers la piste
-    miiGroupe.rotation.y = cote < 0 ? Math.PI * 0.08 : -Math.PI * 0.08;
-    scene.add(miiGroupe);
-    spectateurs.push(miiGroupe);
-
-    const corpsMat = new THREE.MeshPhongMaterial({ color: cCorps, shininess: 90, specular: 0x446688 });
-    const peauMat  = new THREE.MeshPhongMaterial({ color: cPeau,  shininess: 60, specular: 0x443322 });
-    const oeilMat  = new THREE.MeshPhongMaterial({ color: 0x111122, shininess: 120, specular: 0x888888 });
-
-    // Corps arrondi style Mii (capsule = cylindre + 2 demi-sphères)
-    const torsoGeo = new THREE.CylinderGeometry(0.16, 0.20, 0.42, 10);
-    const torso = new THREE.Mesh(torsoGeo, corpsMat);
-    torso.position.y = 0.02;
-    miiGroupe.add(torso);
-
-    // Bas arrondi
-    const baseGeo = new THREE.SphereGeometry(0.20, 10, 6, 0, Math.PI*2, Math.PI/2, Math.PI/2);
-    const base = new THREE.Mesh(baseGeo, corpsMat);
-    base.position.y = -0.18;
-    miiGroupe.add(base);
-
-    // Tête — grosse sphère légèrement ovale style Mii
-    const teteGeo = new THREE.SphereGeometry(0.24, 14, 12);
-    const tete = new THREE.Mesh(teteGeo, peauMat);
-    tete.scale.set(1.05, 1.12, 1.0);
-    tete.position.y = 0.52;
-    tete.castShadow = true;
-    miiGroupe.add(tete);
-
-    // Cheveux (calotte)
-    const chevCouleurs = [0x3B2314, 0xFFCC44, 0xCC4400, 0x111111, 0x884422, 0x444444];
-    const chevMat = new THREE.MeshPhongMaterial({ color: chevCouleurs[i % chevCouleurs.length], shininess: 50 });
-    const chevGeo = new THREE.SphereGeometry(0.245, 12, 8, 0, Math.PI*2, 0, Math.PI/2);
-    const chev = new THREE.Mesh(chevGeo, chevMat);
-    chev.position.y = 0.60;
-    miiGroupe.add(chev);
-
-    // Yeux brillants
-    [-0.09, 0.09].forEach(ox => {
-      const oGeo = new THREE.SphereGeometry(0.038, 8, 8);
-      const oeil = new THREE.Mesh(oGeo, oeilMat);
-      oeil.position.set(ox, 0.54, -0.20);
-      miiGroupe.add(oeil);
-      // Reflet
-      const rGeo = new THREE.SphereGeometry(0.012, 6, 6);
-      const rMat = new THREE.MeshPhongMaterial({ color: 0xffffff, emissive: 0xffffff });
-      const reflet = new THREE.Mesh(rGeo, rMat);
-      reflet.position.set(ox + 0.015, 0.558, -0.232);
-      miiGroupe.add(reflet);
+      terrainGroupe.add(b);
     });
-
-    // Bouche (sourire petit arc)
-    const boucheMat = new THREE.MeshPhongMaterial({ color: 0x883322 });
-    const boucheGeo = new THREE.BoxGeometry(0.09, 0.025, 0.02);
-    const bouche = new THREE.Mesh(boucheGeo, boucheMat);
-    bouche.position.set(0, 0.42, -0.22);
-    miiGroupe.add(bouche);
-
-    // Bras gauche (pivot épaule)
-    const brasGaucheG = new THREE.Group();
-    brasGaucheG.position.set(-0.23, 0.22, 0);
-    const bGGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.40, 10);
-    const bG = new THREE.Mesh(bGGeo, corpsMat);
-    bG.position.y = -0.20;
-    brasGaucheG.add(bG);
-    // Main gauche
-    const mainGGeo = new THREE.SphereGeometry(0.06, 8, 8);
-    const mainG = new THREE.Mesh(mainGGeo, peauMat);
-    mainG.position.y = -0.42;
-    brasGaucheG.add(mainG);
-    miiGroupe.add(brasGaucheG);
-    miiGroupe.userData.brasGauche = brasGaucheG;
-
-    // Bras droit
-    const brasDroitG = new THREE.Group();
-    brasDroitG.position.set(0.23, 0.22, 0);
-    const bDGeo = new THREE.CylinderGeometry(0.065, 0.055, 0.40, 10);
-    const bD = new THREE.Mesh(bDGeo, corpsMat);
-    bD.position.y = -0.20;
-    brasDroitG.add(bD);
-    const mainDGeo = new THREE.SphereGeometry(0.06, 8, 8);
-    const mainD = new THREE.Mesh(mainDGeo, peauMat);
-    mainD.position.y = -0.42;
-    brasDroitG.add(mainD);
-    miiGroupe.add(brasDroitG);
-    miiGroupe.userData.brasDroit = brasDroitG;
   }
-
-  // === PERSONNAGE JOUEUR (Mii transparent, plastique brillant) ===
-  const jPeauMat = new THREE.MeshPhongMaterial({ color: 0xFFCCA0, transparent: true, opacity: 0.42, shininess: 60 });
-  const jHautMat = new THREE.MeshPhongMaterial({ color: 0x2266EE, transparent: true, opacity: 0.42, shininess: 90, specular: 0x4477CC });
-  const jBasMat  = new THREE.MeshPhongMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.42, shininess: 60 });
-  const jChevMat = new THREE.MeshPhongMaterial({ color: 0x3B2314, transparent: true, opacity: 0.42, shininess: 50 });
-
-  joueurMii.position.set(0, 0, 7.2);
-  scene.add(joueurMii);
-
-  // Torse
-  const jTorsoGeo = new THREE.CylinderGeometry(0.22, 0.26, 0.52, 12);
-  const jTorso = new THREE.Mesh(jTorsoGeo, jHautMat);
-  jTorso.position.set(0, 0.82, 0);
-  jTorso.castShadow = true;
-  joueurMii.add(jTorso);
-
-  // Tête
-  const jTeteGeo = new THREE.SphereGeometry(0.30, 14, 12);
-  const jTete = new THREE.Mesh(jTeteGeo, jPeauMat);
-  jTete.scale.set(1.05, 1.12, 1.0);
-  jTete.position.set(0, 1.60, 0);
-  jTete.castShadow = true;
-  joueurMii.add(jTete);
-
-  // Cheveux joueur
-  const jChevGeo = new THREE.SphereGeometry(0.31, 12, 8, 0, Math.PI*2, 0, Math.PI/2);
-  const jChev = new THREE.Mesh(jChevGeo, jChevMat);
-  jChev.position.set(0, 1.71, 0);
-  joueurMii.add(jChev);
-
-  // Jambes
-  [-0.14, 0.14].forEach(x => {
-    const jGeo = new THREE.CylinderGeometry(0.11, 0.10, 0.50, 10);
-    const j = new THREE.Mesh(jGeo, jBasMat);
-    j.position.set(x, 0.30, 0);
-    joueurMii.add(j);
-  });
-
-  // Bras droit joueur (pivot épaule)
-  joueurBras.position.set(0.32, 1.12, 0);
-  joueurMii.add(joueurBras);
-  const jBrasGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.48, 10);
-  const jBrasMesh = new THREE.Mesh(jBrasGeo, jHautMat);
-  jBrasMesh.position.set(0, -0.24, 0);
-  joueurBras.add(jBrasMesh);
-  // Main
-  const jMainGeo = new THREE.SphereGeometry(0.09, 10, 10);
-  const jMain = new THREE.Mesh(jMainGeo, jPeauMat);
-  jMain.position.set(0, -0.50, 0);
-  joueurBras.add(jMain);
-  joueurBras.rotation.z = -0.4;
-}
-creerPiste();
-
-// ============================================
-//  ANIMATIONS SPECTATEURS
-// ============================================
-
-// 1. APPLAUDISSEMENTS (strike / spare)
-function animerApplaudissements(duree = 2500) {
-  if (animSpectateurs) clearTimeout(animSpectateurs);
-  let t = 0;
-  const vitesse = 0.12;
-
-  function frame() {
-    t += vitesse;
-    spectateurs.forEach((mii, i) => {
-      const phase = t + i * 0.4; // décalage entre Miis
-      const angle = Math.sin(phase) * (Math.PI / 2.5); // bras qui battent
-      if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z =  angle;
-      if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = -angle;
-      // Sautillement
-      mii.position.y = mii.userData.yBase + Math.abs(Math.sin(phase)) * 0.06;
+  if (indexTrou >= 2) {
+    [[-5, -dist*0.3], [5, -dist*0.5], [0, -dist*0.7]].forEach(([x,z]) => {
+      const bG = new THREE.CylinderGeometry(3, 3, 0.12, 14);
+      const b  = new THREE.Mesh(bG, sandMat);
+      b.position.set(x, 0.01, z);
+      terrainGroupe.add(b);
     });
   }
 
-  // Lance l'animation dans la boucle principale
-  ETAT.animSpec = { type: 'applaudir', fn: frame, fin: Date.now() + duree };
-}
-
-// 2. ROTATION + SAUT (rigole)
-function animerRotation(duree = 2200) {
-  if (animSpectateurs) clearTimeout(animSpectateurs);
-  let t = 0;
-
-  function frame() {
-    t += 0.1;
-    spectateurs.forEach((mii, i) => {
-      const phase = t + i * 0.25;
-      mii.rotation.y = phase * 1.2;
-      // Bras tendus sur les côtés en croix
-      if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z =  Math.PI / 2;
-      if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = -Math.PI / 2;
-      // Saut synchronisé avec la rotation
-      mii.position.y = mii.userData.yBase + Math.abs(Math.sin(phase * 1.5)) * 0.18;
+  // ── Arbres décoratifs ──
+  const trunkMat  = phong(0x6D4C41, 40, 0x332211);
+  const leafMats  = [phong(0x388E3C,20), phong(0x2E7D32,20), phong(0x43A047,20), phong(0x1B5E20,20)];
+  const nbTrees   = 8 + indexTrou * 6;
+  for (let i = 0; i < nbTrees; i++) {
+    const side = i % 2 === 0 ? -1 : 1;
+    const xPos = side * (9 + Math.random() * 8);
+    const zPos = -Math.random() * (dist + 10);
+    const h    = 3 + Math.random() * 3;
+    // Tronc
+    const tG = new THREE.CylinderGeometry(0.18, 0.25, h, 7);
+    const t  = new THREE.Mesh(tG, trunkMat);
+    t.position.set(xPos, h/2, zPos);
+    t.castShadow = true;
+    terrainGroupe.add(t);
+    // Feuillage (3 cônes)
+    const lMat = leafMats[i % leafMats.length];
+    [0, 0.9, 1.7].forEach((dy, li) => {
+      const r = 1.8 - li * 0.4;
+      const cG = new THREE.ConeGeometry(r, 1.6, 8);
+      const c  = new THREE.Mesh(cG, lMat);
+      c.position.set(xPos, h + dy + 0.6, zPos);
+      c.castShadow = true;
+      terrainGroupe.add(c);
     });
   }
 
-  ETAT.animSpec = { type: 'tourner', fn: frame, fin: Date.now() + duree };
-
-  setTimeout(() => {
-    spectateurs.forEach(mii => {
-      mii.rotation.y = 0;
-      if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z = 0;
-      if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = 0;
-      mii.position.y = mii.userData.yBase;
+  // ── Collines arrière (montagnes simplifiées) ──
+  if (indexTrou === 2) {
+    [[-20, -dist-20, 25], [20, -dist-15, 20], [0, -dist-30, 30]].forEach(([x,z,r]) => {
+      const mG = new THREE.SphereGeometry(r, 12, 8, 0, Math.PI*2, 0, Math.PI/2);
+      const m  = new THREE.Mesh(mG, phong(0x5D8A5E, 5));
+      m.position.set(x, -2, z);
+      terrainGroupe.add(m);
     });
-    ETAT.animSpec = null;
-  }, duree + 100);
-}
-
-// 3. ANIMATION DU BRAS DU JOUEUR (lancer)
-function animerLancer() {
-  let t = 0;
-  const dureeAnim = 0.6; // secondes simulées
-
-  function frame() {
-    t += 0.05;
-    if (t <= 1) {
-      // Recul : bras remonte vers l'arrière
-      joueurBras.rotation.x = -Math.PI / 3 * Math.sin(t * Math.PI);
-      joueurBras.rotation.z = -0.4 - Math.sin(t * Math.PI) * 0.3;
-      requestAnimationFrame(frame);
-    } else {
-      // Retour position repos
-      joueurBras.rotation.x = 0;
-      joueurBras.rotation.z = -0.4;
-    }
   }
-  frame();
+
+  // ── Green (zone autour du trou) ──
+  const greenMat = phong(0x66BB6A, 30, 0x335533);
+  const greenG = new THREE.CylinderGeometry(5, 5, 0.22, 20);
+  const green  = new THREE.Mesh(greenG, greenMat);
+  green.position.set(0, 0.01, -dist);
+  green.receiveShadow = true;
+  terrainGroupe.add(green);
+
+  // ── Trou dans le green ──
+  const trouG = new THREE.CylinderGeometry(0.22, 0.22, 0.3, 14);
+  trou3D = new THREE.Mesh(trouG, phong(0x111111, 5));
+  trou3D.position.set(0, 0.1, -dist);
+  terrainGroupe.add(trou3D);
+
+  // ── Drapeau ──
+  const matFlagMat = phong(0xCCCCCC, 120, 0xAAAAAA);
+  const polGeo = new THREE.CylinderGeometry(0.04, 0.04, 2.8, 8);
+  const pol = new THREE.Mesh(polGeo, matFlagMat);
+  pol.position.set(0.3, 1.4, -dist);
+  terrainGroupe.add(pol);
+
+  const flagGeo = new THREE.BoxGeometry(0.6, 0.4, 0.02);
+  flagMesh = new THREE.Mesh(flagGeo, phong(0xFF2222, 40, 0x881111));
+  flagMesh.position.set(0.6, 2.5, -dist);
+  terrainGroupe.add(flagMesh);
+
+  // ── Tee de départ (carré blanc) ──
+  const teeG = new THREE.BoxGeometry(2, 0.05, 2);
+  const tee  = new THREE.Mesh(teeG, phong(0xFFFFFF, 30, 0xAAAA88));
+  tee.position.set(0, 0.12, 8);
+  terrainGroupe.add(tee);
+
+  scene.add(terrainGroupe);
 }
 
-// ── Boule de bowling — plastique brillant bleu Wii ──
-const bouleMat = new THREE.MeshPhongMaterial({
-  color: 0x2255EE, shininess: 180, specular: 0x88AAFF
-});
-const bouleGeo = new THREE.SphereGeometry(0.22, 20, 20);
-const boule = new THREE.Mesh(bouleGeo, bouleMat);
-boule.position.set(0, 0.22, 6);
-boule.castShadow = true;
-scene.add(boule);
-
-// Trous de la boule
-const trouMat = new THREE.MeshPhongMaterial({ color: 0x001133, shininess: 20 });
-[[-0.08, 0.12, -0.18], [0, 0.05, -0.20], [0.08, 0.12, -0.18]].forEach(([x,y,z]) => {
-  const tGeo = new THREE.SphereGeometry(0.028, 8, 8);
-  const t = new THREE.Mesh(tGeo, trouMat);
-  t.position.set(x, y + 0.22, z);
-  scene.add(t);
-});
-
-// ── Quilles ──
-const POSITIONS_QUILLES = [
-  [0,    0, -13],
-  [-0.32, 0, -13.55], [0.32, 0, -13.55],
-  [-0.64, 0, -14.1],  [0,    0, -14.1],  [0.64, 0, -14.1],
-  [-0.96, 0, -14.65], [-0.32, 0, -14.65],[0.32, 0, -14.65],[0.96, 0, -14.65]
-];
-
-let quilles = [];
-
-// Chaque quille a une vélocité physique pour rouler
-function creerQuilles() {
-  quilles.forEach(q => scene.remove(q));
-  quilles = [];
-
-  POSITIONS_QUILLES.forEach(pos => {
-    const groupe = new THREE.Group();
-
-    // Corps — plastique blanc très brillant
-    const corpsGeo = new THREE.CylinderGeometry(0.052, 0.10, 0.50, 12);
-    const corpsMat = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, shininess: 160, specular: 0xBBBBBB });
-    const corps = new THREE.Mesh(corpsGeo, corpsMat);
-    corps.position.y = 0.25;
-    corps.castShadow = true;
-    groupe.add(corps);
-
-    // Col
-    const colGeo = new THREE.CylinderGeometry(0.048, 0.052, 0.09, 12);
-    const colMat = new THREE.MeshPhongMaterial({ color: 0xF8F8F8, shininess: 140, specular: 0xAAAAAA });
-    const col = new THREE.Mesh(colGeo, colMat);
-    col.position.y = 0.52;
-    groupe.add(col);
-
-    // Tête ronde
-    const teteGeo = new THREE.SphereGeometry(0.09, 12, 12);
-    const teteMat = new THREE.MeshPhongMaterial({ color: 0xFFFFFF, shininess: 160, specular: 0xBBBBBB });
-    const tete = new THREE.Mesh(teteGeo, teteMat);
-    tete.position.y = 0.63;
-    groupe.add(tete);
-
-    // Bande rouge brillante (signature Wii)
-    const bandeMat = new THREE.MeshPhongMaterial({ color: 0xFF2222, shininess: 120, specular: 0xFF8888 });
-    [0.19, 0.33].forEach(y => {
-      const bGeo = new THREE.CylinderGeometry(0.075, 0.075, 0.032, 12);
-      const b = new THREE.Mesh(bGeo, bandeMat);
-      b.position.y = y;
-      groupe.add(b);
-    });
-
-    groupe.position.set(...pos);
-    groupe.userData = {
-      tombee: false,
-      posOriginale: new THREE.Vector3(...pos),
-      velX: 0, velZ: 0,
-      enMouvement: false,
-      rotVel: 0,
-    };
-    scene.add(groupe);
-    quilles.push(groupe);
-  });
-}
-creerQuilles();
-
-// ============================================
-//  CAPTEURS
-// ============================================
-// Capteurs — fallback si sensors.js non chargé
-const gyro  = typeof Gyroscope      !== 'undefined' ? new Gyroscope()           : { start: async()=>{}, stop:()=>{}, getNormalizedX:()=>0, getNormalizedY:()=>0, x:0, y:0, z:0 };
-const swipe = typeof SwipeDetector  !== 'undefined' ? new SwipeDetector(canvas) : { onSwipe: null, onTap: null };
-
-// Quand le joueur swipe vers le haut → lancer
-swipe.onSwipe = (direction, puissance) => {
-  if (direction === 'haut' && ETAT.peutLancer && !ETAT.ballEnMouvement) {
-    lancerBoule(puissance);
-  }
-};
-
-// ============================================
-//  LOGIQUE DU JEU
-// ============================================
-
-// Variables de physique de la boule
-let bouleVitesse = { x: 0, z: 0 };
-let bouleEnVol = false;
-let cameraZoom = false;
-let cameraMode = 'jeu'; // 'jeu' | 'public' | 'reset'
-const CAM_JEU    = { x: 0, y: 1.8, z: 9.5,  lx: 0, ly: 0.5,  lz: 0 };
-const CAM_PUBLIC = { x: 0, y: 2.5, z: 2.0,  lx: 0, ly: 1.2,  lz: -6 };
-
-function zoomVersCrowd(duree = 2800) {
-  cameraMode = 'public';
-  setTimeout(() => { cameraMode = 'reset'; }, duree);
+// ══════════════════════════════════════════
+//  BALLE DE GOLF
+// ══════════════════════════════════════════
+function creerBalle() {
+  if (balleMesh) scene.remove(balleMesh);
+  const bGeo = new THREE.SphereGeometry(0.2, 14, 14);
+  const bMat = new THREE.MeshPhongMaterial({ color:0xFFFFFF, shininess:160, specular:0xCCCCCC });
+  balleMesh = new THREE.Mesh(bGeo, bMat);
+  balleMesh.castShadow = true;
+  scene.add(balleMesh);
 }
 
-function lerpCam(from, to, t) {
-  camera.position.x += (to.x - camera.position.x) * t;
-  camera.position.y += (to.y - camera.position.y) * t;
-  camera.position.z += (to.z - camera.position.z) * t;
-  const lx = camera.position.x + (to.lx - camera.position.x - 0) * t;
-  const ly = (to.ly - 0) * t + 0;
-  camera.lookAt(to.lx, to.ly, to.lz);
-}
-
-function lancerBoule(puissance) {
-  if (ETAT.ballEnMouvement) return;
-
-  ETAT.ballEnMouvement = true;
-  ETAT.peutLancer = false;
-  document.getElementById('swipe-hint').style.opacity = '0';
-
-  // Animation du bras !
-  animerLancer();
-
-  // Vitesse basée sur la puissance du swipe et l'inclinaison du gyroscope
-  const vitesseZ = -0.08 - (puissance / 100) * 0.12;
-  const vitesseX = gyro.getNormalizedX(25) * 0.04;
-
-  bouleVitesse = { x: vitesseX, z: vitesseZ };
-  bouleEnVol = true;
-
-  // Zoom caméra progressif
-  setTimeout(() => { cameraZoom = true; }, 500);
-}
-
-function resetBoule() {
-  boule.position.set(0, 0.22, 6);
-  bouleVitesse = { x: 0, z: 0 };
-  bouleEnVol = false;
-  cameraZoom = false;
-  ETAT.ballEnMouvement = false;
-  camera.position.set(0, 1.8, 9.5);
+function resetBalle() {
+  ballePos.set(0, 0.2, 8);
+  balleVel.set(0, 0, 0);
+  if (balleMesh) balleMesh.position.copy(ballePos);
+  ETAT.ballEnVol  = false;
+  cameraMode = 'jeu';
+  camera.position.set(CAM_BASE.x, CAM_BASE.y, CAM_BASE.z);
   camera.lookAt(0, 0.5, 0);
 }
 
-// ============================================
-//  PHYSIQUE DES QUILLES — VRAIE SIMULATION
-// ============================================
+// ══════════════════════════════════════════
+//  OMBRE BALLE AU SOL
+// ══════════════════════════════════════════
+const ombreGeo = new THREE.CircleGeometry(0.25, 10);
+const ombreMat = new THREE.MeshBasicMaterial({ color:0x000000, transparent:true, opacity:0.25 });
+const ombreMesh = new THREE.Mesh(ombreGeo, ombreMat);
+ombreMesh.rotation.x = -Math.PI/2;
+ombreMesh.position.y = 0.02;
+scene.add(ombreMesh);
 
-function checkCollisions() {
-  quilles.forEach(quille => {
-    if (quille.userData.tombee) return;
-    const dist = boule.position.distanceTo(quille.position);
-    if (dist < 0.4) {
-      const dirX = (quille.position.x - boule.position.x);
-      const dirZ = (quille.position.z - boule.position.z);
-      const len  = Math.sqrt(dirX*dirX + dirZ*dirZ) || 1;
-      // Force fixe forte + bonus vitesse boule
-      const force = 2.5 + (Math.abs(bouleVitesse.z) + Math.abs(bouleVitesse.x)) * 8;
-      impacterQuille(quille, (dirX/len) * force, (dirZ/len) * force);
-    }
+// ══════════════════════════════════════════
+//  FLÈCHE DE VISÉE AU SOL
+// ══════════════════════════════════════════
+const flecheG = new THREE.Group();
+scene.add(flecheG);
+const segs = [];
+for (let i=0; i<16; i++) {
+  const sG = new THREE.BoxGeometry(0.05, 0.01, 0.2);
+  const sM = new THREE.MeshBasicMaterial({ color:0xFFFF00, transparent:true, opacity:1-(i/16)*0.7 });
+  const s  = new THREE.Mesh(sG, sM);
+  flecheG.add(s); segs.push(s);
+}
+const ptGeo = new THREE.ConeGeometry(0.09, 0.28, 4);
+const ptMat = new THREE.MeshBasicMaterial({ color:0xFFFF00 });
+const ptMesh = new THREE.Mesh(ptGeo, ptMat);
+flecheG.add(ptMesh);
+
+function mettreAJourFleche() {
+  if (ETAT.ballEnVol || !ETAT.peutFrapper) { flecheG.visible=false; return; }
+  flecheG.visible = true;
+  const nx    = gyro.getNormalizedX(30);
+  const angle = nx * 0.4;
+  const bx    = ballePos.x, bz = ballePos.z;
+  segs.forEach((s, i) => {
+    const t = i * 0.5;
+    s.position.set(bx + Math.sin(angle)*t, 0.012, bz - Math.cos(angle)*t);
+    s.rotation.y = angle;
   });
+  const tf = segs.length * 0.5;
+  ptMesh.position.set(bx + Math.sin(angle)*tf, 0.012, bz - Math.cos(angle)*tf);
+  ptMesh.rotation.set(Math.PI/2, 0, angle);
 }
 
-function impacterQuille(quille, vx, vz) {
-  if (quille.userData.tombee) return;
-  quille.userData.tombee      = true;
-  quille.userData.velX        = vx;
-  quille.userData.velZ        = vz;
-  quille.userData.rotVel      = 3.5; // vitesse de rotation fixe rapide
-  quille.userData.enMouvement = true;
+// ══════════════════════════════════════════
+//  CAPTEURS
+// ══════════════════════════════════════════
+const gyro  = typeof Gyroscope     !== 'undefined' ? new Gyroscope()           : { start:async()=>{}, stop:()=>{}, getNormalizedX:()=>0, getNormalizedY:()=>0, x:0, y:0, z:0 };
+const swipe = typeof SwipeDetector !== 'undefined' ? new SwipeDetector(canvas) : { onSwipe:null };
+
+let swipeEnCours = false;
+let swipeStartY  = 0;
+let puissanceEnCours = 0;
+
+// Swipe manuel pour la puissance (appui → relâche)
+canvas.addEventListener('touchstart', e => {
+  if (!ETAT.peutFrapper || ETAT.ballEnVol) return;
+  swipeEnCours = true;
+  swipeStartY  = e.touches[0].clientY;
+  document.getElementById('power-bar-wrap').classList.add('show');
+}, { passive:true });
+
+canvas.addEventListener('touchmove', e => {
+  if (!swipeEnCours) return;
+  const dy = swipeStartY - e.touches[0].clientY;
+  puissanceEnCours = Math.max(0, Math.min(100, (dy / (window.innerHeight * 0.55)) * 100));
+  document.getElementById('power-fill').style.height = puissanceEnCours + '%';
+  document.getElementById('power-val').textContent   = Math.round(puissanceEnCours) + '%';
+}, { passive:true });
+
+canvas.addEventListener('touchend', e => {
+  if (!swipeEnCours) return;
+  swipeEnCours = false;
+  document.getElementById('power-bar-wrap').classList.remove('show');
+  if (puissanceEnCours > 5) frapper(puissanceEnCours);
+  puissanceEnCours = 0;
+  document.getElementById('power-fill').style.height = '0%';
+  document.getElementById('power-val').textContent   = '0%';
+}, { passive:true });
+
+// ══════════════════════════════════════════
+//  PHYSIQUE DU TIR
+// ══════════════════════════════════════════
+const GRAVITY = -0.012;
+
+function frapper(puissance) {
+  if (ETAT.ballEnVol || !ETAT.peutFrapper || ETAT.inTrou) return;
+  ETAT.peutFrapper = false;
+  ETAT.ballEnVol   = true;
+  ETAT.coupsParTrou[ETAT.trou]++;
+  ETAT.coupsTotal++;
+  document.getElementById('hud-shots').textContent = ETAT.coupsTotal;
+  document.getElementById('swipe-hint').style.opacity = '0';
+
+  const nx    = gyro.getNormalizedX(30);
+  const angle = nx * 0.4;
+  const force = 0.03 + (puissance / 100) * 0.22;
+  const hauteur = 0.04 + (puissance/100) * 0.15;
+
+  balleVel.set(
+    Math.sin(angle) * force,
+    hauteur,
+    -Math.cos(angle) * force
+  );
+
+  cameraMode = 'vol';
+  if (navigator.vibrate) navigator.vibrate(40);
 }
 
-// Met à jour TOUTES les quilles en mouvement à chaque frame
-function updateQuilles() {
-  const FRICTION  = 0.92;
-  const RAYON_HIT = 0.42;
-
-  quilles.forEach(quille => {
-    if (!quille.userData.enMouvement) return;
-
-    const ud = quille.userData;
-    const speed = Math.sqrt(ud.velX*ud.velX + ud.velZ*ud.velZ);
-
-    // Déplace la quille
-    quille.position.x += ud.velX * 0.04;
-    quille.position.z += ud.velZ * 0.04;
-
-    // Rotation de chute — rapide et visible
-    const angleMax = Math.PI / 2;
-    quille.rotation.x = Math.min(angleMax, quille.rotation.x + ud.rotVel * 0.04);
-
-    // Oriente dans la direction du mouvement
-    if (speed > 0.1) {
-      quille.rotation.y = Math.atan2(ud.velX, ud.velZ);
-    }
-
-    // Friction progressive
-    ud.velX   *= FRICTION;
-    ud.velZ   *= FRICTION;
-    ud.rotVel *= FRICTION;
-
-    // Descend au sol
-    quille.position.y = Math.max(-0.15, quille.position.y - 0.015);
-
-    // Arrêt
-    if (speed < 0.05 && quille.rotation.x >= angleMax - 0.05) {
-      ud.enMouvement = false;
-    }
-
-    // Collision quille → quille (domino en chaîne)
-    quilles.forEach(autre => {
-      if (autre === quille) return;
-      const d = quille.position.distanceTo(autre.position);
-      if (d < RAYON_HIT && speed > 0.4) {
-        const dx = (autre.position.x - quille.position.x) / (d || 1);
-        const dz = (autre.position.z - quille.position.z) / (d || 1);
-        const force = speed * 0.7;
-        if (!autre.userData.tombee) {
-          impacterQuille(autre, dx * force, dz * force);
-        } else if (autre.userData.enMouvement) {
-          autre.userData.velX += dx * force * 0.5;
-          autre.userData.velZ += dz * force * 0.5;
-        }
-        ud.velX *= 0.8;
-        ud.velZ *= 0.8;
-      }
-    });
-  });
+// ══════════════════════════════════════════
+//  DÉTECTION DANS LE TROU
+// ══════════════════════════════════════════
+function checkDansTrou() {
+  const dx = ballePos.x - 0;
+  const dz = ballePos.z - (-TROUS[ETAT.trou].distance);
+  return Math.sqrt(dx*dx + dz*dz) < 0.55 && ballePos.y < 0.4;
 }
 
-function compterQuillesTombees() {
-  return quilles.filter(q => q.userData.tombee).length;
+function balleTombeDansTrou() {
+  ETAT.inTrou   = true;
+  ETAT.ballEnVol = false;
+  if (balleMesh) balleMesh.visible = false;
+  // Animation balle qui tombe dans le trou
+  setTimeout(() => afficherResultatTrou(), 600);
 }
 
-// Fin du lancer
-function finLancer() {
-  const tombees = compterQuillesTombees();
-  const nouvellesTombees = tombees - ETAT.quillesTombeesFrame;
-  ETAT.quillesTombees = tombees;
+// ══════════════════════════════════════════
+//  RÉSULTAT DU TROU
+// ══════════════════════════════════════════
+function afficherResultatTrou() {
+  const t     = ETAT.trou;
+  const coups = ETAT.coupsParTrou[t];
+  const par   = TROUS[t].par;
+  const diff  = coups - par;
 
-  const throws = ETAT.throwsParFrame[ETAT.frameActuelle];
-  throws.push(nouvellesTombees);
-  ETAT.quillesTombeesFrame = tombees;
+  let emoji, titre, sub, classe;
+  if (coups === 1)        { emoji='🦅'; titre='Hole-in-One !'; sub='Coup de légende !!!'; classe='eagle'; }
+  else if (diff <= -2)    { emoji='🦅'; titre='Eagle !';       sub=`${-diff} sous le par !`; classe='eagle'; }
+  else if (diff === -1)   { emoji='🐦'; titre='Birdie !';      sub='−1 sous le par';    classe='birdie'; }
+  else if (diff === 0)    { emoji='✅'; titre='Par !';          sub='Exactement dans le par'; classe=''; }
+  else if (diff === 1)    { emoji='😅'; titre='Bogey',         sub='+1 au dessus du par'; classe='bogey'; }
+  else                    { emoji='😬'; titre=`+${diff}`,      sub=`${diff} coups de trop`; classe='double'; }
 
-  // Calcule et affiche le résultat
-  afficherResultatLancer(tombees, nouvellesTombees, throws);
-  mettreAJourScore();
-  mettreAJourFramesBar();
+  document.getElementById('res-emoji').textContent = emoji;
+  document.getElementById('res-title').textContent = titre;
+  document.getElementById('res-sub').textContent   = sub;
+
+  // Carte score
+  const el = document.getElementById(`hcoup-${t}`);
+  el.textContent = coups;
+  el.className = `hole-coup ${classe}`;
+
+  // Score adversaire pour ce trou
+  const coupsAdv = genererCoupsAdv(par, ETAT.niveauChoisi);
+  ETAT.coupsAdvParTrou[t] = coupsAdv;
+  ETAT.coupsAdvTotal += coupsAdv;
+  mettreAJourHUDAdv();
+
+  document.getElementById('result-overlay').classList.add('show');
 }
 
-function afficherResultatLancer(total, nouvelles, throws) {
-  const overlay = document.getElementById('result-overlay');
-  const emoji = document.getElementById('result-emoji');
-  const titre = document.getElementById('result-title');
-  const sub = document.getElementById('result-sub');
-
-  if (throws.length === 1 && nouvelles === 10) {
-    emoji.textContent = '🎳';
-    titre.textContent = 'STRIKE !';
-    sub.textContent = 'Toutes les quilles !';
-    titre.style.color = '#F5A623';
-    animerApplaudissements(3000);
-    zoomVersCrowd(3000);
-  } else if (throws.length === 2 && total === 10) {
-    emoji.textContent = '✨';
-    titre.textContent = 'SPARE !';
-    sub.textContent = 'Bien joué !';
-    titre.style.color = '#5BBF6A';
-    animerApplaudissements(2500);
-    zoomVersCrowd(2500);
-  } else if (nouvelles === 0) {
-    emoji.textContent = '😬';
-    titre.textContent = 'Rigole !';
-    sub.textContent = 'Retente ta chance...';
-    titre.style.color = '#F55A5A';
-    animerRotation(2200);
-    zoomVersCrowd(2200);
-  } else {
-    emoji.textContent = '👍';
-    titre.textContent = `${nouvelles} quille${nouvelles > 1 ? 's' : ''} !`;
-    sub.textContent = `${10 - total} restante${10 - total > 1 ? 's' : ''}`;
-    titre.style.color = 'white';
-  }
-
-  overlay.classList.add('show');
-}
-
-function nextThrow() {
-  document.getElementById('result-overlay').classList.remove('show');
-
-  const throws = ETAT.throwsParFrame[ETAT.frameActuelle];
-  const strike = throws.length === 1 && throws[0] === 10;
-
-  if (strike || throws.length >= 2) {
-    // Passe à la frame suivante
-    ETAT.frameActuelle++;
-    ETAT.lancerActuel = 0;
-    ETAT.quillesTombeesFrame = 0;
-
-    // Score adversaire après chaque frame !
-    mettreAJourScoreAdv();
-
-    creerQuilles();
-
-    if (ETAT.frameActuelle >= 3) {
-      finPartie();
-      return;
-    }
-  } else {
-    // Deuxième lancer de la même frame
-    ETAT.lancerActuel = 1;
-    // Garde les quilles tombées
-  }
-
-  resetBoule();
-  ETAT.peutLancer = true;
-  document.getElementById('swipe-hint').style.opacity = '1';
-  mettreAJourHUD();
-}
-
-function mettreAJourScore() {
-  // Calcul officiel du bowling :
-  // On a tous les lancers à plat dans un tableau
-  // Strike  → 10 + 2 prochains lancers
-  // Spare   → 10 + prochain lancer
-  // Normal  → somme des 2 lancers
-
-  // Reconstruit la liste plate de tous les lancers
-  const tous = [];
-  ETAT.throwsParFrame.forEach(t => t.forEach(v => tous.push(v)));
-
-  let total = 0;
-  let idx = 0; // index dans le tableau plat
-
-  for (let f = 0; f < 3; f++) {
-    const throws = ETAT.throwsParFrame[f];
-    if (throws.length === 0) break;
-
-    if (throws[0] === 10) {
-      // STRIKE : 10 + 2 prochains lancers
-      const bonus1 = tous[idx + 1] ?? 0;
-      const bonus2 = tous[idx + 2] ?? 0;
-      total += 10 + bonus1 + bonus2;
-      idx += 1; // strike = 1 lancer
-    } else if (throws.length >= 2 && throws[0] + throws[1] === 10) {
-      // SPARE : 10 + prochain lancer
-      const bonus = tous[idx + 2] ?? 0;
-      total += 10 + bonus;
-      idx += 2;
-    } else {
-      // Normal
-      total += (throws[0] ?? 0) + (throws[1] ?? 0);
-      idx += throws.length;
-    }
-  }
-
-  ETAT.scoreTotal = total;
-  document.getElementById('hud-score').textContent = total;
-}
-
-function mettreAJourHUD() {
-  document.getElementById('hud-frame').textContent = `${ETAT.frameActuelle + 1} / 3`;
-  document.getElementById('hud-pins').textContent = 10 - ETAT.quillesTombeesFrame;
-}
-
-function mettreAJourFramesBar() {
-  const bar = document.getElementById('frames-bar');
-  bar.innerHTML = '';
-
-  // Reconstruit le tableau plat pour les scores cumulés
-  const tous = [];
-  ETAT.throwsParFrame.forEach(t => t.forEach(v => tous.push(v)));
-
-  let scoresCumules = [];
-  let idx = 0;
-  let cumul = 0;
-
-  for (let f = 0; f < 3; f++) {
-    const throws = ETAT.throwsParFrame[f];
-    if (throws.length === 0) { scoresCumules.push(null); idx++; continue; }
-
-    let scoreFrame = 0;
-    if (throws[0] === 10) {
-      scoreFrame = 10 + (tous[idx+1] ?? 0) + (tous[idx+2] ?? 0);
-      idx += 1;
-    } else if (throws.length >= 2 && throws[0] + throws[1] === 10) {
-      scoreFrame = 10 + (tous[idx+2] ?? 0);
-      idx += 2;
-    } else {
-      scoreFrame = (throws[0] ?? 0) + (throws[1] ?? 0);
-      idx += throws.length;
-    }
-
-    // N'affiche le score que si la frame est complète
-    const frameComplete = throws[0] === 10 || throws.length >= 2;
-    // Et si le bonus est connu (strike/spare : on a les lancers suivants)
-    const bonusConnu = throws[0] !== 10 && !(throws.length >= 2 && throws[0]+throws[1]===10)
-      || (throws[0] === 10 && ETAT.throwsParFrame[f+1]?.length >= 1 && (ETAT.throwsParFrame[f+1][0] !== 10 ? ETAT.throwsParFrame[f+1].length >= 2 : ETAT.throwsParFrame[f+2]?.length >= 1))
-      || (throws.length >= 2 && throws[0]+throws[1]===10 && ETAT.throwsParFrame[f+1]?.length >= 1);
-
-    if (frameComplete && bonusConnu) {
-      cumul += scoreFrame;
-      scoresCumules.push(cumul);
-    } else if (frameComplete) {
-      scoresCumules.push('...'); // En attente du bonus
-    } else {
-      scoresCumules.push(null);
-    }
-  }
-
-  for (let f = 0; f < 3; f++) {
-    const throws = ETAT.throwsParFrame[f];
-    const div = document.createElement('div');
-    div.className = `frame${f === ETAT.frameActuelle ? ' active' : ''}`;
-
-    const num = document.createElement('div');
-    num.className = 'frame-num';
-    num.textContent = `F${f + 1}`;
-
-    const throwsDiv = document.createElement('div');
-    throwsDiv.className = 'frame-throws';
-
-    throws.forEach((t, i) => {
-      const box = document.createElement('div');
-      box.className = 'throw-box';
-      if (i === 0 && t === 10) {
-        box.textContent = 'X'; box.classList.add('strike');
-      } else if (i === 1 && throws[0] + t === 10) {
-        box.textContent = '/'; box.classList.add('spare');
-      } else {
-        box.textContent = t;
-      }
-      throwsDiv.appendChild(box);
-    });
-
-    const scoreDiv = document.createElement('div');
-    scoreDiv.className = 'frame-score';
-    if (scoresCumules[f] !== null && scoresCumules[f] !== undefined) {
-      scoreDiv.textContent = scoresCumules[f];
-    }
-
-    div.appendChild(num);
-    div.appendChild(throwsDiv);
-    div.appendChild(scoreDiv);
-    bar.appendChild(div);
-  }
-}
-
-// ============================================
-//  SCORE ADVERSAIRE — PAR FRAME, RÉALISTE
-// ============================================
-
-// Scores par frame selon le niveau (quilles tombées sur 10, par lancer)
-// Facile  : 0-6 par frame  → total ~0-18 sur 3 frames
-// Moyen   : 5-16 par frame → total ~15-48
-// Difficile: 15-25 par frame → total ~45-75
-// Champion (rare) : jusqu'à 30 par frame → total ~90
-
-// ============================================
-//  SCORE ADVERSAIRE — RÈGLES OFFICIELLES
-// ============================================
-
-// L'IA génère des lancers réalistes, on calcule le vrai score
-// Facile   : jamais de strike/spare → 2-6 pts/frame → ~6-18 total
-// Moyen    : spare possible, strike rare → 5-16 pts/frame → ~15-40 total  
-// Difficile: strikes et spares réguliers → 10-25 pts/frame → ~30-70 total
-// Champion (2%) : strikes en série → jusqu'à ~90
-
-// Messages de provocation
-const PROVOCS = {
-  adv_devant:    ["😤 Il est devant toi !", "💪 Rattrape-moi si tu peux !", "😏 Trop facile...", "🎳 Regarde mon score !"],
-  joueur_devant: ["😤 Je vais te rattraper !", "🔥 C'est pas fini !", "😅 J'ai encore 2 frames !", "⚡ Je me réchauffe..."],
-  egal:          ["😬 C'est serré !", "🤝 Match nul pour l'instant...", "😮 On est à égalité !"],
-};
-
-function afficherProvoc(scoreAdv, scoreJoueur) {
-  const bubble = document.getElementById('provoc-bubble');
-  let pool;
-  if (scoreAdv > scoreJoueur)      pool = PROVOCS.adv_devant;
-  else if (scoreJoueur > scoreAdv) pool = PROVOCS.joueur_devant;
-  else                              pool = PROVOCS.egal;
-  bubble.textContent = pool[Math.floor(Math.random() * pool.length)];
-  bubble.style.display = 'block';
-  setTimeout(() => { bubble.style.display = 'none'; }, 2500);
-}
-
-function genererLancersIA(niveau) {
-  // Retourne [lancer1, lancer2?] pour une frame
+// ══════════════════════════════════════════
+//  SCORE ADVERSAIRE RÉALISTE
+// ══════════════════════════════════════════
+function genererCoupsAdv(par, niveau) {
+  // Facile : +1 à +3 par rapport au par (nul)
+  // Moyen  : par ± 1
+  // Difficile : par -1 à par
   const r = Math.random();
-
+  let diff;
   if (niveau === 'facile') {
-    // Jamais de strike, rarement spare
-    const l1 = Math.floor(Math.random() * 5);       // 0-4
-    const l2 = Math.floor(Math.random() * (6 - l1)); // complète sans spare
-    return [l1, l2];
-
+    diff = 1 + Math.floor(Math.random() * 3); // +1 à +3
   } else if (niveau === 'moyen') {
-    if (r < 0.06) return [10];                        // 6% strike
-    const l1 = 3 + Math.floor(Math.random() * 5);   // 3-7
-    if (r < 0.20) return [l1, 10 - l1];             // ~14% spare
-    const l2 = Math.floor(Math.random() * (9 - l1));
-    return [l1, Math.max(0, l2)];
-
-  } else { // difficile
-    if (r < 0.35) return [10];                       // 35% strike
-    const l1 = 5 + Math.floor(Math.random() * 4);   // 5-8
-    if (r < 0.65) return [l1, 10 - l1];             // 30% spare
-    const l2 = Math.floor(Math.random() * (10 - l1));
-    return [l1, Math.max(0, l2)];
+    diff = r < 0.2 ? -1 : r < 0.6 ? 0 : 1;  // birdie 20%, par 40%, bogey 40%
+  } else {
+    diff = r < 0.35 ? -1 : r < 0.75 ? 0 : (r < 0.97 ? 1 : -2); // eagle 3%, birdie 32%, par 40%, bogey 25%
   }
+  return Math.max(1, par + diff);
 }
 
-function scoreParFrame(niveau) {
-  // Champion : chance de strike (2%)
-  const estChampion = Math.random() < 0.02;
-  if (estChampion) return 10; // strike, bonus compté séparément
-
-  const lancers = genererLancersIA(niveau);
-  return lancers.reduce((a, b) => a + b, 0);
-}
-
-// Génère 3 frames + bonus pour strikes/spares
-function genererScoreIAComplet(niveau) {
-  const frames = [];
-  for (let f = 0; f < 3; f++) {
-    frames.push(genererLancersIA(niveau));
-  }
-
-  // Aplatit tous les lancers
-  const tous = frames.flat();
-
-  // Calcule le score officiel
-  let total = 0;
-  let idx = 0;
-  for (let f = 0; f < 3; f++) {
-    if (frames[f][0] === 10) {
-      total += 10 + (tous[idx+1] ?? 0) + (tous[idx+2] ?? 0);
-      idx += 1;
-    } else if (frames[f][0] + (frames[f][1] ?? 0) === 10) {
-      total += 10 + (tous[idx+2] ?? 0);
-      idx += 2;
-    } else {
-      total += frames[f].reduce((a,b) => a+b, 0);
-      idx += frames[f].length;
-    }
-  }
-
-  return { frames, total };
-}
-
-function mettreAJourScoreAdv() {
-  const niveau = ETAT.niveauChoisi || 'moyen';
-
-  // Génère le score de la frame actuelle de l'IA
-  const lancers = genererLancersIA(niveau);
-  const scoreFrame = lancers.reduce((a, b) => a + b, 0);
-  ETAT.scoresAdv.push(scoreFrame);
-  ETAT.scoreTotalAdv += scoreFrame;
-
-  // Anime le score
+function mettreAJourHUDAdv() {
   const el = document.getElementById('adv-score-hud');
-  el.textContent = `${ETAT.scoreTotalAdv} pts`;
-  el.classList.remove('danger');
+  el.textContent = `${ETAT.coupsAdvTotal} coups`;
+  el.classList.remove('worse');
   void el.offsetWidth;
-  el.classList.add('danger');
-
+  el.classList.add('worse');
   // Provocation
-  setTimeout(() => afficherProvoc(ETAT.scoreTotalAdv, ETAT.scoreTotal), 800);
+  setTimeout(() => afficherProvoc(), 800);
+}
+
+const PROVOCS = {
+  adv_moins: ["😤 Il fait moins de coups !", "💪 Rattrapez-le !", "😏 Il est en avance..."],
+  joueur_moins: ["😤 Je vais te rattraper !", "🔥 C'est pas fini !", "😅 J'ai encore des trous !"],
+  egal: ["😬 C'est serré !", "🤝 Égalité pour l'instant !", "⚡ Tout se joue maintenant !"],
+};
+function afficherProvoc() {
+  const p = document.getElementById('provoc');
+  const pool = ETAT.coupsAdvTotal < ETAT.coupsTotal ? PROVOCS.adv_moins
+             : ETAT.coupsTotal < ETAT.coupsAdvTotal ? PROVOCS.joueur_moins
+             : PROVOCS.egal;
+  p.textContent = pool[Math.floor(Math.random()*pool.length)];
+  p.style.display = 'block';
+  setTimeout(() => { p.style.display='none'; }, 2500);
+}
+
+// ══════════════════════════════════════════
+//  NAVIGATION ENTRE TROUS
+// ══════════════════════════════════════════
+function troupSuivant() {
+  document.getElementById('result-overlay').classList.remove('show');
+  ETAT.trou++;
+
+  if (ETAT.trou >= 3) {
+    finPartie(); return;
+  }
+
+  // Carte active
+  document.querySelectorAll('.hole-card').forEach((c,i) => {
+    c.classList.toggle('active', i === ETAT.trou);
+  });
+
+  ETAT.inTrou = false;
+  construireTrou(ETAT.trou);
+  creerBalle();
+  resetBalle();
+  mettreAJourHUD();
+  ETAT.peutFrapper = true;
+  document.getElementById('swipe-hint').style.opacity = '1';
 }
 
 function finPartie() {
-  const scoreJoueur = ETAT.scoreTotal;
-  const scoreAdv    = ETAT.scoreTotalAdv;
-  const gagne       = scoreJoueur > scoreAdv;
+  const coupsJ = ETAT.coupsTotal;
+  const coupsA = ETAT.coupsAdvTotal;
+  const gagne  = coupsJ <= coupsA; // au golf on veut MOINS de coups
 
-  document.getElementById('final-score-display').textContent = gagne ? '🏆 Victoire !' : '😔 Défaite';
-  document.getElementById('final-player').textContent = scoreJoueur;
-  document.getElementById('final-player').className = `final-player-score${gagne ? ' winner' : ''}`;
-  document.getElementById('final-adv').textContent = scoreAdv;
-  document.getElementById('final-adv').className = `final-player-score${!gagne ? ' winner' : ''}`;
-  document.getElementById('final-adv-name').textContent = ETAT.adversaire?.nom || 'CPU';
+  // Calcul différentiel par rapport au par total
+  const parTotal = TROUS.reduce((a,t)=>a+t.par,0);
+  const diffJ = coupsJ - parTotal;
+  let labelScore;
+  if (diffJ < 0)      labelScore = `${diffJ}`;
+  else if (diffJ===0) labelScore = 'E';
+  else                labelScore = `+${diffJ}`;
 
+  document.getElementById('f-score-label').textContent = labelScore;
+  document.getElementById('f-joueur').textContent      = `${coupsJ} coups`;
+  document.getElementById('f-adv').textContent         = `${coupsA} coups`;
+  document.getElementById('f-adv-name').textContent    = ETAT.adversaire?.nom || 'CPU';
+  document.getElementById('f-joueur').className        = `final-player-score${gagne?' winner':''}`;
+  document.getElementById('f-adv').className           = `final-player-score${!gagne?' winner':''}`;
+
+  const titre = gagne ? '🏆 Victoire !' : '😔 Défaite';
+  document.querySelector('#final-overlay .final-title').textContent = titre;
   document.getElementById('final-overlay').classList.add('show');
 }
 
-// ============================================
+function mettreAJourHUD() {
+  const t = ETAT.trou;
+  document.getElementById('hud-hole').textContent = `${t+1} / 3`;
+  document.getElementById('hud-shots').textContent = ETAT.coupsTotal;
+  document.getElementById('hud-par').textContent  = TROUS[t].par;
+}
+
+// ══════════════════════════════════════════
 //  DÉMARRAGE
-// ============================================
+// ══════════════════════════════════════════
 function demarrerJeu() {
   document.getElementById('start-screen').style.display = 'none';
   document.getElementById('hud-adv').style.display = 'flex';
 
   const lancer = async () => {
-    try { await gyro.start(); } catch(e) { console.warn('Gyro non dispo:', e); }
-    mettreAJourFramesBar();
+    try { await gyro.start(); } catch(e) {}
+    construireTrou(0);
+    creerBalle();
+    resetBalle();
     mettreAJourHUD();
-    ETAT.peutLancer = true;
+    ETAT.peutFrapper = true;
   };
 
   const estIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -1750,71 +845,9 @@ function demarrerJeu() {
   }
 }
 
-// ============================================
-//  FLÈCHE DE VISÉE AU SOL (style Wii)
-// ============================================
-const flecheGroupe = new THREE.Group();
-scene.add(flecheGroupe);
-
-// Segments pointillés rouges
-const NB_SEG = 14;
-const segmentsVisee = [];
-for (let i = 0; i < NB_SEG; i++) {
-  const geo = new THREE.BoxGeometry(0.045, 0.008, 0.15);
-  const mat = new THREE.MeshLambertMaterial({
-    color: 0xff2222, transparent: true, opacity: 1 - (i / NB_SEG) * 0.65
-  });
-  const seg = new THREE.Mesh(geo, mat);
-  flecheGroupe.add(seg);
-  segmentsVisee.push(seg);
-}
-// Pointe de la flèche
-const pointeGeo = new THREE.ConeGeometry(0.07, 0.22, 4);
-const pointeMat = new THREE.MeshLambertMaterial({ color: 0xff2222 });
-const pointeVisee = new THREE.Mesh(pointeGeo, pointeMat);
-flecheGroupe.add(pointeVisee);
-
-function mettreAJourFleche() {
-  if (ETAT.ballEnMouvement || !ETAT.peutLancer) {
-    flecheGroupe.visible = false;
-    return;
-  }
-  flecheGroupe.visible = true;
-
-  const nx = gyro.getNormalizedX(25);
-  const angle = nx * 0.32; // angle de visée en radians
-
-  // Boule glisse pour montrer la direction
-  boule.position.x += (nx * 1.1 - boule.position.x) * 0.1;
-
-  // Place les segments sur la piste
-  const startZ = boule.position.z - 0.6;
-  const pas = 0.42;
-
-  segmentsVisee.forEach((seg, i) => {
-    const t = i * pas;
-    seg.position.set(
-      boule.position.x + Math.sin(angle) * t,
-      0.012,
-      startZ - Math.cos(angle) * t
-    );
-    seg.rotation.y = angle;
-  });
-
-  // Pointe au bout de la ligne
-  const tFin = NB_SEG * pas;
-  pointeVisee.position.set(
-    boule.position.x + Math.sin(angle) * tFin,
-    0.012,
-    startZ - Math.cos(angle) * tFin
-  );
-  pointeVisee.rotation.set(Math.PI / 2, 0, 0);
-  pointeVisee.rotation.y = angle;
-}
-
-// ============================================
+// ══════════════════════════════════════════
 //  BOUCLE DE JEU
-// ============================================
+// ══════════════════════════════════════════
 let frameCount = 0;
 
 function animate() {
@@ -1824,85 +857,88 @@ function animate() {
   // Flèche de visée
   mettreAJourFleche();
 
-  // Physique des quilles
-  updateQuilles();
+  // Drapeau qui flotte
+  if (flagMesh) flagMesh.rotation.y = Math.sin(frameCount * 0.05) * 0.3;
 
-  // Animations spectateurs
-  if (ETAT.animSpec && Date.now() < ETAT.animSpec.fin) {
-    ETAT.animSpec.fn();
-  } else if (ETAT.animSpec && Date.now() >= ETAT.animSpec.fin) {
-    // Remet les bras en position neutre
-    spectateurs.forEach(mii => {
-      if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z = 0;
-      if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = 0;
-      mii.position.y = mii.userData.yBase;
-      mii.rotation.y = 0;
-    });
-    ETAT.animSpec = null;
-  }
+  // Physique balle
+  if (ETAT.ballEnVol && balleMesh) {
+    balleVel.y += GRAVITY;
+    ballePos.add(balleVel);
 
-  // Mouvement de la boule
-  if (bouleEnVol) {
-    boule.position.x += bouleVitesse.x;
-    boule.position.z += bouleVitesse.z;
-    boule.rotation.x += 0.1;
-
-    // Collisions
-    if (frameCount % 3 === 0) checkCollisions();
-
-    // Fin du parcours
-    if (boule.position.z < -16) {
-      bouleEnVol = false;
-      setTimeout(finLancer, 500);
-    }
-
-    // Boule dans la rigole
-    if (Math.abs(boule.position.x) > 1.8) {
-      boule.position.x = Math.sign(boule.position.x) * 2.1;
-      bouleVitesse.x = 0;
-    }
-  }
-
-  // Gestion caméra (hors du bloc bouleEnVol)
-  if (cameraMode === 'public') {
-    camera.position.x += (CAM_PUBLIC.x - camera.position.x) * 0.04;
-    camera.position.y += (CAM_PUBLIC.y - camera.position.y) * 0.04;
-    camera.position.z += (CAM_PUBLIC.z - camera.position.z) * 0.04;
-    camera.lookAt(CAM_PUBLIC.lx, CAM_PUBLIC.ly, CAM_PUBLIC.lz);
-  } else if (cameraMode === 'reset') {
-    camera.position.x += (CAM_JEU.x - camera.position.x) * 0.05;
-    camera.position.y += (CAM_JEU.y - camera.position.y) * 0.05;
-    camera.position.z += (CAM_JEU.z - camera.position.z) * 0.05;
-    camera.lookAt(CAM_JEU.lx, CAM_JEU.ly, CAM_JEU.lz);
-    if (Math.abs(camera.position.z - CAM_JEU.z) < 0.05) cameraMode = 'jeu';
-  } else if (bouleEnVol && cameraZoom && camera.position.z > boule.position.z + 5) {
-    camera.position.z += (boule.position.z + 5 - camera.position.z) * 0.05;
-    camera.position.y += (2.5 - camera.position.y) * 0.02;
-    camera.lookAt(boule.position);
-  }
-
-  // Oscillation légère des quilles (idle)
-  if (!bouleEnVol && frameCount % 120 === 0) {
-    quilles.forEach((q, i) => {
-      if (!q.userData.tombee) {
-        q.rotation.z = Math.sin(frameCount * 0.01 + i) * 0.02;
+    // Rebond au sol
+    if (ballePos.y <= 0.2) {
+      ballePos.y = 0.2;
+      balleVel.y = -balleVel.y * 0.38;
+      balleVel.x *= 0.75;
+      balleVel.z *= 0.75;
+      if (navigator.vibrate) navigator.vibrate(10);
+      if (Math.abs(balleVel.y) < 0.015) {
+        balleVel.y = 0;
+        balleVel.x *= 0.6;
+        balleVel.z *= 0.6;
       }
-    });
+    }
+
+    // Arrêt naturel
+    if (ballePos.y <= 0.21 && balleVel.length() < 0.008) {
+      balleVel.set(0,0,0);
+      ETAT.ballEnVol  = false;
+      ETAT.peutFrapper = true;
+      cameraMode = 'reset';
+      document.getElementById('swipe-hint').style.opacity = '1';
+    }
+
+    balleMesh.position.copy(ballePos);
+    balleMesh.rotation.x += balleVel.z * 4;
+    balleMesh.rotation.z -= balleVel.x * 4;
+
+    // Ombre au sol
+    ombreMesh.position.x = ballePos.x;
+    ombreMesh.position.z = ballePos.z;
+    ombreMesh.material.opacity = Math.max(0.05, 0.25 - ballePos.y * 0.03);
+
+    // Dans le trou ?
+    if (checkDansTrou()) { balleTombeDansTrou(); }
+
+    // Hors limites Z (trop loin)
+    if (ballePos.z < -(TROUS[ETAT.trou].distance + 20)) {
+      balleVel.set(0,0,0); ETAT.ballEnVol=false;
+      ETAT.peutFrapper=true; cameraMode='reset';
+      document.getElementById('swipe-hint').style.opacity='1';
+    }
+  }
+
+  // Caméra
+  if (cameraMode === 'vol') {
+    // Suit la balle
+    const tx = ballePos.x;
+    const tz = ballePos.z + 10;
+    const ty = Math.max(3.5, ballePos.y + 4);
+    camera.position.x += (tx - camera.position.x) * 0.06;
+    camera.position.y += (ty - camera.position.y) * 0.04;
+    camera.position.z += (tz - camera.position.z) * 0.05;
+    camera.lookAt(ballePos.x, ballePos.y, ballePos.z);
+  } else if (cameraMode === 'reset') {
+    camera.position.x += (CAM_BASE.x - camera.position.x) * 0.05;
+    camera.position.y += (CAM_BASE.y - camera.position.y) * 0.05;
+    camera.position.z += (CAM_BASE.z - camera.position.z) * 0.05;
+    camera.lookAt(ballePos.x, ballePos.y, ballePos.z - 5);
+    if (Math.abs(camera.position.z - CAM_BASE.z) < 0.1) {
+      cameraMode = 'jeu';
+      camera.lookAt(0, 0.5, 0);
+    }
   }
 
   renderer.render(scene, camera);
 }
 
-// Resize
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(innerWidth, innerHeight);
 });
 
-// Lancement
 animate();
-mettreAJourFramesBar();
 </script>
 </body>
 </html>
