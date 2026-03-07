@@ -654,6 +654,12 @@ const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
 fillLight.position.set(-5, 5, 5);
 scene.add(fillLight);
 
+// ── Variables globales pour animations ──
+const spectateurs = [];          // groupes Mii spectateurs
+const joueurMii   = new THREE.Group(); // groupe Mii joueur
+const joueurBras  = new THREE.Group(); // bras du joueur (pivot épaule)
+let animSpectateurs = null;       // animation en cours
+
 // ── Piste de bowling style Wii ──
 function creerPiste() {
 
@@ -793,8 +799,8 @@ function creerPiste() {
     }
   });
 
-  // === SPECTATEURS (Miis cartoon) ===
-  const couleursMiis = [0xFFCCA0, 0x4488FF, 0xFF6644, 0x44BB44, 0xFFAA22, 0xAA44FF, 0xFF4488];
+  // === SPECTATEURS (Miis cartoon) avec groupes animables ===
+  const couleursMiis = [0x4488FF, 0xFF6644, 0x44BB44, 0xFFAA22, 0xAA44FF, 0xFF4488, 0x44CCBB];
   const couleursPeaux = [0xFFCCA0, 0xE8A87C, 0xC68642, 0x8D5524];
 
   for (let i = 0; i < 20; i++) {
@@ -802,84 +808,195 @@ function creerPiste() {
     const zPos = -2 - (i % 10) * 1.4;
     const yBase = 0.65 + Math.floor(i / 10) * 0.5;
     const couleurCorps = couleursMiis[i % couleursMiis.length];
-    const couleurPeau = couleursPeaux[i % couleursPeaux.length];
+    const couleurPeau  = couleursPeaux[i % couleursPeaux.length];
+
+    // Groupe global du Mii (pour rotation sur lui-même)
+    const miiGroupe = new THREE.Group();
+    miiGroupe.position.set(cote, yBase, zPos);
+    miiGroupe.userData = { yBase, cote, zPos, index: i };
+    scene.add(miiGroupe);
+    spectateurs.push(miiGroupe);
 
     const corpsMat = new THREE.MeshLambertMaterial({ color: couleurCorps });
-    const peauMat = new THREE.MeshLambertMaterial({ color: couleurPeau });
+    const peauMat  = new THREE.MeshLambertMaterial({ color: couleurPeau });
 
     // Corps
     const corpsGeo = new THREE.CylinderGeometry(0.15, 0.2, 0.45, 8);
     const corps = new THREE.Mesh(corpsGeo, corpsMat);
-    corps.position.set(cote, yBase, zPos);
-    scene.add(corps);
+    corps.position.y = 0;
+    miiGroupe.add(corps);
 
-    // Grosse tête (style Mii)
+    // Tête
     const teteGeo = new THREE.SphereGeometry(0.22, 10, 10);
     const tete = new THREE.Mesh(teteGeo, peauMat);
     tete.scale.y = 1.1;
-    tete.position.set(cote, yBase + 0.44, zPos);
-    scene.add(tete);
+    tete.position.y = 0.44;
+    miiGroupe.add(tete);
 
     // Cheveux
     const chevMat = new THREE.MeshLambertMaterial({ color: [0x3B2314, 0xFFCC44, 0xCC3300, 0x111111][i % 4] });
     const chevGeo = new THREE.SphereGeometry(0.23, 8, 8, 0, Math.PI * 2, 0, Math.PI / 2);
     const chev = new THREE.Mesh(chevGeo, chevMat);
-    chev.position.set(cote, yBase + 0.55, zPos);
-    scene.add(chev);
+    chev.position.y = 0.55;
+    miiGroupe.add(chev);
 
     // Yeux
     const oeilMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
     [-0.07, 0.07].forEach(ox => {
-      const oGeo = new THREE.SphereGeometry(0.035, 6, 6);
+      const oGeo = new THREE.SphereGeometry(0.03, 6, 6);
       const oeil = new THREE.Mesh(oGeo, oeilMat);
-      oeil.position.set(cote + ox, yBase + 0.46, zPos - 0.19);
-      scene.add(oeil);
+      // Oriente les yeux vers la piste
+      const dirZ = cote > 0 ? -0.19 : -0.19;
+      oeil.position.set(ox, 0.46, dirZ);
+      miiGroupe.add(oeil);
     });
+
+    // Bras gauche (pivot depuis l'épaule)
+    const brasGaucheGroupe = new THREE.Group();
+    brasGaucheGroupe.position.set(-0.22, 0.2, 0);
+    const brasGGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.38, 8);
+    const brasG = new THREE.Mesh(brasGGeo, corpsMat);
+    brasG.position.y = -0.19;
+    brasGaucheGroupe.add(brasG);
+    miiGroupe.add(brasGaucheGroupe);
+    miiGroupe.userData.brasGauche = brasGaucheGroupe;
+
+    // Bras droit
+    const brasDroitGroupe = new THREE.Group();
+    brasDroitGroupe.position.set(0.22, 0.2, 0);
+    const brasDGeo = new THREE.CylinderGeometry(0.06, 0.05, 0.38, 8);
+    const brasD = new THREE.Mesh(brasDGeo, corpsMat);
+    brasD.position.y = -0.19;
+    brasDroitGroupe.add(brasD);
+    miiGroupe.add(brasDroitGroupe);
+    miiGroupe.userData.brasDroit = brasDroitGroupe;
   }
 
-  // === PERSONNAGE JOUEUR (Mii derrière la boule — semi-transparent) ===
-  const joueurPeauMat = new THREE.MeshLambertMaterial({ color: 0xFFCCA0, transparent: true, opacity: 0.35 });
-  const joueurHautMat = new THREE.MeshLambertMaterial({ color: 0x2255CC, transparent: true, opacity: 0.35 });
-  const joueurBasMat  = new THREE.MeshLambertMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.35 });
+  // === PERSONNAGE JOUEUR (Mii transparent) ===
+  const joueurPeauMat = new THREE.MeshLambertMaterial({ color: 0xFFCCA0, transparent: true, opacity: 0.38 });
+  const joueurHautMat = new THREE.MeshLambertMaterial({ color: 0x2255CC, transparent: true, opacity: 0.38 });
+
+  // Groupe global joueur
+  joueurMii.position.set(0, 0, 7.2);
+  scene.add(joueurMii);
 
   // Torse
   const torsoGeo = new THREE.BoxGeometry(0.5, 0.55, 0.3);
   const torso = new THREE.Mesh(torsoGeo, joueurHautMat);
-  torso.position.set(0, 0.85, 7.2);
-  scene.add(torso);
+  torso.position.set(0, 0.85, 0);
+  joueurMii.add(torso);
 
-  // Tête grosse
+  // Tête
   const teteJGeo = new THREE.SphereGeometry(0.28, 12, 12);
   const teteJ = new THREE.Mesh(teteJGeo, joueurPeauMat);
   teteJ.scale.y = 1.15;
-  teteJ.position.set(0, 1.55, 7.2);
-  scene.add(teteJ);
+  teteJ.position.set(0, 1.55, 0);
+  joueurMii.add(teteJ);
 
-  // Cheveux joueur
-  const chevJMat = new THREE.MeshLambertMaterial({ color: 0x3B2314, transparent: true, opacity: 0.35 });
+  // Cheveux
+  const chevJMat = new THREE.MeshLambertMaterial({ color: 0x3B2314, transparent: true, opacity: 0.38 });
   const chevJGeo = new THREE.SphereGeometry(0.29, 10, 10, 0, Math.PI * 2, 0, Math.PI / 2);
   const chevJ = new THREE.Mesh(chevJGeo, chevJMat);
-  chevJ.position.set(0, 1.68, 7.2);
-  scene.add(chevJ);
+  chevJ.position.set(0, 1.68, 0);
+  joueurMii.add(chevJ);
 
   // Jambes
-  [[-0.13, 0xEEEEEE], [0.13, 0xEEEEEE]].forEach(([x, c]) => {
-    const jMat = new THREE.MeshLambertMaterial({ color: c });
+  [-0.13, 0.13].forEach(x => {
+    const jMat = new THREE.MeshLambertMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.38 });
     const jGeo = new THREE.CylinderGeometry(0.1, 0.09, 0.45, 8);
     const j = new THREE.Mesh(jGeo, jMat);
-    j.position.set(x, 0.33, 7.2);
-    scene.add(j);
+    j.position.set(x, 0.33, 0);
+    joueurMii.add(j);
   });
 
-  // Bras droit (tenant la boule)
-  const brasMat = new THREE.MeshLambertMaterial({ color: 0x2255CC, transparent: true, opacity: 0.35 });
+  // Bras droit (pivot depuis épaule pour animation de lancer)
+  joueurBras.position.set(0.3, 1.1, 0); // pivot à l'épaule
+  joueurMii.add(joueurBras);
+  const brasMat = new THREE.MeshLambertMaterial({ color: 0x2255CC, transparent: true, opacity: 0.38 });
   const brasGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.45, 8);
-  const bras = new THREE.Mesh(brasGeo, brasMat);
-  bras.rotation.z = -Math.PI / 3;
-  bras.position.set(0.32, 0.72, 7.1);
-  scene.add(bras);
+  const brasM = new THREE.Mesh(brasGeo, brasMat);
+  brasM.position.set(0, -0.22, 0); // pend vers le bas depuis le pivot
+  joueurBras.add(brasM);
+  joueurBras.rotation.z = -0.4; // position repos
 }
 creerPiste();
+
+// ============================================
+//  ANIMATIONS SPECTATEURS
+// ============================================
+
+// 1. APPLAUDISSEMENTS (strike / spare)
+function animerApplaudissements(duree = 2500) {
+  if (animSpectateurs) clearTimeout(animSpectateurs);
+  let t = 0;
+  const vitesse = 0.12;
+
+  function frame() {
+    t += vitesse;
+    spectateurs.forEach((mii, i) => {
+      const phase = t + i * 0.4; // décalage entre Miis
+      const angle = Math.sin(phase) * (Math.PI / 2.5); // bras qui battent
+      if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z =  angle;
+      if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = -angle;
+      // Sautillement
+      mii.position.y = mii.userData.yBase + Math.abs(Math.sin(phase)) * 0.06;
+    });
+  }
+
+  // Lance l'animation dans la boucle principale
+  ETAT.animSpec = { type: 'applaudir', fn: frame, fin: Date.now() + duree };
+}
+
+// 2. ROTATION (rigole)
+function animerRotation(duree = 2000) {
+  if (animSpectateurs) clearTimeout(animSpectateurs);
+  let t = 0;
+
+  function frame() {
+    t += 0.08;
+    spectateurs.forEach((mii, i) => {
+      const phase = t + i * 0.2;
+      mii.rotation.y = phase; // tourne sur lui-même
+      // Bras tendus sur les côtés
+      if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z =  Math.PI / 2;
+      if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = -Math.PI / 2;
+    });
+  }
+
+  ETAT.animSpec = { type: 'tourner', fn: frame, fin: Date.now() + duree };
+
+  // Remet en position neutre après
+  setTimeout(() => {
+    spectateurs.forEach(mii => {
+      mii.rotation.y = 0;
+      if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z = 0;
+      if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = 0;
+      mii.position.y = mii.userData.yBase;
+    });
+    ETAT.animSpec = null;
+  }, duree);
+}
+
+// 3. ANIMATION DU BRAS DU JOUEUR (lancer)
+function animerLancer() {
+  let t = 0;
+  const dureeAnim = 0.6; // secondes simulées
+
+  function frame() {
+    t += 0.05;
+    if (t <= 1) {
+      // Recul : bras remonte vers l'arrière
+      joueurBras.rotation.x = -Math.PI / 3 * Math.sin(t * Math.PI);
+      joueurBras.rotation.z = -0.4 - Math.sin(t * Math.PI) * 0.3;
+      requestAnimationFrame(frame);
+    } else {
+      // Retour position repos
+      joueurBras.rotation.x = 0;
+      joueurBras.rotation.z = -0.4;
+    }
+  }
+  frame();
+}
 
 // ── Boule de bowling (bleue style Wii) ──
 const bouleMat = new THREE.MeshLambertMaterial({ color: 0x3366DD });
@@ -981,6 +1098,9 @@ function lancerBoule(puissance) {
   ETAT.ballEnMouvement = true;
   ETAT.peutLancer = false;
   document.getElementById('swipe-hint').style.opacity = '0';
+
+  // Animation du bras !
+  animerLancer();
 
   // Vitesse basée sur la puissance du swipe et l'inclinaison du gyroscope
   const vitesseZ = -0.08 - (puissance / 100) * 0.12;
@@ -1121,18 +1241,21 @@ function afficherResultatLancer(total, nouvelles, throws) {
     titre.textContent = 'STRIKE !';
     sub.textContent = 'Toutes les quilles !';
     titre.style.color = '#F5A623';
+    animerApplaudissements(3000);
   } else if (throws.length === 2 && total === 10) {
     // SPARE !
     emoji.textContent = '✨';
     titre.textContent = 'SPARE !';
     sub.textContent = 'Bien joué !';
     titre.style.color = '#5BBF6A';
+    animerApplaudissements(2500);
   } else if (nouvelles === 0) {
     // Dans la rigole
     emoji.textContent = '😬';
     titre.textContent = 'Rigole !';
     sub.textContent = 'Retente ta chance...';
     titre.style.color = '#F55A5A';
+    animerRotation(2000);
   } else {
     emoji.textContent = '👍';
     titre.textContent = `${nouvelles} quille${nouvelles > 1 ? 's' : ''} !`;
@@ -1536,6 +1659,20 @@ function animate() {
 
   // Physique des quilles
   updateQuilles();
+
+  // Animations spectateurs
+  if (ETAT.animSpec && Date.now() < ETAT.animSpec.fin) {
+    ETAT.animSpec.fn();
+  } else if (ETAT.animSpec && Date.now() >= ETAT.animSpec.fin) {
+    // Remet les bras en position neutre
+    spectateurs.forEach(mii => {
+      if (mii.userData.brasGauche) mii.userData.brasGauche.rotation.z = 0;
+      if (mii.userData.brasDroit)  mii.userData.brasDroit.rotation.z  = 0;
+      mii.position.y = mii.userData.yBase;
+      mii.rotation.y = 0;
+    });
+    ETAT.animSpec = null;
+  }
 
   // Mouvement de la boule
   if (bouleEnVol) {
