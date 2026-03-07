@@ -360,12 +360,111 @@
       line-height: 1.5;
       font-weight: 700;
     }
+
+    /* ── Boutons de niveau ── */
+    .niveau-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 16px;
+      padding: 12px 18px;
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      width: 100%;
+    }
+    .niveau-btn:active { transform: scale(0.97); }
+    .niveau-btn.selected {
+      background: rgba(245,166,35,0.3);
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(245,166,35,0.2);
+    }
+    .niveau-btn span:nth-child(2) { flex: 1; text-align: left; }
+
+    /* ── HUD adversaire (score en direct) ── */
+    #hud-adv {
+      position: fixed;
+      top: 80px;
+      left: 0; right: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .adv-score-card {
+      background: rgba(245,90,90,0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(245,90,90,0.4);
+      border-radius: 14px;
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .adv-avatar { font-size: 1.1rem; }
+    .adv-info { text-align: left; }
+    .adv-name-hud {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.6);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .adv-score-hud {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      color: #FF7777;
+      line-height: 1;
+    }
+    .adv-score-hud.danger { color: #FF4444; animation: scoreUp 0.4s ease; }
+    @keyframes scoreUp {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.4); color: #FF2222; }
+      100% { transform: scale(1); }
+    }
+
+    /* Bulle de provocation */
+    #provoc-bubble {
+      position: fixed;
+      top: 130px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,60,60,0.9);
+      color: white;
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.85rem;
+      padding: 8px 16px;
+      border-radius: 20px;
+      z-index: 11;
+      display: none;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
   </style>
 </head>
 <body>
 
 <!-- Bouton retour -->
 <button id="btn-back" onclick="window.location.href='../index.html'">←</button>
+
+<!-- HUD adversaire (score en direct) -->
+<div id="hud-adv" style="display:none;">
+  <div class="adv-score-card">
+    <span class="adv-avatar" id="adv-avatar-hud">🤖</span>
+    <div class="adv-info">
+      <div class="adv-name-hud" id="adv-name-hud">Adversaire</div>
+      <div class="adv-score-hud" id="adv-score-hud">0 pts</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bulle de provocation -->
+<div id="provoc-bubble"></div>
 
 <!-- Canvas 3D -->
 <canvas id="gameCanvas"></canvas>
@@ -426,16 +525,37 @@
   <button class="result-btn" style="background:#2A5FBF;box-shadow:0 6px 0 #1a3f8f" onclick="location.reload()">🔄 Rejouer</button>
 </div>
 
-<!-- Écran de démarrage -->
+<!-- Écran de démarrage avec choix de niveau -->
 <div id="start-screen">
   <span class="start-emoji">🎳</span>
   <div class="start-title">Bowling</div>
-  <div class="adversaire-card">
+
+  <!-- Choix du niveau -->
+  <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px;">
+    <div style="font-family:'Fredoka One',cursive; color:rgba(255,255,255,0.7); font-size:0.85rem; text-align:center; letter-spacing:2px; text-transform:uppercase;">Choisis ton niveau</div>
+
+    <button class="niveau-btn" id="btn-facile" onclick="choisirNiveau('facile')">
+      <span>😊</span> <span>Facile</span>
+      <span style="font-size:0.7rem; opacity:0.7;">Adversaires débutants</span>
+    </button>
+    <button class="niveau-btn" id="btn-moyen" onclick="choisirNiveau('moyen')">
+      <span>😤</span> <span>Moyen</span>
+      <span style="font-size:0.7rem; opacity:0.7;">Adversaires expérimentés</span>
+    </button>
+    <button class="niveau-btn" id="btn-difficile" onclick="choisirNiveau('difficile')">
+      <span>💀</span> <span>Difficile</span>
+      <span style="font-size:0.7rem; opacity:0.7;">Adversaires redoutables</span>
+    </button>
+  </div>
+
+  <!-- Adversaire (affiché après choix du niveau) -->
+  <div class="adversaire-card" id="adv-card" style="display:none;">
     <div class="adversaire-label">Ton adversaire</div>
     <div class="adversaire-name" id="adv-name">Chargement...</div>
     <div class="adversaire-niveau" id="adv-niveau"></div>
   </div>
-  <button class="start-btn" id="start-btn" onclick="demarrerJeu()">🎳 Jouer !</button>
+
+  <button class="start-btn" id="start-btn" style="display:none;" onclick="demarrerJeu()">🎳 C'est parti !</button>
   <p class="gyro-info">📐 Incline ton téléphone pour viser<br>👆 Swipe vers le haut pour lancer</p>
 </div>
 
@@ -450,8 +570,8 @@
 //  ÉTAT DU JEU
 // ============================================
 const ETAT = {
-  frameActuelle: 0,       // 0 à 2 (3 frames)
-  lancerActuel: 0,         // 0 ou 1 (2 lancers par frame)
+  frameActuelle: 0,
+  lancerActuel: 0,
   quillesTombees: 0,
   quillesTombeesFrame: 0,
   scores: [null, null, null],
@@ -460,23 +580,43 @@ const ETAT = {
   ballEnMouvement: false,
   adversaire: null,
   peutLancer: true,
+  // Nouveau :
+  niveauChoisi: null,
+  scoreTotalAdv: 0,
+  scoresAdv: [],
 };
 
 // ============================================
-//  SUPABASE — Charger l'adversaire
+//  CHOIX DU NIVEAU
 // ============================================
-async function chargerAdversaire() {
-  const adv = await getAdversaire('bowling');
+async function choisirNiveau(niveau) {
+  ETAT.niveauChoisi = niveau;
+
+  // Highlight bouton sélectionné
+  document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById(`btn-${niveau}`).classList.add('selected');
+
+  // Charge l'adversaire selon le niveau
+  document.getElementById('adv-name').textContent = 'Recherche...';
+  document.getElementById('adv-card').style.display = 'block';
+  document.getElementById('start-btn').style.display = 'none';
+
+  const adv = await getAdversaire('bowling', niveau);
   ETAT.adversaire = adv;
+
   if (adv) {
     document.getElementById('adv-name').textContent = `${adv.avatar} ${adv.nom}`;
     document.getElementById('adv-niveau').textContent = `Niveau : ${adv.bowling}`;
+    document.getElementById('adv-avatar-hud').textContent = adv.avatar || '🤖';
+    document.getElementById('adv-name-hud').textContent = adv.nom;
   } else {
     document.getElementById('adv-name').textContent = '🤖 CPU';
-    document.getElementById('adv-niveau').textContent = 'Niveau : moyen';
+    document.getElementById('adv-niveau').textContent = `Niveau : ${niveau}`;
   }
+
+  document.getElementById('start-btn').style.display = 'block';
+  if (navigator.vibrate) navigator.vibrate(20);
 }
-chargerAdversaire();
 
 // ============================================
 //  THREE.JS — SCÈNE 3D
@@ -1014,7 +1154,11 @@ function nextThrow() {
     ETAT.frameActuelle++;
     ETAT.lancerActuel = 0;
     ETAT.quillesTombeesFrame = 0;
-    creerQuilles(); // Remet toutes les quilles
+
+    // Score adversaire après chaque frame !
+    mettreAJourScoreAdv();
+
+    creerQuilles();
 
     if (ETAT.frameActuelle >= 3) {
       finPartie();
@@ -1090,18 +1234,88 @@ function mettreAJourFramesBar() {
   }
 }
 
-// Score IA (simulé selon le niveau)
-function scoreIA() {
-  const niveau = ETAT.adversaire?.bowling || 'moyen';
-  const bases = { facile: [40, 70], moyen: [70, 110], difficile: [110, 150] };
-  const [min, max] = bases[niveau];
-  return Math.floor(Math.random() * (max - min)) + min;
+// ============================================
+//  SCORE ADVERSAIRE — PAR FRAME, RÉALISTE
+// ============================================
+
+// Scores par frame selon le niveau (quilles tombées sur 10, par lancer)
+// Facile  : 0-6 par frame  → total ~0-18 sur 3 frames
+// Moyen   : 5-16 par frame → total ~15-48
+// Difficile: 15-25 par frame → total ~45-75
+// Champion (rare) : jusqu'à 30 par frame → total ~90
+
+const SCORE_CONFIG = {
+  facile:    { min: 0,  max: 6,  moyenne: 3  },
+  moyen:     { min: 5,  max: 16, moyenne: 11 },
+  difficile: { min: 15, max: 25, moyenne: 20 },
+};
+
+function scoreParFrame(niveau) {
+  const cfg = SCORE_CONFIG[niveau] || SCORE_CONFIG.moyen;
+  // Distribution réaliste avec un peu d'aléatoire autour de la moyenne
+  const base = cfg.moyenne + (Math.random() - 0.5) * (cfg.max - cfg.min) * 0.6;
+  const score = Math.round(Math.max(cfg.min, Math.min(cfg.max, base)));
+
+  // Chance très rare d'un frame parfait (champion du monde)
+  if (Math.random() < 0.02) return Math.min(30, cfg.max + 5);
+
+  return score;
+}
+
+// Messages de provocation selon la situation
+const PROVOCS = {
+  adv_devant: [
+    "😤 Il est devant toi !",
+    "💪 Rattrape-moi si tu peux !",
+    "😏 Trop facile...",
+    "🎳 Mon tour était parfait !",
+  ],
+  joueur_devant: [
+    "😤 Je vais te rattraper !",
+    "🔥 C'est pas fini !",
+    "😅 J'ai encore 2 frames !",
+    "⚡ Je me réchauffe...",
+  ],
+  egal: [
+    "😬 C'est serré !",
+    "🤝 Match nul pour l'instant...",
+    "😮 Incroyable, on est à égalité !",
+  ],
+};
+
+function afficherProvoc(scoreAdv, scoreJoueur) {
+  const bubble = document.getElementById('provoc-bubble');
+  let pool;
+  if (scoreAdv > scoreJoueur) pool = PROVOCS.adv_devant;
+  else if (scoreJoueur > scoreAdv) pool = PROVOCS.joueur_devant;
+  else pool = PROVOCS.egal;
+
+  bubble.textContent = pool[Math.floor(Math.random() * pool.length)];
+  bubble.style.display = 'block';
+  setTimeout(() => { bubble.style.display = 'none'; }, 2500);
+}
+
+function mettreAJourScoreAdv() {
+  const niveau = ETAT.niveauChoisi || 'moyen';
+  const frameScore = scoreParFrame(niveau);
+  ETAT.scoresAdv.push(frameScore);
+  ETAT.scoreTotalAdv += frameScore;
+
+  // Anime le score
+  const el = document.getElementById('adv-score-hud');
+  el.textContent = `${ETAT.scoreTotalAdv} pts`;
+  el.classList.remove('danger');
+  void el.offsetWidth; // force reflow pour relancer l'animation
+  el.classList.add('danger');
+
+  // Provocation
+  setTimeout(() => afficherProvoc(ETAT.scoreTotalAdv, ETAT.scoreTotal), 800);
 }
 
 function finPartie() {
   const scoreJoueur = ETAT.scoreTotal;
-  const scoreAdv = scoreIA();
-  const gagne = scoreJoueur > scoreAdv;
+  const scoreAdv    = ETAT.scoreTotalAdv;
+  const gagne       = scoreJoueur > scoreAdv;
 
   document.getElementById('final-score-display').textContent = gagne ? '🏆 Victoire !' : '😔 Défaite';
   document.getElementById('final-player').textContent = scoreJoueur;
@@ -1117,8 +1331,8 @@ function finPartie() {
 //  DÉMARRAGE
 // ============================================
 function demarrerJeu() {
-  // Cache l'écran de démarrage immédiatement
   document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('hud-adv').style.display = 'flex';
 
   const lancer = async () => {
     await gyro.start();
@@ -1128,8 +1342,6 @@ function demarrerJeu() {
   };
 
   demanderPermissionIOS(lancer);
-
-  // Android / desktop → pas besoin de permission, démarre direct
   const estIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   if (!estIOS) lancer();
 }
