@@ -1008,8 +1008,6 @@ function creerPiste() {
   const jBasMat  = new THREE.MeshPhongMaterial({ color: 0xEEEEEE, transparent: true, opacity: 0.42, shininess: 60 });
   const jChevMat = new THREE.MeshPhongMaterial({ color: 0x3B2314, transparent: true, opacity: 0.42, shininess: 50 });
 
-  const jChevMat = new THREE.MeshPhongMaterial({ color: 0x3B2314, transparent: true, opacity: 0.42, shininess: 50 });
-
   joueurMii.position.set(0, 0, 7.2);
   scene.add(joueurMii);
 
@@ -1221,8 +1219,9 @@ creerQuilles();
 // ============================================
 //  CAPTEURS
 // ============================================
-const gyro = new Gyroscope();
-const swipe = new SwipeDetector(canvas);
+// Capteurs — fallback si sensors.js non chargé
+const gyro  = typeof Gyroscope      !== 'undefined' ? new Gyroscope()           : { start: async()=>{}, stop:()=>{}, getNormalizedX:()=>0, getNormalizedY:()=>0, x:0, y:0, z:0 };
+const swipe = typeof SwipeDetector  !== 'undefined' ? new SwipeDetector(canvas) : { onSwipe: null, onTap: null };
 
 // Quand le joueur swipe vers le haut → lancer
 swipe.onSwipe = (direction, puissance) => {
@@ -1737,15 +1736,18 @@ function demarrerJeu() {
   document.getElementById('hud-adv').style.display = 'flex';
 
   const lancer = async () => {
-    await gyro.start();
+    try { await gyro.start(); } catch(e) { console.warn('Gyro non dispo:', e); }
     mettreAJourFramesBar();
     mettreAJourHUD();
     ETAT.peutLancer = true;
   };
 
-  demanderPermissionIOS(lancer);
   const estIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (!estIOS) lancer();
+  if (estIOS && typeof demanderPermissionIOS === 'function') {
+    demanderPermissionIOS(lancer);
+  } else {
+    lancer();
+  }
 }
 
 // ============================================
