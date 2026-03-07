@@ -644,9 +644,11 @@ function resetBalle() {
   balleVel.set(0, 0, 0);
   if (balleMesh) balleMesh.position.copy(ballePos);
   ETAT.ballEnVol  = false;
+  // Caméra derrière le tee
+  CAM_BASE.x = 0; CAM_BASE.y = 3.5; CAM_BASE.z = 12;
   cameraMode = 'jeu';
-  camera.position.set(CAM_BASE.x, CAM_BASE.y, CAM_BASE.z);
-  camera.lookAt(0, 0.5, 0);
+  camera.position.set(0, 3.5, 12);
+  camera.lookAt(0, 0.3, 0);
 }
 
 // ══════════════════════════════════════════
@@ -735,7 +737,9 @@ document.addEventListener('touchend', e => {
 // ══════════════════════════════════════════
 //  PHYSIQUE DU TIR
 // ══════════════════════════════════════════
-const GRAVITY = -0.012;
+// Distances : Trou1=80u  Trou2=130u  Trou3=180u
+// À 100% force la balle couvre ~80u (trou1 en 1 coup, trou3 en ~3 coups)
+const GRAVITY = -0.014;
 
 function frapper(puissance) {
   if (ETAT.ballEnVol || !ETAT.peutFrapper || ETAT.inTrou) return;
@@ -747,15 +751,13 @@ function frapper(puissance) {
   document.getElementById('swipe-hint').style.opacity = '0';
 
   const nx    = gyro.getNormalizedX(30);
-  const angle = nx * 0.4;
-  const force = 0.03 + (puissance / 100) * 0.22;
-  const hauteur = 0.04 + (puissance/100) * 0.15;
+  const angle = nx * 0.45;
+  const t     = puissance / 100;        // 0..1
+  const Vz    = 0.08 + t * 0.67;       // min 0.08, max 0.75 → couvre ~80u à 100%
+  const Vy    = 0.10 + t * 0.22;       // trajectoire réaliste
+  const Vx    = Math.sin(angle) * (Vz + 0.05);
 
-  balleVel.set(
-    Math.sin(angle) * force,
-    hauteur,
-    -Math.cos(angle) * force
-  );
+  balleVel.set(Vx, Vy, -Math.cos(angle) * Vz);
 
   cameraMode = 'vol';
   if (joueurBras) animerLancerMii();
@@ -980,6 +982,16 @@ function animate() {
       ETAT.peutFrapper = true;
       cameraMode = 'reset';
       document.getElementById('swipe-hint').style.opacity = '1';
+
+      // ── Repositionner le Mii à côté de la balle ──
+      if (joueurMii) {
+        joueurMii.position.set(ballePos.x + 0.9, 0.1, ballePos.z + 0.2);
+        if (joueurBras) joueurBras.rotation.z = -0.3; // bras repos
+      }
+
+      // ── Recadrer la caméra sur la nouvelle position balle ──
+      CAM_BASE.x = ballePos.x;
+      CAM_BASE.z = ballePos.z + 12;
     }
 
     balleMesh.position.copy(ballePos);
@@ -996,15 +1008,18 @@ function animate() {
 
     // Hors limites Z (trop loin)
     if (ballePos.z < -(TROUS[ETAT.trou].distance + 20)) {
+      ballePos.z = -(TROUS[ETAT.trou].distance + 18);
       balleVel.set(0,0,0); ETAT.ballEnVol=false;
       ETAT.peutFrapper=true; cameraMode='reset';
       document.getElementById('swipe-hint').style.opacity='1';
+      if (joueurMii) joueurMii.position.set(ballePos.x + 0.9, 0.1, ballePos.z + 0.2);
+      CAM_BASE.x = ballePos.x; CAM_BASE.z = ballePos.z + 12;
     }
   }
 
   // Caméra
   if (cameraMode === 'vol') {
-    // Suit la balle
+    // Suit la balle en vol
     const tx = ballePos.x;
     const tz = ballePos.z + 10;
     const ty = Math.max(3.5, ballePos.y + 4);
@@ -1012,14 +1027,17 @@ function animate() {
     camera.position.y += (ty - camera.position.y) * 0.04;
     camera.position.z += (tz - camera.position.z) * 0.05;
     camera.lookAt(ballePos.x, ballePos.y, ballePos.z);
+  } else if (cameraMode === 'jeu') {
+    // Regarde depuis derrière la balle (position CAM_BASE)
+    camera.lookAt(ballePos.x, 0.3, ballePos.z - 8);
   } else if (cameraMode === 'reset') {
-    camera.position.x += (CAM_BASE.x - camera.position.x) * 0.05;
+    const tx = CAM_BASE.x, tz = CAM_BASE.z;
+    camera.position.x += (tx - camera.position.x) * 0.05;
     camera.position.y += (CAM_BASE.y - camera.position.y) * 0.05;
-    camera.position.z += (CAM_BASE.z - camera.position.z) * 0.05;
-    camera.lookAt(ballePos.x, ballePos.y, ballePos.z - 5);
-    if (Math.abs(camera.position.z - CAM_BASE.z) < 0.1) {
+    camera.position.z += (tz - camera.position.z) * 0.05;
+    camera.lookAt(ballePos.x, 0.3, ballePos.z - 5);
+    if (Math.abs(camera.position.z - tz) < 0.15) {
       cameraMode = 'jeu';
-      camera.lookAt(0, 0.5, 0);
     }
   }
 
