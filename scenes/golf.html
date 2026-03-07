@@ -1090,25 +1090,35 @@ function animate() {
 
   // Caméra
   if (cameraMode === 'vol') {
-    // Suit la balle en vol
-    const tx = ballePos.x;
-    const tz = ballePos.z + 10;
+    // Suit la balle en vol — légèrement derrière elle
+    const tx = ballePos.x - Math.sin(angleVise) * 10;
+    const tz = ballePos.z - Math.cos(angleVise) * 10;
     const ty = Math.max(3.5, ballePos.y + 4);
     camera.position.x += (tx - camera.position.x) * 0.06;
     camera.position.y += (ty - camera.position.y) * 0.04;
     camera.position.z += (tz - camera.position.z) * 0.05;
     camera.lookAt(ballePos.x, ballePos.y, ballePos.z);
-  } else if (cameraMode === 'jeu') {
-    // Regarde depuis derrière la balle (position CAM_BASE)
-    camera.lookAt(ballePos.x, 0.3, ballePos.z - 8);
-  } else if (cameraMode === 'reset') {
-    const tx = CAM_BASE.x, tz = CAM_BASE.z;
-    camera.position.x += (tx - camera.position.x) * 0.05;
-    camera.position.y += (CAM_BASE.y - camera.position.y) * 0.05;
-    camera.position.z += (tz - camera.position.z) * 0.05;
-    camera.lookAt(ballePos.x, 0.3, ballePos.z - 5);
-    if (Math.abs(camera.position.z - tz) < 0.15) {
-      cameraMode = 'jeu';
+  } else {
+    // Modes 'jeu' et 'reset' : orbite autour de la balle selon angleVise
+    // La caméra est toujours derrière le joueur par rapport à la direction de tir
+    const CAM_DIST = 11;
+    const CAM_H    = 3.8;
+    const targetX  = ballePos.x - Math.sin(angleVise) * CAM_DIST;
+    const targetZ  = ballePos.z - Math.cos(angleVise) * CAM_DIST;
+
+    const lerp = cameraMode === 'reset' ? 0.07 : 0.06;
+    camera.position.x += (targetX - camera.position.x) * lerp;
+    camera.position.y += (CAM_H   - camera.position.y) * lerp;
+    camera.position.z += (targetZ - camera.position.z) * lerp;
+
+    // Regarde un peu devant la balle (vers le trou)
+    const lookX = ballePos.x + Math.sin(angleVise) * 4;
+    const lookZ = ballePos.z + Math.cos(angleVise) * 4;
+    camera.lookAt(lookX, 0.4, lookZ);
+
+    if (cameraMode === 'reset') {
+      const d = Math.abs(camera.position.x - targetX) + Math.abs(camera.position.z - targetZ);
+      if (d < 0.2) cameraMode = 'jeu';
     }
   }
 
