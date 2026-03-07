@@ -1177,10 +1177,41 @@ function nextThrow() {
 }
 
 function mettreAJourScore() {
+  // Calcul officiel du bowling :
+  // On a tous les lancers à plat dans un tableau
+  // Strike  → 10 + 2 prochains lancers
+  // Spare   → 10 + prochain lancer
+  // Normal  → somme des 2 lancers
+
+  // Reconstruit la liste plate de tous les lancers
+  const tous = [];
+  ETAT.throwsParFrame.forEach(t => t.forEach(v => tous.push(v)));
+
   let total = 0;
-  ETAT.throwsParFrame.forEach(throws => {
-    throws.forEach(t => total += t);
-  });
+  let idx = 0; // index dans le tableau plat
+
+  for (let f = 0; f < 3; f++) {
+    const throws = ETAT.throwsParFrame[f];
+    if (throws.length === 0) break;
+
+    if (throws[0] === 10) {
+      // STRIKE : 10 + 2 prochains lancers
+      const bonus1 = tous[idx + 1] ?? 0;
+      const bonus2 = tous[idx + 2] ?? 0;
+      total += 10 + bonus1 + bonus2;
+      idx += 1; // strike = 1 lancer
+    } else if (throws.length >= 2 && throws[0] + throws[1] === 10) {
+      // SPARE : 10 + prochain lancer
+      const bonus = tous[idx + 2] ?? 0;
+      total += 10 + bonus;
+      idx += 2;
+    } else {
+      // Normal
+      total += (throws[0] ?? 0) + (throws[1] ?? 0);
+      idx += throws.length;
+    }
+  }
+
   ETAT.scoreTotal = total;
   document.getElementById('hud-score').textContent = total;
 }
@@ -1193,6 +1224,47 @@ function mettreAJourHUD() {
 function mettreAJourFramesBar() {
   const bar = document.getElementById('frames-bar');
   bar.innerHTML = '';
+
+  // Reconstruit le tableau plat pour les scores cumulés
+  const tous = [];
+  ETAT.throwsParFrame.forEach(t => t.forEach(v => tous.push(v)));
+
+  let scoresCumules = [];
+  let idx = 0;
+  let cumul = 0;
+
+  for (let f = 0; f < 3; f++) {
+    const throws = ETAT.throwsParFrame[f];
+    if (throws.length === 0) { scoresCumules.push(null); idx++; continue; }
+
+    let scoreFrame = 0;
+    if (throws[0] === 10) {
+      scoreFrame = 10 + (tous[idx+1] ?? 0) + (tous[idx+2] ?? 0);
+      idx += 1;
+    } else if (throws.length >= 2 && throws[0] + throws[1] === 10) {
+      scoreFrame = 10 + (tous[idx+2] ?? 0);
+      idx += 2;
+    } else {
+      scoreFrame = (throws[0] ?? 0) + (throws[1] ?? 0);
+      idx += throws.length;
+    }
+
+    // N'affiche le score que si la frame est complète
+    const frameComplete = throws[0] === 10 || throws.length >= 2;
+    // Et si le bonus est connu (strike/spare : on a les lancers suivants)
+    const bonusConnu = throws[0] !== 10 && !(throws.length >= 2 && throws[0]+throws[1]===10)
+      || (throws[0] === 10 && ETAT.throwsParFrame[f+1]?.length >= 1 && (ETAT.throwsParFrame[f+1][0] !== 10 ? ETAT.throwsParFrame[f+1].length >= 2 : ETAT.throwsParFrame[f+2]?.length >= 1))
+      || (throws.length >= 2 && throws[0]+throws[1]===10 && ETAT.throwsParFrame[f+1]?.length >= 1);
+
+    if (frameComplete && bonusConnu) {
+      cumul += scoreFrame;
+      scoresCumules.push(cumul);
+    } else if (frameComplete) {
+      scoresCumules.push('...'); // En attente du bonus
+    } else {
+      scoresCumules.push(null);
+    }
+  }
 
   for (let f = 0; f < 3; f++) {
     const throws = ETAT.throwsParFrame[f];
@@ -1210,11 +1282,9 @@ function mettreAJourFramesBar() {
       const box = document.createElement('div');
       box.className = 'throw-box';
       if (i === 0 && t === 10) {
-        box.textContent = 'X';
-        box.classList.add('strike');
+        box.textContent = 'X'; box.classList.add('strike');
       } else if (i === 1 && throws[0] + t === 10) {
-        box.textContent = '/';
-        box.classList.add('spare');
+        box.textContent = '/'; box.classList.add('spare');
       } else {
         box.textContent = t;
       }
@@ -1223,8 +1293,8 @@ function mettreAJourFramesBar() {
 
     const scoreDiv = document.createElement('div');
     scoreDiv.className = 'frame-score';
-    if (throws.length > 0) {
-      scoreDiv.textContent = throws.reduce((a, b) => a + b, 0);
+    if (scoresCumules[f] !== null && scoresCumules[f] !== undefined) {
+      scoreDiv.textContent = scoresCumules[f];
     }
 
     div.appendChild(num);
@@ -1244,68 +1314,112 @@ function mettreAJourFramesBar() {
 // Difficile: 15-25 par frame → total ~45-75
 // Champion (rare) : jusqu'à 30 par frame → total ~90
 
-const SCORE_CONFIG = {
-  facile:    { min: 0,  max: 6,  moyenne: 3  },
-  moyen:     { min: 5,  max: 16, moyenne: 11 },
-  difficile: { min: 15, max: 25, moyenne: 20 },
-};
+// ============================================
+//  SCORE ADVERSAIRE — RÈGLES OFFICIELLES
+// ============================================
 
-function scoreParFrame(niveau) {
-  const cfg = SCORE_CONFIG[niveau] || SCORE_CONFIG.moyen;
-  // Distribution réaliste avec un peu d'aléatoire autour de la moyenne
-  const base = cfg.moyenne + (Math.random() - 0.5) * (cfg.max - cfg.min) * 0.6;
-  const score = Math.round(Math.max(cfg.min, Math.min(cfg.max, base)));
+// L'IA génère des lancers réalistes, on calcule le vrai score
+// Facile   : jamais de strike/spare → 2-6 pts/frame → ~6-18 total
+// Moyen    : spare possible, strike rare → 5-16 pts/frame → ~15-40 total  
+// Difficile: strikes et spares réguliers → 10-25 pts/frame → ~30-70 total
+// Champion (2%) : strikes en série → jusqu'à ~90
 
-  // Chance très rare d'un frame parfait (champion du monde)
-  if (Math.random() < 0.02) return Math.min(30, cfg.max + 5);
-
-  return score;
-}
-
-// Messages de provocation selon la situation
+// Messages de provocation
 const PROVOCS = {
-  adv_devant: [
-    "😤 Il est devant toi !",
-    "💪 Rattrape-moi si tu peux !",
-    "😏 Trop facile...",
-    "🎳 Mon tour était parfait !",
-  ],
-  joueur_devant: [
-    "😤 Je vais te rattraper !",
-    "🔥 C'est pas fini !",
-    "😅 J'ai encore 2 frames !",
-    "⚡ Je me réchauffe...",
-  ],
-  egal: [
-    "😬 C'est serré !",
-    "🤝 Match nul pour l'instant...",
-    "😮 Incroyable, on est à égalité !",
-  ],
+  adv_devant:    ["😤 Il est devant toi !", "💪 Rattrape-moi si tu peux !", "😏 Trop facile...", "🎳 Regarde mon score !"],
+  joueur_devant: ["😤 Je vais te rattraper !", "🔥 C'est pas fini !", "😅 J'ai encore 2 frames !", "⚡ Je me réchauffe..."],
+  egal:          ["😬 C'est serré !", "🤝 Match nul pour l'instant...", "😮 On est à égalité !"],
 };
 
 function afficherProvoc(scoreAdv, scoreJoueur) {
   const bubble = document.getElementById('provoc-bubble');
   let pool;
-  if (scoreAdv > scoreJoueur) pool = PROVOCS.adv_devant;
+  if (scoreAdv > scoreJoueur)      pool = PROVOCS.adv_devant;
   else if (scoreJoueur > scoreAdv) pool = PROVOCS.joueur_devant;
-  else pool = PROVOCS.egal;
-
+  else                              pool = PROVOCS.egal;
   bubble.textContent = pool[Math.floor(Math.random() * pool.length)];
   bubble.style.display = 'block';
   setTimeout(() => { bubble.style.display = 'none'; }, 2500);
 }
 
+function genererLancersIA(niveau) {
+  // Retourne [lancer1, lancer2?] pour une frame
+  const r = Math.random();
+
+  if (niveau === 'facile') {
+    // Jamais de strike, rarement spare
+    const l1 = Math.floor(Math.random() * 5);       // 0-4
+    const l2 = Math.floor(Math.random() * (6 - l1)); // complète sans spare
+    return [l1, l2];
+
+  } else if (niveau === 'moyen') {
+    if (r < 0.06) return [10];                        // 6% strike
+    const l1 = 3 + Math.floor(Math.random() * 5);   // 3-7
+    if (r < 0.20) return [l1, 10 - l1];             // ~14% spare
+    const l2 = Math.floor(Math.random() * (9 - l1));
+    return [l1, Math.max(0, l2)];
+
+  } else { // difficile
+    if (r < 0.35) return [10];                       // 35% strike
+    const l1 = 5 + Math.floor(Math.random() * 4);   // 5-8
+    if (r < 0.65) return [l1, 10 - l1];             // 30% spare
+    const l2 = Math.floor(Math.random() * (10 - l1));
+    return [l1, Math.max(0, l2)];
+  }
+}
+
+function scoreParFrame(niveau) {
+  // Champion : chance de strike (2%)
+  const estChampion = Math.random() < 0.02;
+  if (estChampion) return 10; // strike, bonus compté séparément
+
+  const lancers = genererLancersIA(niveau);
+  return lancers.reduce((a, b) => a + b, 0);
+}
+
+// Génère 3 frames + bonus pour strikes/spares
+function genererScoreIAComplet(niveau) {
+  const frames = [];
+  for (let f = 0; f < 3; f++) {
+    frames.push(genererLancersIA(niveau));
+  }
+
+  // Aplatit tous les lancers
+  const tous = frames.flat();
+
+  // Calcule le score officiel
+  let total = 0;
+  let idx = 0;
+  for (let f = 0; f < 3; f++) {
+    if (frames[f][0] === 10) {
+      total += 10 + (tous[idx+1] ?? 0) + (tous[idx+2] ?? 0);
+      idx += 1;
+    } else if (frames[f][0] + (frames[f][1] ?? 0) === 10) {
+      total += 10 + (tous[idx+2] ?? 0);
+      idx += 2;
+    } else {
+      total += frames[f].reduce((a,b) => a+b, 0);
+      idx += frames[f].length;
+    }
+  }
+
+  return { frames, total };
+}
+
 function mettreAJourScoreAdv() {
   const niveau = ETAT.niveauChoisi || 'moyen';
-  const frameScore = scoreParFrame(niveau);
-  ETAT.scoresAdv.push(frameScore);
-  ETAT.scoreTotalAdv += frameScore;
+
+  // Génère le score de la frame actuelle de l'IA
+  const lancers = genererLancersIA(niveau);
+  const scoreFrame = lancers.reduce((a, b) => a + b, 0);
+  ETAT.scoresAdv.push(scoreFrame);
+  ETAT.scoreTotalAdv += scoreFrame;
 
   // Anime le score
   const el = document.getElementById('adv-score-hud');
   el.textContent = `${ETAT.scoreTotalAdv} pts`;
   el.classList.remove('danger');
-  void el.offsetWidth; // force reflow pour relancer l'animation
+  void el.offsetWidth;
   el.classList.add('danger');
 
   // Provocation
