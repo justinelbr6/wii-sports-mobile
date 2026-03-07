@@ -158,9 +158,11 @@
       position:fixed; inset:0; z-index:25; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:18px;
       background:linear-gradient(180deg,#1a2e1a 0%,#0d1f0d 100%);
+      padding: 24px 20px;
+      text-align: center;
     }
-    .start-emoji  { font-size:5rem; animation:bounce 1.5s ease-in-out infinite; }
-    .start-title  { font-family:'Fredoka One',cursive; font-size:2.8rem; color:white; }
+    .start-emoji  { font-size:5rem; animation:bounce 1.5s ease-in-out infinite; display:block; text-align:center; }
+    .start-title  { font-family:'Fredoka One',cursive; font-size:2.8rem; color:white; text-align:center; width:100%; }
     .niveau-btn {
       display:flex; align-items:center; gap:10px;
       background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.2);
@@ -539,9 +541,96 @@ function construireTrou(indexTrou) {
 }
 
 // ══════════════════════════════════════════
+//  MII JOUEUR TRANSPARENT (style bowling)
+// ══════════════════════════════════════════
+let joueurMii = null;
+let joueurBras = null;
+
+function creerMiiJoueur() {
+  if (joueurMii) scene.remove(joueurMii);
+  joueurMii = new THREE.Group();
+
+  const alpha = 0.42;
+  function miiMat(color) {
+    return new THREE.MeshPhongMaterial({ color, transparent:true, opacity:alpha, shininess:60, depthWrite:false });
+  }
+
+  // Corps
+  const corpsG = new THREE.BoxGeometry(0.7, 0.9, 0.45);
+  const corps  = new THREE.Mesh(corpsG, miiMat(0x3a7bd5));
+  corps.position.set(0, 0.85, 0);
+  joueurMii.add(corps);
+
+  // Tête
+  const teteG = new THREE.SphereGeometry(0.38, 14, 14);
+  const tete  = new THREE.Mesh(teteG, miiMat(0xfad9b4));
+  tete.position.set(0, 1.75, 0);
+  joueurMii.add(tete);
+
+  // Yeux
+  [-0.13, 0.13].forEach(x => {
+    const eyeG = new THREE.SphereGeometry(0.07, 8, 8);
+    const eye  = new THREE.Mesh(eyeG, miiMat(0x222266));
+    eye.position.set(x, 1.82, 0.34);
+    joueurMii.add(eye);
+  });
+
+  // Cheveux
+  const chevG = new THREE.SphereGeometry(0.40, 14, 8, 0, Math.PI*2, 0, Math.PI*0.55);
+  const chev  = new THREE.Mesh(chevG, miiMat(0x3d2200));
+  chev.position.set(0, 1.78, 0);
+  chev.rotation.x = 0.15;
+  joueurMii.add(chev);
+
+  // Jambes
+  [-0.18, 0.18].forEach((x,i) => {
+    const jG = new THREE.BoxGeometry(0.28, 0.65, 0.3);
+    const j  = new THREE.Mesh(jG, miiMat(0x1a1a2e));
+    j.position.set(x, 0.25, 0);
+    joueurMii.add(j);
+  });
+
+  // Bras droit (pivot épaule) — posture de golf
+  joueurBras = new THREE.Group();
+  joueurBras.position.set(0, 1.3, 0); // pivot épaule droite
+  const brasG = new THREE.BoxGeometry(0.22, 0.62, 0.22);
+  const bras  = new THREE.Mesh(brasG, miiMat(0x3a7bd5));
+  bras.position.set(0.5, -0.22, 0);
+  joueurBras.add(bras);
+  // Main
+  const mainG = new THREE.SphereGeometry(0.13, 8, 8);
+  const main  = new THREE.Mesh(mainG, miiMat(0xfad9b4));
+  main.position.set(0.5, -0.6, 0);
+  joueurBras.add(main);
+  joueurMii.add(joueurBras);
+
+  // Position à côté de la balle (légèrement décalé)
+  joueurMii.position.set(0.9, 0.1, 8.2);
+  joueurMii.rotation.y = -Math.PI * 0.12; // légèrement tourné vers le fairway
+
+  scene.add(joueurMii);
+}
+
+function animerLancerMii() {
+  // Bras qui recule puis frappe
+  const t0 = Date.now();
+  function step() {
+    const dt = (Date.now() - t0) / 300;
+    if (dt < 1) {
+      joueurBras.rotation.z = -Math.sin(dt * Math.PI) * 0.9;
+      requestAnimationFrame(step);
+    } else {
+      joueurBras.rotation.z = -0.3;
+    }
+  }
+  step();
+}
+
+// ══════════════════════════════════════════
 //  BALLE DE GOLF
 // ══════════════════════════════════════════
 function creerBalle() {
+  creerMiiJoueur();
   if (balleMesh) scene.remove(balleMesh);
   const bGeo = new THREE.SphereGeometry(0.2, 14, 14);
   const bMat = new THREE.MeshPhongMaterial({ color:0xFFFFFF, shininess:160, specular:0xCCCCCC });
@@ -613,27 +702,31 @@ let swipeEnCours = false;
 let swipeStartY  = 0;
 let puissanceEnCours = 0;
 
-// Swipe manuel pour la puissance (appui → relâche)
-canvas.addEventListener('touchstart', e => {
-  if (!ETAT.peutFrapper || ETAT.ballEnVol) return;
+// Swipe sur document entier (pas uniquement le canvas) pour ne pas être bloqué par les overlays
+document.addEventListener('touchstart', e => {
+  // Ignore si on est sur l'écran de démarrage ou un overlay
+  if (document.getElementById('start-screen').style.display !== 'none') return;
+  if (document.getElementById('result-overlay').classList.contains('show')) return;
+  if (document.getElementById('final-overlay').classList.contains('show')) return;
+  if (!ETAT.peutFrapper || ETAT.ballEnVol || ETAT.inTrou) return;
   swipeEnCours = true;
   swipeStartY  = e.touches[0].clientY;
   document.getElementById('power-bar-wrap').classList.add('show');
 }, { passive:true });
 
-canvas.addEventListener('touchmove', e => {
+document.addEventListener('touchmove', e => {
   if (!swipeEnCours) return;
   const dy = swipeStartY - e.touches[0].clientY;
-  puissanceEnCours = Math.max(0, Math.min(100, (dy / (window.innerHeight * 0.55)) * 100));
+  puissanceEnCours = Math.max(0, Math.min(100, (dy / (window.innerHeight * 0.5)) * 100));
   document.getElementById('power-fill').style.height = puissanceEnCours + '%';
   document.getElementById('power-val').textContent   = Math.round(puissanceEnCours) + '%';
 }, { passive:true });
 
-canvas.addEventListener('touchend', e => {
+document.addEventListener('touchend', e => {
   if (!swipeEnCours) return;
   swipeEnCours = false;
   document.getElementById('power-bar-wrap').classList.remove('show');
-  if (puissanceEnCours > 5) frapper(puissanceEnCours);
+  if (puissanceEnCours > 8) frapper(puissanceEnCours);
   puissanceEnCours = 0;
   document.getElementById('power-fill').style.height = '0%';
   document.getElementById('power-val').textContent   = '0%';
@@ -665,6 +758,7 @@ function frapper(puissance) {
   );
 
   cameraMode = 'vol';
+  if (joueurBras) animerLancerMii();
   if (navigator.vibrate) navigator.vibrate(40);
 }
 
