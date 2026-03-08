@@ -1,743 +1,821 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🎾 Tennis — Wii Sports Mobile</title>
-<style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:#1a1a2e; overflow:hidden; font-family:'Segoe UI',sans-serif; touch-action:none; }
-canvas { display:block; }
-#ui-overlay {
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  pointer-events:none; z-index:10;
-}
-#score-board {
-  position:fixed; top:12px; left:50%; transform:translateX(-50%);
-  display:flex; gap:10px; align-items:center;
-  background:rgba(0,0,0,0.6); backdrop-filter:blur(8px);
-  border-radius:50px; padding:8px 20px;
-  border:2px solid rgba(255,255,255,0.15);
-  pointer-events:none; z-index:20;
-}
-.team-score {
-  display:flex; flex-direction:column; align-items:center; gap:2px;
-}
-.team-name { font-size:11px; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; }
-.score-val {
-  font-size:26px; font-weight:900; color:#fff;
-  text-shadow:0 0 10px currentColor;
-  transition:transform 0.2s;
-}
-.score-val.bump { transform:scale(1.5); color:#FFE500; }
-.score-divider { font-size:20px; color:rgba(255,255,255,0.4); padding:0 5px; }
-.tennis-pts {
-  font-size:13px; font-weight:700; padding:2px 10px;
-  border-radius:20px; background:rgba(255,255,255,0.1);
-  color:#fff;
-}
-#game-label {
-  position:fixed; top:68px; left:50%; transform:translateX(-50%);
-  font-size:12px; color:rgba(255,255,255,0.6);
-  background:rgba(0,0,0,0.4); padding:4px 12px; border-radius:20px;
-  pointer-events:none; z-index:20;
-}
-#tilt-indicator {
-  position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
-  display:flex; align-items:center; gap:8px;
-  background:rgba(0,0,0,0.5); border-radius:30px; padding:8px 16px;
-  pointer-events:none; z-index:20;
-}
-.tilt-bar-bg {
-  width:120px; height:8px; background:rgba(255,255,255,0.15);
-  border-radius:4px; overflow:hidden; position:relative;
-}
-.tilt-bar-fill {
-  height:100%; width:50%; background:linear-gradient(90deg,#4FC3F7,#fff,#FF7043);
-  border-radius:4px; transform:translateX(-50%); transition:transform 0.1s;
-  position:absolute; left:0;
-}
-.tilt-label { font-size:11px; color:rgba(255,255,255,0.6); }
-#result-overlay {
-  position:fixed; inset:0; display:none; flex-direction:column;
-  align-items:center; justify-content:center; z-index:50;
-  background:rgba(0,0,0,0.7); backdrop-filter:blur(10px);
-}
-#result-overlay.show { display:flex; }
-.result-box {
-  background:linear-gradient(135deg,#1565C0,#0D47A1);
-  border:3px solid rgba(255,255,255,0.3); border-radius:24px;
-  padding:40px 50px; text-align:center;
-  box-shadow:0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(21,101,192,0.5);
-  animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
-}
-@keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
-.result-emoji { font-size:60px; margin-bottom:10px; }
-.result-title { font-size:32px; font-weight:900; color:#fff; margin-bottom:6px; }
-.result-sub { font-size:16px; color:rgba(255,255,255,0.7); margin-bottom:24px; }
-.result-btn {
-  background:linear-gradient(135deg,#FFE500,#FF9800);
-  color:#000; font-weight:900; font-size:18px;
-  border:none; border-radius:50px; padding:14px 36px;
-  cursor:pointer; pointer-events:all;
-  box-shadow:0 4px 20px rgba(255,229,0,0.4);
-  transition:transform 0.15s;
-}
-.result-btn:active { transform:scale(0.95); }
-#start-screen {
-  position:fixed; inset:0; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; z-index:100;
-  background:linear-gradient(160deg,#1a237e 0%,#0d47a1 40%,#006064 100%);
-}
-.start-title { font-size:48px; font-weight:900; color:#fff; text-shadow:0 4px 20px rgba(0,0,0,0.4); margin-bottom:8px; }
-.start-sub { font-size:16px; color:rgba(255,255,255,0.7); margin-bottom:40px; }
-.diff-grid { display:flex; gap:16px; margin-bottom:30px; flex-wrap:wrap; justify-content:center; }
-.diff-btn {
-  padding:16px 28px; border-radius:20px; border:3px solid rgba(255,255,255,0.3);
-  background:rgba(255,255,255,0.1); color:#fff; font-size:17px; font-weight:700;
-  cursor:pointer; transition:all 0.2s; min-width:110px; text-align:center;
-}
-.diff-btn:hover, .diff-btn.selected {
-  background:rgba(255,255,255,0.25); border-color:rgba(255,255,255,0.7);
-  transform:scale(1.05);
-}
-.diff-btn.selected { background:rgba(255,229,0,0.3); border-color:#FFE500; color:#FFE500; }
-.start-btn {
-  background:linear-gradient(135deg,#FFE500,#FF9800);
-  color:#000; font-weight:900; font-size:20px;
-  border:none; border-radius:50px; padding:16px 44px;
-  cursor:pointer; box-shadow:0 4px 24px rgba(255,229,0,0.5);
-  transition:transform 0.15s; display:none;
-}
-.start-btn.visible { display:block; }
-.start-btn:active { transform:scale(0.95); }
-#point-flash {
-  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-  font-size:48px; font-weight:900; color:#FFE500;
-  text-shadow:0 0 30px rgba(255,229,0,0.8);
-  pointer-events:none; z-index:40; opacity:0;
-  transition:opacity 0.2s;
-}
-#point-flash.show { opacity:1; }
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>Tennis 🎾</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --court:  #1a5fa8;
+      --yellow: #FFE500;
+      --orange: #FF6D00;
+      --red:    #D32F2F;
+      --white:  #FFFFFF;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { background:#0a1628; font-family:'Nunito',sans-serif; overflow:hidden; height:100vh; width:100vw; }
+    #gameCanvas { position:fixed; top:0; left:0; width:100%; height:100%; touch-action:none; }
+
+    /* ── SCOREBOARD ── */
+    #scoreboard {
+      position:fixed; top:0; left:0; right:0; z-index:20;
+      display:none; justify-content:center; padding:10px; pointer-events:none;
+    }
+    .sb-panel {
+      background:rgba(0,0,0,0.55); backdrop-filter:blur(12px);
+      border:1.5px solid rgba(255,255,255,0.15); padding:8px 18px;
+      display:flex; flex-direction:column; align-items:center; gap:2px;
+    }
+    .sb-panel.left  { border-radius:18px 0 0 18px; }
+    .sb-panel.right { border-radius:0 18px 18px 0; }
+    .sb-panel.mid   { background:rgba(0,0,0,0.7); padding:8px 12px; }
+    .sb-name  { font-size:.58rem; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,.5); font-weight:800; }
+    .sb-jeux  { font-family:'Fredoka One',cursive; font-size:1.6rem; color:white; line-height:1; }
+    .sb-pts   { font-size:.7rem; font-weight:800; color:rgba(255,255,255,.55); }
+    .sb-vs    { font-family:'Fredoka One',cursive; font-size:.9rem; color:rgba(255,255,255,.35); }
+    .sb-set   { font-size:.52rem; color:rgba(255,255,255,.28); text-transform:uppercase; letter-spacing:1px; }
+
+    /* ── TIMING ── */
+    #timing-wrap {
+      position:fixed; bottom:110px; left:50%; transform:translateX(-50%);
+      z-index:20; display:none; flex-direction:column; align-items:center; gap:6px; pointer-events:none;
+    }
+    #timing-label { font-family:'Fredoka One',cursive; font-size:.9rem; color:rgba(255,255,255,.65); }
+    #timing-track {
+      width:200px; height:18px; background:rgba(0,0,0,.5);
+      border-radius:10px; border:2px solid rgba(255,255,255,.18); position:relative; overflow:hidden;
+    }
+    #timing-zone    { position:absolute; top:0; height:100%; background:rgba(255,229,0,.4); border-radius:4px; }
+    #timing-perfect { position:absolute; top:0; height:100%; background:rgba(255,100,0,.65); border-radius:4px; }
+    #timing-cursor  { position:absolute; top:0; width:6px; height:100%; background:white; border-radius:3px; box-shadow:0 0 8px white; }
+
+    /* ── VISÉE GYRO ── */
+    #aim-wrap {
+      position:fixed; bottom:62px; left:50%; transform:translateX(-50%);
+      z-index:20; display:none; align-items:center; gap:8px; pointer-events:none;
+    }
+    .aim-lbl { font-size:.62rem; color:rgba(255,255,255,.4); font-weight:800; text-transform:uppercase; letter-spacing:1px; }
+    #aim-track { width:130px; height:8px; background:rgba(255,255,255,.1); border-radius:4px; position:relative; overflow:hidden; }
+    #aim-fill  { position:absolute; top:0; height:100%; width:50%; background:linear-gradient(90deg,#4FC3F7,#fff,#FF7043); border-radius:4px; left:25%; }
+    #aim-dot   { position:absolute; top:-2px; width:12px; height:12px; background:white; border-radius:50%; left:calc(50% - 6px); box-shadow:0 0 6px white; }
+
+    /* ── BOUTON FRAPPE ── */
+    #hit-btn {
+      position:fixed; bottom:14px; left:16px; right:16px; z-index:20; display:none;
+      height:80px; background:linear-gradient(180deg,#FFE500,#FF9800);
+      border:none; border-radius:24px; cursor:pointer;
+      font-family:'Fredoka One',cursive; font-size:1.55rem; color:#1a1a00;
+      box-shadow:0 8px 0 #b36200; -webkit-appearance:none; outline:none;
+      align-items:center; justify-content:center; position:fixed;
+    }
+    #hit-btn::before { content:''; position:absolute; inset:0; height:45%; background:rgba(255,255,255,.22); border-radius:24px 24px 0 0; }
+    #hit-btn.pressed { transform:translateY(6px); box-shadow:0 2px 0 #b36200; }
+    .hit-lbl { position:relative; z-index:1; }
+
+    /* ── FLASH ── */
+    #hit-flash { position:fixed; inset:0; z-index:25; pointer-events:none; opacity:0; transition:opacity .06s; }
+
+    /* ── MSG CENTRAL ── */
+    #msg-center {
+      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      z-index:30; pointer-events:none; opacity:0; transition:opacity .15s;
+      font-family:'Fredoka One',cursive; font-size:2.8rem; color:white;
+      text-shadow:3px 3px 0 rgba(0,0,0,.5), 0 0 30px rgba(255,229,0,.5);
+      white-space:nowrap; text-align:center;
+    }
+    #msg-center.show { opacity:1; }
+
+    /* ── RÉSULTAT ── */
+    #result-overlay {
+      position:fixed; inset:0; z-index:40; display:none;
+      align-items:center; justify-content:center;
+      background:rgba(0,0,0,.75); backdrop-filter:blur(10px);
+    }
+    #result-overlay.show { display:flex; }
+    .res-box {
+      background:linear-gradient(135deg,#0d2b60,#0a4a2e);
+      border:2px solid rgba(255,255,255,.2); border-radius:28px;
+      padding:34px 38px; text-align:center; max-width:320px; width:calc(100% - 40px);
+      animation:popIn .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes popIn { from{opacity:0;transform:scale(.5)} to{opacity:1;transform:scale(1)} }
+    .res-emoji { font-size:4rem; }
+    .res-title { font-family:'Fredoka One',cursive; font-size:2.2rem; color:white; margin:8px 0 4px; }
+    .res-sub   { font-size:.88rem; color:rgba(255,255,255,.5); font-weight:700; margin-bottom:18px; }
+    .res-score { display:flex; gap:14px; justify-content:center; margin-bottom:22px; }
+    .res-pl    { background:rgba(255,255,255,.07); border-radius:14px; padding:10px 16px; }
+    .res-plnm  { font-size:.62rem; color:rgba(255,255,255,.38); text-transform:uppercase; letter-spacing:1px; font-weight:800; }
+    .res-plsc  { font-family:'Fredoka One',cursive; font-size:1.8rem; color:white; }
+    .res-plsc.win { color:var(--yellow); }
+    .res-sep   { font-family:'Fredoka One',cursive; font-size:1.3rem; color:rgba(255,255,255,.25); align-self:center; }
+    .res-btn   { background:linear-gradient(135deg,var(--yellow),var(--orange)); color:#1a1a00; font-family:'Fredoka One',cursive; font-size:1.05rem; border:none; border-radius:50px; padding:12px 26px; cursor:pointer; margin:4px; }
+
+    /* ── START SCREEN ── */
+    #start-screen {
+      position:fixed; inset:0; z-index:50;
+      background:linear-gradient(160deg,#0a2a0a,#1565C0 55%,#1a4a00);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:14px; padding:24px; text-align:center;
+    }
+    .start-emoji { font-size:5rem; animation:bounce 1.5s ease-in-out infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    .start-title { font-family:'Fredoka One',cursive; font-size:3rem; color:white; }
+    .start-sub   { font-size:.83rem; color:rgba(255,255,255,.5); font-weight:700; max-width:280px; line-height:1.7; }
+    .niv-grid    { display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px; }
+    .niv-btn {
+      display:flex; align-items:center; gap:12px;
+      background:rgba(255,255,255,.08); border:2px solid rgba(255,255,255,.15);
+      border-radius:16px; padding:12px 16px; color:white;
+      font-family:'Fredoka One',cursive; font-size:1.05rem; cursor:pointer;
+    }
+    .niv-btn.sel { background:rgba(255,229,0,.15); border-color:var(--yellow); color:var(--yellow); }
+    .adv-found  { background:rgba(255,255,255,.07); border:2px solid rgba(255,255,255,.12); border-radius:16px; padding:12px 20px; display:none; }
+    .adv-flbl   { font-size:.6rem; color:rgba(255,255,255,.38); text-transform:uppercase; letter-spacing:2px; font-weight:800; }
+    .adv-fnom   { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--yellow); margin-top:2px; }
+    .go-btn {
+      background:linear-gradient(135deg,var(--yellow),var(--orange)); color:#1a1a00;
+      font-family:'Fredoka One',cursive; font-size:1.4rem; border:none;
+      border-radius:50px; padding:15px 44px; box-shadow:0 8px 0 #b36200;
+      cursor:pointer; display:none;
+    }
+    .go-btn:active { transform:translateY(4px); box-shadow:0 4px 0 #b36200; }
+  </style>
 </head>
 <body>
 
-<div id="start-screen">
-  <div style="font-size:72px;margin-bottom:10px;">🎾</div>
-  <div class="start-title">Tennis</div>
-  <div class="start-sub">2 contre 2 · Penche ton téléphone pour viser !</div>
-  <div class="diff-grid">
-    <div class="diff-btn" onclick="choisirDiff('facile',this)">😊 Facile</div>
-    <div class="diff-btn" onclick="choisirDiff('moyen',this)">😤 Moyen</div>
-    <div class="diff-btn" onclick="choisirDiff('difficile',this)">💀 Difficile</div>
-  </div>
-  <button class="start-btn" id="startBtn" onclick="demarrer()">C'est parti ! 🎾</button>
-</div>
+<button onclick="window.location.href='../index.html'" style="position:fixed;top:12px;left:12px;z-index:60;background:rgba(0,0,0,.4);border:1.5px solid rgba(255,255,255,.2);border-radius:50%;width:40px;height:40px;color:white;font-size:1.1rem;cursor:pointer;">←</button>
 
-<div id="score-board">
-  <div class="team-score">
-    <div class="team-name">🔵 Toi</div>
-    <div class="score-val" id="score-joueur">0</div>
-    <div class="tennis-pts" id="pts-joueur">0</div>
+<canvas id="gameCanvas"></canvas>
+
+<!-- Score -->
+<div id="scoreboard">
+  <div class="sb-panel left">
+    <div class="sb-name">🎾 Toi</div>
+    <div class="sb-jeux" id="sb-j-jeux">0</div>
+    <div class="sb-pts"  id="sb-j-pts">0</div>
   </div>
-  <div class="score-divider">VS</div>
-  <div class="team-score">
-    <div class="tennis-pts" id="pts-adv">0</div>
-    <div class="score-val" id="score-adv">0</div>
-    <div class="team-name">🔴 CPU</div>
+  <div class="sb-panel mid">
+    <div class="sb-vs">VS</div>
+    <div class="sb-set" id="sb-set">Set 1</div>
+  </div>
+  <div class="sb-panel right">
+    <div class="sb-name" id="sb-a-name">CPU 🎾</div>
+    <div class="sb-jeux" id="sb-a-jeux">0</div>
+    <div class="sb-pts"  id="sb-a-pts">0</div>
   </div>
 </div>
-<div id="game-label">Set 1 · Jeu en cours</div>
 
-<div id="tilt-indicator">
-  <span class="tilt-label">◀ Gauche</span>
-  <div class="tilt-bar-bg"><div class="tilt-bar-fill" id="tiltFill"></div></div>
-  <span class="tilt-label">Droite ▶</span>
+<!-- Timing bar -->
+<div id="timing-wrap">
+  <div id="timing-label">⏱ Timing</div>
+  <div id="timing-track">
+    <div id="timing-zone"></div>
+    <div id="timing-perfect"></div>
+    <div id="timing-cursor"></div>
+  </div>
 </div>
 
-<div id="point-flash"></div>
+<!-- Visée -->
+<div id="aim-wrap">
+  <span class="aim-lbl">◀</span>
+  <div id="aim-track"><div id="aim-fill"></div><div id="aim-dot"></div></div>
+  <span class="aim-lbl">▶</span>
+</div>
 
+<!-- Frappe -->
+<button id="hit-btn" ontouchstart="frapper(event)" onmousedown="frapper(event)">
+  <span class="hit-lbl">🎾 FRAPPE !</span>
+</button>
+
+<div id="hit-flash"></div>
+<div id="msg-center"></div>
+
+<!-- Résultat -->
 <div id="result-overlay">
-  <div class="result-box">
-    <div class="result-emoji" id="res-emoji">🏆</div>
-    <div class="result-title" id="res-title">Victoire !</div>
-    <div class="result-sub" id="res-sub">Tu as gagné le match !</div>
-    <button class="result-btn" onclick="resetJeu()">Rejouer 🎾</button>
+  <div class="res-box">
+    <div class="res-emoji" id="res-emoji">🏆</div>
+    <div class="res-title" id="res-title">Victoire !</div>
+    <div class="res-sub"   id="res-sub">Bien joué !</div>
+    <div class="res-score">
+      <div class="res-pl"><div class="res-plnm">Toi</div><div class="res-plsc win" id="res-j-sc">0</div></div>
+      <div class="res-sep">–</div>
+      <div class="res-pl"><div class="res-plnm" id="res-a-name">CPU</div><div class="res-plsc" id="res-a-sc">0</div></div>
+    </div>
+    <button class="res-btn" onclick="window.location.href='../index.html'">🏠 Menu</button>
+    <button class="res-btn" onclick="location.reload()">🔄 Rejouer</button>
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Start -->
+<div id="start-screen">
+  <span class="start-emoji">🎾</span>
+  <div class="start-title">Tennis</div>
+  <div class="start-sub">Appuie au bon moment sur le bouton jaune !<br>Penche le téléphone pour viser gauche / droite.</div>
+  <div class="niv-grid">
+    <button class="niv-btn" id="niv-facile"    onclick="choisirNiveau('facile',this)">😊 <span style="flex:1;text-align:left">Facile</span>    <span style="font-size:.68rem;opacity:.4">Zone large</span></button>
+    <button class="niv-btn" id="niv-moyen"     onclick="choisirNiveau('moyen',this)">😤 <span style="flex:1;text-align:left">Moyen</span>     <span style="font-size:.68rem;opacity:.4">Zone normale</span></button>
+    <button class="niv-btn" id="niv-difficile" onclick="choisirNiveau('difficile',this)">💀 <span style="flex:1;text-align:left">Difficile</span> <span style="font-size:.68rem;opacity:.4">Zone étroite !</span></button>
+  </div>
+  <div class="adv-found" id="adv-found">
+    <div class="adv-flbl">Ton adversaire</div>
+    <div class="adv-fnom" id="adv-fnom">…</div>
+  </div>
+  <button class="go-btn" id="go-btn" onclick="demarrer()">🎾 Jouer !</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/sensors.js"></script>
 <script>
 // ══════════════════════════════════════════
-//  ÉTAT DU JEU
+//  CONFIG
 // ══════════════════════════════════════════
-const TENNIS_PTS = ['0','15','30','40','Ad'];
-let etat = {
-  difficulte: null,
-  ptsJoueur: 0, ptsAdv: 0,
-  jeuxJoueur: 0, jeuxAdv: 0,
-  balle: { x:0, y:1.2, z:0, vx:0, vy:0, vz:0, enVol:false, direction:1 },
-  joueurTilt: 0, // -1 à 1
-  phase: 'service', // 'service','echange','point'
-  animSpec: null,
-  temps: 0,
+const DIFF = {
+  facile:    { vitesse:0.22, erreurIA:0.55, delaiIA:2200, zoneW:0.38, perfectW:0.12, cursorSpd:0.016 },
+  moyen:     { vitesse:0.30, erreurIA:0.30, delaiIA:1600, zoneW:0.28, perfectW:0.08, cursorSpd:0.022 },
+  difficile: { vitesse:0.40, erreurIA:0.10, delaiIA:1000, zoneW:0.18, perfectW:0.05, cursorSpd:0.032 },
+};
+
+const ETAT = {
+  niveau:        'moyen',
+  adversaire:    null,
+  phase:         'idle', // idle|frappe_dispo|vol|ia_retour
+  ptsJ:0, ptsA:0, jeuxJ:0, jeuxA:0,
+  cursorPos:     0,   // 0..1
+  cursorDir:     1,
+  frappePossible:false,
+  finPartie:     false,
 };
 
 // ══════════════════════════════════════════
 //  THREE.JS SETUP
 // ══════════════════════════════════════════
-const renderer = new THREE.WebGLRenderer({ antialias:true });
-renderer.setSize(window.innerWidth, window.innerHeight);
+const canvas   = document.getElementById('gameCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.1;
-document.body.prepend(renderer.domElement);
+renderer.toneMappingExposure = 1.15;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB);
-scene.fog = new THREE.Fog(0x87CEEB, 30, 80);
+scene.fog = new THREE.FogExp2(0x87CEEB, 0.016);
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 200);
-camera.position.set(0, 8, 18);
-camera.lookAt(0, 0, 0);
+// Caméra FPS — derrière le joueur, vue vers le court
+const camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.1, 200);
+camera.position.set(0, 2.2, 11.5);
+camera.lookAt(0, 1.2, 0);
 
 // Lumières
-const sunLight = new THREE.DirectionalLight(0xFFF5E0, 1.4);
-sunLight.position.set(10, 20, 10);
-sunLight.castShadow = true;
-scene.add(sunLight);
-scene.add(new THREE.AmbientLight(0xB0C8E0, 0.7));
-const fillLight = new THREE.DirectionalLight(0x90CAF9, 0.4);
-fillLight.position.set(-8, 5, -5);
-scene.add(fillLight);
+const sun = new THREE.DirectionalLight(0xFFF8E7, 1.6);
+sun.position.set(8, 22, 10); sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-22; sun.shadow.camera.right=22;
+sun.shadow.camera.top=22;   sun.shadow.camera.bottom=-22;
+scene.add(sun, sun.target);
+scene.add(new THREE.AmbientLight(0xC8DCF0, 0.95));
+const fill = new THREE.DirectionalLight(0xA0C0FF, 0.5);
+fill.position.set(-10, 8, -5); scene.add(fill);
 
-// ══════════════════════════════════════════
-//  COURT DE TENNIS
-// ══════════════════════════════════════════
-function creerCourt() {
-  // Sol herbe
-  const herbeGeo = new THREE.PlaneGeometry(60, 60);
-  const herbeMat = new THREE.MeshPhongMaterial({ color:0x2E7D32, shininess:20 });
-  const herbe = new THREE.Mesh(herbeGeo, herbeMat);
-  herbe.rotation.x = -Math.PI/2;
-  herbe.receiveShadow = true;
-  scene.add(herbe);
-
-  // Court (surface bleue)
-  const courtGeo = new THREE.PlaneGeometry(10.97, 23.77);
-  const courtMat = new THREE.MeshPhongMaterial({ color:0x1565C0, shininess:40 });
-  const court = new THREE.Mesh(courtGeo, courtMat);
-  court.rotation.x = -Math.PI/2;
-  court.position.y = 0.01;
-  court.receiveShadow = true;
-  scene.add(court);
-
-  // Lignes blanches
-  function ligne(w,h,x,z) {
-    const geo = new THREE.PlaneGeometry(w,h);
-    const mat = new THREE.MeshPhongMaterial({ color:0xFFFFFF, shininess:60 });
-    const m = new THREE.Mesh(geo,mat);
-    m.rotation.x = -Math.PI/2;
-    m.position.set(x,0.02,z);
-    scene.add(m);
-  }
-  // Contours
-  ligne(10.97,0.05,0,-11.885); ligne(10.97,0.05,0,11.885);
-  ligne(0.05,23.77,-5.485,0); ligne(0.05,23.77,5.485,0);
-  // Ligne de service
-  ligne(10.97,0.05,0,-6.4); ligne(10.97,0.05,0,6.4);
-  // Couloir double (si double)
-  ligne(0.05,23.77,-4.115,0); ligne(0.05,23.77,4.115,0);
-  // Ligne centrale
-  ligne(0.05,12.8,0,0);
-
-  // Filet
-  const filetGeo = new THREE.BoxGeometry(10.97,0.91,0.05);
-  const filetMat = new THREE.MeshPhongMaterial({ color:0xFFFFFF, transparent:true, opacity:0.7, shininess:80 });
-  const filet = new THREE.Mesh(filetGeo,filetMat);
-  filet.position.set(0,0.455,0);
-  scene.add(filet);
-  // Poteaux
-  [-5.485,5.485].forEach(x => {
-    const pGeo = new THREE.CylinderGeometry(0.05,0.05,1.2);
-    const pMat = new THREE.MeshPhongMaterial({ color:0xCCCCCC, shininess:100 });
-    const p = new THREE.Mesh(pGeo,pMat);
-    p.position.set(x,0.6,0);
-    scene.add(p);
-  });
-
-  // Gradins (rectangles colorés)
-  const couleursGradin = [0xE53935,0x1E88E5,0x43A047,0xFB8C00,0x8E24AA];
-  [-14,-13.5,-13].forEach((z,i) => {
-    const grad = new THREE.BoxGeometry(28,1.2+i*0.3,0.3);
-    const gmat = new THREE.MeshPhongMaterial({ color:couleursGradin[i%5], shininess:30 });
-    const g = new THREE.Mesh(grad,gmat);
-    g.position.set(0,0.6+i*0.8,z);
-    scene.add(g);
-  });
-  [14,13.5,13].forEach((z,i) => {
-    const grad = new THREE.BoxGeometry(28,1.2+i*0.3,0.3);
-    const gmat = new THREE.MeshPhongMaterial({ color:couleursGradin[(i+2)%5], shininess:30 });
-    const g = new THREE.Mesh(grad,gmat);
-    g.position.set(0,0.6+i*0.8,z);
-    scene.add(g);
-  });
+function phong(c, sh=60, sp=0x111111) {
+  return new THREE.MeshPhongMaterial({ color:c, shininess:sh, specular:sp });
 }
-creerCourt();
-
-// ══════════════════════════════════════════
-//  CRÉER UN MII
-// ══════════════════════════════════════════
-function creerMii(couleurCorps, couleurPeau, x, z, rot) {
-  const groupe = new THREE.Group();
-  const peau = new THREE.MeshPhongMaterial({ color:couleurPeau, shininess:80 });
-  const corps = new THREE.MeshPhongMaterial({ color:couleurCorps, shininess:60 });
-
-  // Corps
-  const bodyGeo = new THREE.CylinderGeometry(0.28,0.22,0.7);
-  groupe.add(objet(bodyGeo,corps,0,0.55,0));
-  // Tête
-  const headGeo = new THREE.SphereGeometry(0.28,16,12);
-  groupe.add(objet(headGeo,peau,0,1.18,0));
-  // Yeux
-  [-0.1,0.1].forEach(ex => {
-    const eGeo = new THREE.SphereGeometry(0.06,8,8);
-    const eMat = new THREE.MeshPhongMaterial({ color:0x222222, shininess:120 });
-    groupe.add(objet(eGeo,eMat,ex,1.22,0.24));
-    // Reflet
-    const rGeo = new THREE.SphereGeometry(0.025,6,6);
-    const rMat = new THREE.MeshPhongMaterial({ color:0xFFFFFF });
-    groupe.add(objet(rGeo,rMat,ex+0.02,1.24,0.27));
-  });
-  // Bouche
-  const bGeo = new THREE.SphereGeometry(0.05,8,8);
-  groupe.add(objet(bGeo,new THREE.MeshPhongMaterial({color:0xCC4444,shininess:60}),0,1.08,0.25));
-  // Jambes
-  [-0.12,0.12].forEach(jx => {
-    const jGeo = new THREE.CylinderGeometry(0.1,0.1,0.5);
-    groupe.add(objet(jGeo,corps,jx,0.1,0));
-  });
-  // Bras
-  [-0.38,0.38].forEach((bx,i) => {
-    const bGeo = new THREE.CylinderGeometry(0.07,0.07,0.4);
-    const bras = objet(bGeo,peau,bx,0.65+0.05,0);
-    bras.rotation.z = i===0 ? 0.5 : -0.5;
-    groupe.add(bras);
-  });
-
-  groupe.position.set(x,0,z);
-  groupe.rotation.y = rot;
-  groupe.castShadow = true;
-  scene.add(groupe);
-  return groupe;
-}
-
-function objet(geo,mat,x,y,z) {
-  const m = new THREE.Mesh(geo,mat);
-  m.position.set(x,y,z);
-  m.castShadow = true;
-  return m;
+function mkMesh(geo, mat, x=0, y=0, z=0) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x,y,z); m.castShadow = true; return m;
 }
 
 // ══════════════════════════════════════════
-//  JOUEURS ET ADVERSAIRES
+//  COURT
 // ══════════════════════════════════════════
-// Équipe bleue (joueur) : z positif
-const miiJ1 = creerMii(0x1565C0, 0xFFCBA4, -2, 8, 0);
-const miiJ2 = creerMii(0x0288D1, 0xFFCBA4, 2, 9, 0);
-// Équipe rouge (CPU) : z négatif
-const miiA1 = creerMii(0xC62828, 0xFFCBA4, -2, -8, Math.PI);
-const miiA2 = creerMii(0xE53935, 0xFFCBA4, 2, -9, Math.PI);
+// Herbe
+const herbe = mkMesh(new THREE.PlaneGeometry(100,100), phong(0x2d6a2d,15,0x112211));
+herbe.rotation.x = -Math.PI/2; herbe.receiveShadow = true; scene.add(herbe);
+// Surface bleue
+const court = mkMesh(new THREE.PlaneGeometry(10.97,23.77), phong(0x1a5fa8,30,0x0a2a50));
+court.rotation.x = -Math.PI/2; court.position.y = 0.01; court.receiveShadow = true; scene.add(court);
 
-// Raquettes
-function creerRaquette(couleur) {
+function ligne(w,h,x,z) {
+  const m = mkMesh(new THREE.PlaneGeometry(w,h), phong(0xFFFFFF,80));
+  m.rotation.x = -Math.PI/2; m.position.set(x,0.015,z); scene.add(m);
+}
+ligne(10.97,.06,0,-11.88); ligne(10.97,.06,0,11.88);
+ligne(.06,23.77,-5.485,0); ligne(.06,23.77,5.485,0);
+ligne(10.97,.06,0,-6.4);   ligne(10.97,.06,0,6.4);
+ligne(.06,23.77,-4.115,0); ligne(.06,23.77,4.115,0);
+ligne(.06,6.4,0,3.2);      ligne(.06,6.4,0,-3.2);
+
+// Filet
+const filetMesh = mkMesh(new THREE.BoxGeometry(10.97,.91,.05),
+  new THREE.MeshPhongMaterial({color:0xEEEEEE,transparent:true,opacity:.75,shininess:80}));
+filetMesh.position.set(0,.455,0); scene.add(filetMesh);
+scene.add(mkMesh(new THREE.BoxGeometry(10.97,.06,.06), phong(0xFFFFFF,60), 0,.88,0));
+[-5.6,5.6].forEach(x => { const p=mkMesh(new THREE.CylinderGeometry(.05,.05,1.1,8),phong(0xBBBBBB,100),x,.55,0); scene.add(p); });
+
+// Gradins front (derrière l'adversaire)
+const gradCols = [0xB71C1C,0x1565C0,0x2E7D32,0xE65100,0x6A1B9A];
+[-14.5,-15.3,-16.2].forEach((z,i) => {
+  scene.add(mkMesh(new THREE.BoxGeometry(28,1.5+i*.5,.5), phong(gradCols[i],20), 0,.75+i*1.2,z));
+});
+// Gradins latéraux
+[-8.2,8.2].forEach(x => {
+  scene.add(mkMesh(new THREE.BoxGeometry(.5,4,26), phong(0x333333,10), x,2,-3));
+});
+// Sol de fond (derrière le joueur)
+scene.add(mkMesh(new THREE.BoxGeometry(28,2,1), phong(0x222222,5), 0,1,13.5));
+
+// Nuages
+for (let i=0;i<7;i++) {
+  const c = mkMesh(new THREE.SphereGeometry(2.5+Math.random()*2,10,6),
+    new THREE.MeshPhongMaterial({color:0xFFFFFF,transparent:true,opacity:.88}));
+  c.position.set((Math.random()-.5)*70,20+Math.random()*8,(Math.random()-.5)*60);
+  scene.add(c);
+}
+
+// ══════════════════════════════════════════
+//  CRÉER MII
+// ══════════════════════════════════════════
+function creerMii(coulCorps, coulPeau, x, z, rotY, sc=1) {
   const g = new THREE.Group();
-  // Tête ovale
-  const headGeo = new THREE.TorusGeometry(0.25,0.04,8,20);
-  g.add(objet(headGeo, new THREE.MeshPhongMaterial({color:couleur,shininess:100}),0,0.25,0));
-  // Manche
-  const manGeo = new THREE.CylinderGeometry(0.03,0.04,0.5);
-  g.add(objet(manGeo, new THREE.MeshPhongMaterial({color:0x795548,shininess:60}),0,-0.1,0));
-  // Cordage
-  const cordGeo = new THREE.PlaneGeometry(0.46,0.46);
-  g.add(objet(cordGeo, new THREE.MeshPhongMaterial({color:0xE0E0E0,transparent:true,opacity:0.5,side:THREE.DoubleSide}),0,0.25,0));
-  return g;
+  function m(c,sh=55) { return phong(c,sh); }
+
+  g.add(mkMesh(new THREE.BoxGeometry(.7,.94,.46),  m(coulCorps), 0,.87,0));
+  const tete = mkMesh(new THREE.SphereGeometry(.36,14,12), m(coulPeau,80), 0,1.74,0);
+  g.add(tete);
+  [-0.12,0.12].forEach(ex => {
+    g.add(mkMesh(new THREE.SphereGeometry(.07,8,8),   m(0x222244,120), ex,1.80,.33));
+    g.add(mkMesh(new THREE.SphereGeometry(.028,6,6),  m(0xFFFFFF),     ex+.022,1.82,.36));
+  });
+  const chev = mkMesh(new THREE.SphereGeometry(.38,14,8,0,Math.PI*2,0,Math.PI*.55), m(0x2d1a00), 0,1.77,0);
+  chev.rotation.x = .12; g.add(chev);
+  g.add(mkMesh(new THREE.BoxGeometry(.16,.04,.06), m(0xAA3322), 0,1.62,.34));
+  [-0.17,.17].forEach(jx => g.add(mkMesh(new THREE.BoxGeometry(.28,.66,.30), m(0x1a1a2e), jx,.27,0)));
+
+  // Bras
+  const brasGroup = new THREE.Group();
+  brasGroup.position.set(0,1.28,0);
+  [-0.5,.5].forEach(bx => brasGroup.add(mkMesh(new THREE.BoxGeometry(.22,.62,.22), m(coulCorps), bx,-.20,0)));
+  g.add(brasGroup);
+
+  // Raquette
+  const raq = new THREE.Group();
+  raq.position.set(.58,.68,.1);
+  raq.rotation.set(.2,0,-.3);
+  raq.add(mkMesh(new THREE.CylinderGeometry(.03,.035,.55,8), m(0x5D4037,80), 0,-.1,0));
+  raq.add(mkMesh(new THREE.TorusGeometry(.24,.04,8,20), m(0xFFF176,100), 0,.28,0));
+  const cord = new THREE.Mesh(new THREE.PlaneGeometry(.44,.44),
+    new THREE.MeshPhongMaterial({color:0xE0E0E0,transparent:true,opacity:.5,side:THREE.DoubleSide}));
+  cord.position.set(0,.28,.01); raq.add(cord);
+  g.add(raq);
+
+  g.position.set(x,0,z);
+  g.rotation.y = rotY;
+  g.scale.setScalar(sc);
+  g.castShadow = true;
+  scene.add(g);
+  return { g, brasGroup, raq };
 }
 
-const raqJ1 = creerRaquette(0x1565C0);
-miiJ1.add(raqJ1);
-raqJ1.position.set(0.45,0.65,0);
-raqJ1.rotation.z = -0.3;
+const miiJ = creerMii(0x1565C0, 0xfad9b4,  0,  9, Math.PI, 1.1);
+const miiA = creerMii(0xC62828, 0xd4956a,  0, -8, 0,       1.0);
 
-const raqA1 = creerRaquette(0xC62828);
-miiA1.add(raqA1);
-raqA1.position.set(0.45,0.65,0);
-raqA1.rotation.z = -0.3;
+// Spectateurs — 3 rangées derrière l'adversaire + 2 côtés
+const SPEC_CORPS = [0xFF5722,0x9C27B0,0x009688,0xFFC107,0x3F51B5,0xE91E63,0x4CAF50,0x795548];
+const SPEC_PEAU  = [0xfad9b4,0xd4956a,0xf5c8a0,0xc47a45];
+const specMiis   = [];
 
-// ══════════════════════════════════════════
-//  BALLE DE TENNIS
-// ══════════════════════════════════════════
-const balleGeo = new THREE.SphereGeometry(0.065,16,12);
-const balleMat = new THREE.MeshPhongMaterial({ color:0xCDDC39, shininess:80 });
-const balleMesh = new THREE.Mesh(balleGeo,balleMat);
-balleMesh.castShadow = true;
-scene.add(balleMesh);
-
-// Ombre de la balle
-const ombreGeo = new THREE.CircleGeometry(0.1,16);
-const ombreMat = new THREE.MeshBasicMaterial({ color:0x000000, transparent:true, opacity:0.3 });
-const ombreMesh = new THREE.Mesh(ombreGeo,ombreMat);
-ombreMesh.rotation.x = -Math.PI/2;
-ombreMesh.position.y = 0.02;
-scene.add(ombreMesh);
-
-// ══════════════════════════════════════════
-//  SPECTATEURS MII
-// ══════════════════════════════════════════
-const COULEURS_SPEC = [0xFF5722,0x9C27B0,0x009688,0xFF9800,0x4CAF50,0xE91E63,0x00BCD4,0xCDDC39];
-let spectateursMiis = [];
-for(let i=0; i<20; i++) {
-  const angle = (i/20) * Math.PI * 2;
-  const r = 10 + Math.random()*3;
-  const cx = Math.cos(angle)*r;
-  const cz = Math.sin(angle)*r;
-  const s = creerMii(COULEURS_SPEC[i%8], 0xFFCBA4, cx, cz, Math.atan2(-cz,-cx));
-  s.scale.setScalar(0.7);
-  spectateursMiis.push(s);
+for (let row=0;row<3;row++) {
+  for (let col=0;col<9;col++) {
+    const s = creerMii(SPEC_CORPS[(row*9+col)%8], SPEC_PEAU[(row*9+col)%4],
+      -9+col*2.2, -14.5-row*.7, 0, .64);
+    s.g.position.y = row*1.1;
+    s.g.userData.baseY = row*1.1;
+    specMiis.push(s);
+  }
 }
+[-7.5,7.5].forEach((xi,si) => {
+  for (let i=0;i<5;i++) {
+    const s = creerMii(SPEC_CORPS[(si*5+i)%8], SPEC_PEAU[i%4],
+      xi, -4+i*3, si===0?Math.PI/2:-Math.PI/2, .64);
+    s.g.userData.baseY = 0;
+    specMiis.push(s);
+  }
+});
+
+// ══════════════════════════════════════════
+//  BALLE
+// ══════════════════════════════════════════
+const balleMesh = new THREE.Mesh(
+  new THREE.SphereGeometry(.065,16,12),
+  new THREE.MeshPhongMaterial({color:0xCDDC39,shininess:100,specular:0x888800})
+);
+balleMesh.castShadow = true; scene.add(balleMesh);
+
+const ombreMesh = new THREE.Mesh(
+  new THREE.CircleGeometry(.12,14),
+  new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.28})
+);
+ombreMesh.rotation.x = -Math.PI/2; ombreMesh.position.y = .018; scene.add(ombreMesh);
+
+// Traînée
+const trainee = [];
+for (let i=0;i<5;i++) {
+  const t = new THREE.Mesh(new THREE.SphereGeometry(.04,8,8),
+    new THREE.MeshBasicMaterial({color:0xCDDC39,transparent:true,opacity:(1-i/5)*.35}));
+  t.visible=false; scene.add(t); trainee.push(t);
+}
+
+const ballePos  = new THREE.Vector3(0,1.0,0);
+const balleVel  = new THREE.Vector3();
+let   balleEnVol = false;
+const historique = [];
 
 // ══════════════════════════════════════════
 //  GYROSCOPE
 // ══════════════════════════════════════════
 let tiltX = 0;
-if (window.DeviceOrientationEvent) {
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    // iOS — demande sur action
-  } else {
-    window.addEventListener('deviceorientation', e => {
-      tiltX = Math.max(-1, Math.min(1, (e.gamma || 0) / 30));
-    });
-  }
+if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+  window.addEventListener('deviceorientation', e => {
+    tiltX = Math.max(-1, Math.min(1, (e.gamma||0) / 35));
+  });
 }
 
 // ══════════════════════════════════════════
-//  LOGIQUE DE JEU
+//  TIMING
 // ══════════════════════════════════════════
-let difficulte = 'moyen';
-let jeuActif = false;
+function setZoneTiming() {
+  const d   = DIFF[ETAT.niveau];
+  const zW  = d.zoneW * 100;
+  const pW  = d.perfectW * 100;
+  document.getElementById('timing-zone').style.cssText    = `left:${50-zW/2}%;width:${zW}%`;
+  document.getElementById('timing-perfect').style.cssText = `left:${50-pW/2}%;width:${pW}%`;
+}
 
-const DIFF = {
-  facile:    { vitesse:0.12, erreurIA:0.7, delaiIA:60 },
-  moyen:     { vitesse:0.16, erreurIA:0.4, delaiIA:40 },
-  difficile: { vitesse:0.20, erreurIA:0.15, delaiIA:20 },
-};
+function inZone(p)    { const d=DIFF[ETAT.niveau]; return p>=(0.5-d.zoneW/2)    && p<=(0.5+d.zoneW/2); }
+function inPerfect(p) { const d=DIFF[ETAT.niveau]; return p>=(0.5-d.perfectW/2) && p<=(0.5+d.perfectW/2); }
 
-function choisirDiff(d, btn) {
-  difficulte = d;
-  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected');
-  document.getElementById('startBtn').classList.add('visible');
+// ══════════════════════════════════════════
+//  FRAPPER
+// ══════════════════════════════════════════
+function frapper(e) {
+  if (e) e.preventDefault();
+  if (!ETAT.frappePossible || ETAT.finPartie) return;
+
+  const p       = ETAT.cursorPos;
+  const perfect = inPerfect(p);
+  const bon     = inZone(p);
+
+  document.getElementById('hit-btn').classList.add('pressed');
+  setTimeout(()=>document.getElementById('hit-btn').classList.remove('pressed'),150);
+
+  if (!bon) {
+    affMsg('Raté ! 😬','#FF5722');
+    flash(false);
+    if (navigator.vibrate) navigator.vibrate([10,10,10]);
+    setTimeout(()=>pointAdv('Raté'),400);
+    return;
+  }
+
+  const d  = DIFF[ETAT.niveau];
+  balleVel.set(
+    tiltX * d.vitesse * 4.5,
+    0.055 + (perfect ? .03 : 0),
+    -(d.vitesse * 9 * (perfect ? 1.25 : 1.0))
+  );
+  ballePos.set(balleMesh.position.x, 1.0, 8.5);
+  balleEnVol = true;
+  ETAT.frappePossible = false;
+  ETAT.phase = 'vol';
+
+  flash(true);
+  animFrappeJoueur();
+  if (navigator.vibrate) navigator.vibrate(perfect ? [40,20,40] : 25);
+  affMsg(perfect ? '⚡ PARFAIT !':'Bonne frappe !', perfect ? '#FFE500':'#CDDC39');
+  cacherUI();
+  planifierIARetour();
+}
+
+function planifierIARetour() {
+  const d = DIFF[ETAT.niveau];
+  setTimeout(() => {
+    if (ETAT.finPartie || ETAT.phase !== 'vol') return;
+    if (Math.random() < d.erreurIA) { pointJoueur('Faute adverse !'); return; }
+    // Retour IA vers le joueur
+    ballePos.set((Math.random()-.5)*5, .8, -9);
+    balleVel.set((Math.random()-.5)*.08, .06+Math.random()*.02, d.vitesse*10.5);
+    balleEnVol = true;
+    ETAT.phase = 'ia_retour';
+    animFrappeAdv();
+  }, d.delaiIA + Math.random()*500);
+}
+
+// ══════════════════════════════════════════
+//  PHYSIQUE
+// ══════════════════════════════════════════
+const GRAV = -.012;
+function updateBalle() {
+  if (!balleEnVol) return;
+  balleVel.y += GRAV;
+  ballePos.addScaledVector(balleVel, 1);
+
+  // Sol
+  if (ballePos.y < .065) {
+    ballePos.y = .065;
+    balleVel.y = Math.abs(balleVel.y) * .62;
+    balleVel.x *= .88; balleVel.z *= .88;
+    if (Math.abs(balleVel.y) < .018) balleVel.y = .018;
+  }
+  // Murs latéraux
+  if (Math.abs(ballePos.x) > 5.5) { ballePos.x = Math.sign(ballePos.x)*5.5; balleVel.x *= -.7; }
+
+  // Traînée
+  historique.unshift(ballePos.clone());
+  if (historique.length > 5) historique.pop();
+  trainee.forEach((t,i) => {
+    if (historique[i+1]) { t.visible=true; t.position.copy(historique[i+1]); }
+    else t.visible=false;
+  });
+
+  balleMesh.position.copy(ballePos);
+  ombreMesh.position.set(ballePos.x,.018,ballePos.z);
+  ombreMesh.scale.setScalar(Math.max(.2, 1-ballePos.y*.15));
+
+  // Filet
+  if (Math.abs(ballePos.z) < .15 && ballePos.y < .91) {
+    balleEnVol=false;
+    ETAT.phase==='vol' ? pointAdv('Filet ! 🥅') : pointJoueur('Filet adverse !');
+    return;
+  }
+  // Balle arrive côté joueur — activer le bouton
+  if (ballePos.z > 7.5 && ETAT.phase === 'ia_retour') {
+    balleEnVol = false;
+    ETAT.frappePossible = true;
+    ETAT.phase = 'frappe_dispo';
+    balleMesh.position.set(ballePos.x, 1.0, 8.5);
+    montrerUI();
+    if (navigator.vibrate) navigator.vibrate(18);
+    return;
+  }
+  // Fond adversaire = point joueur
+  if (ballePos.z < -12) { balleEnVol=false; pointJoueur('Point ! 🎾'); return; }
+  // Fond joueur = faute
+  if (ballePos.z > 13)  { balleEnVol=false; pointAdv('Hors ! 😬');    return; }
+}
+
+// ══════════════════════════════════════════
+//  SCORING
+// ══════════════════════════════════════════
+const PTS = ['0','15','30','40'];
+function pointJoueur(msg) {
+  affMsg(msg,'#4FC3F7'); ETAT.ptsJ++;
+  updateScore(); animJoie([miiJ]); animSpecFn('joie');
+  setTimeout(serviceJoueur, 2200);
+}
+function pointAdv(msg) {
+  affMsg(msg,'#FF5722'); ETAT.ptsA++;
+  updateScore(); animTristesse([miiJ]);
+  if (navigator.vibrate) navigator.vibrate([15,10,15]);
+  setTimeout(serviceJoueur, 2200);
+}
+
+function updateScore() {
+  const j=ETAT.ptsJ, a=ETAT.ptsA;
+  let lj,la;
+  if (j>=3&&a>=3) {
+    if (j===a)  { lj=la='40'; }
+    else if(j>a){ lj='Ad';la='40'; }
+    else        { lj='40';la='Ad'; }
+  } else { lj=PTS[Math.min(j,3)]; la=PTS[Math.min(a,3)]; }
+  document.getElementById('sb-j-pts').textContent = lj;
+  document.getElementById('sb-a-pts').textContent = la;
+
+  const jeuGagne = (j>=4&&j-a>=2)||(a>=4&&a-j>=2);
+  if (jeuGagne) {
+    if(j>a) ETAT.jeuxJ++; else ETAT.jeuxA++;
+    ETAT.ptsJ=0; ETAT.ptsA=0;
+    document.getElementById('sb-j-jeux').textContent = ETAT.jeuxJ;
+    document.getElementById('sb-a-jeux').textContent = ETAT.jeuxA;
+    if (ETAT.jeuxJ>=6||ETAT.jeuxA>=6) { setTimeout(finMatch,600); return; }
+  } else {
+    document.getElementById('sb-j-jeux').textContent = ETAT.jeuxJ;
+    document.getElementById('sb-a-jeux').textContent = ETAT.jeuxA;
+  }
+}
+
+function finMatch() {
+  ETAT.finPartie = true; cacherUI();
+  const g   = ETAT.jeuxJ > ETAT.jeuxA;
+  const nom = ETAT.adversaire?.nom || 'CPU';
+  document.getElementById('res-emoji').textContent = g?'🏆':'😢';
+  document.getElementById('res-title').textContent = g?'Victoire !':'Défaite...';
+  document.getElementById('res-sub').textContent   = g?`${ETAT.jeuxJ}–${ETAT.jeuxA} · Bien joué !`:`${ETAT.jeuxJ}–${ETAT.jeuxA} · Essaie encore !`;
+  document.getElementById('res-j-sc').textContent  = ETAT.jeuxJ;
+  document.getElementById('res-a-sc').textContent  = ETAT.jeuxA;
+  document.getElementById('res-a-name').textContent= nom;
+  document.getElementById('res-j-sc').className    = `res-plsc${g?' win':''}`;
+  document.getElementById('res-a-sc').className    = `res-plsc${!g?' win':''}`;
+  document.getElementById('result-overlay').classList.add('show');
+  if (g) animSpecFn('joieForte');
+  if (navigator.vibrate) navigator.vibrate(g?[60,30,60,30,120]:[20,10,20]);
+}
+
+// ══════════════════════════════════════════
+//  SERVICE
+// ══════════════════════════════════════════
+function serviceJoueur() {
+  if (ETAT.finPartie) return;
+  ETAT.phase='frappe_dispo'; ETAT.frappePossible=true;
+  balleEnVol=false; historique.length=0;
+  trainee.forEach(t=>t.visible=false);
+  balleMesh.position.set(0,1.0,8.5);
+  balleMesh.visible=true; ombreMesh.visible=true;
+  setZoneTiming(); montrerUI();
+}
+
+function montrerUI() {
+  document.getElementById('timing-wrap').style.display='flex';
+  document.getElementById('aim-wrap').style.display='flex';
+  document.getElementById('hit-btn').style.display='flex';
+}
+function cacherUI() {
+  document.getElementById('timing-wrap').style.display='none';
+  document.getElementById('aim-wrap').style.display='none';
+  document.getElementById('hit-btn').style.display='none';
+}
+
+// ══════════════════════════════════════════
+//  ANIMATIONS
+// ══════════════════════════════════════════
+function animFrappeJoueur() {
+  const raq=miiJ.raq, t0=Date.now();
+  const s=()=>{ const dt=(Date.now()-t0)/300; if(dt<1){raq.rotation.z=-.3+Math.sin(dt*Math.PI)*-1.1;raq.rotation.x=Math.sin(dt*Math.PI)*.5;requestAnimationFrame(s);}else{raq.rotation.z=-.3;raq.rotation.x=.2;}};s();
+}
+function animFrappeAdv() {
+  const raq=miiA.raq, t0=Date.now();
+  const s=()=>{ const dt=(Date.now()-t0)/280; if(dt<1){raq.rotation.z=-.3+Math.sin(dt*Math.PI)*-1.0;raq.rotation.x=Math.sin(dt*Math.PI)*.4;requestAnimationFrame(s);}else{raq.rotation.z=-.3;raq.rotation.x=.2;}};s();
+}
+function animJoie(miis) {
+  let t=0; const s=()=>{ t++; miis.forEach(m=>m.g.position.y=Math.abs(Math.sin(t*.35))*.45); if(t<45)requestAnimationFrame(s);else miis.forEach(m=>m.g.position.y=0);};s();
+}
+function animTristesse(miis) {
+  let t=0; const s=()=>{ t++; miis.forEach(m=>m.g.rotation.z=Math.sin(t*.28)*.12); if(t<35)requestAnimationFrame(s);else miis.forEach(m=>m.g.rotation.z=0);};s();
+}
+
+let animSpecData=null;
+function animSpecFn(type) {
+  animSpecData={type,fin:Date.now()+(type==='joieForte'?3500:1800)};
+  if (type==='joie'||type==='joieForte') jouerApplauds(type==='joieForte'?3.5:1.8);
+}
+function jouerApplauds(dur) {
+  try {
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const nb=Math.floor(dur*18);
+    for(let i=0;i<nb;i++){
+      const buf=ctx.createBuffer(1,ctx.sampleRate*.06,ctx.sampleRate);
+      const data=buf.getChannelData(0);
+      for(let j=0;j<data.length;j++)data[j]=(Math.random()*2-1)*Math.exp(-j/750);
+      const src=ctx.createBufferSource();src.buffer=buf;
+      const filt=ctx.createBiquadFilter();filt.type='highpass';filt.frequency.value=1100;
+      const gain=ctx.createGain();gain.gain.value=.35+Math.random()*.2;
+      src.connect(filt);filt.connect(gain);gain.connect(ctx.destination);
+      src.start(ctx.currentTime+i/18+Math.random()*.05);
+    }
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════
+//  FEEDBACK
+// ══════════════════════════════════════════
+let msgTimer=null;
+function affMsg(txt,col) {
+  clearTimeout(msgTimer);
+  const el=document.getElementById('msg-center');
+  el.textContent=txt; el.style.color=col||'white'; el.classList.add('show');
+  msgTimer=setTimeout(()=>el.classList.remove('show'),1100);
+}
+function flash(bon) {
+  const el=document.getElementById('hit-flash');
+  el.style.background=bon?'rgba(255,229,0,.18)':'rgba(255,80,0,.22)';
+  el.style.opacity='1'; setTimeout(()=>el.style.opacity='0',100);
+}
+
+// ══════════════════════════════════════════
+//  DÉMARRAGE
+// ══════════════════════════════════════════
+async function choisirNiveau(niveau, btn) {
+  ETAT.niveau = niveau;
+  document.querySelectorAll('.niv-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('adv-found').style.display='block';
+  document.getElementById('adv-fnom').textContent='…';
+  document.getElementById('go-btn').style.display='none';
+  try {
+    const adv = await getAdversaire('tennis', niveau);
+    ETAT.adversaire = adv;
+    document.getElementById('adv-fnom').textContent   = adv?`${adv.avatar||'🎾'} ${adv.nom}`:'🎾 CPU';
+    document.getElementById('sb-a-name').textContent  = adv?.nom||'CPU';
+    document.getElementById('res-a-name').textContent = adv?.nom||'CPU';
+  } catch(e) { document.getElementById('adv-fnom').textContent='🎾 CPU'; }
+  document.getElementById('go-btn').style.display='block';
+  if (navigator.vibrate) navigator.vibrate(15);
 }
 
 function demarrer() {
   document.getElementById('start-screen').style.display='none';
-  jeuActif = true;
-  etat.jeuxJoueur = 0; etat.jeuxAdv = 0;
-  etat.ptsJoueur = 0; etat.ptsAdv = 0;
-  serviceJoueur();
-
-  // Demander permission iOS
-  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission().then(r => {
-      if (r === 'granted') {
-        window.addEventListener('deviceorientation', e => {
-          tiltX = Math.max(-1, Math.min(1, (e.gamma || 0) / 30));
-        });
-      }
-    });
+  document.getElementById('scoreboard').style.display='flex';
+  if (typeof DeviceOrientationEvent?.requestPermission==='function') {
+    DeviceOrientationEvent.requestPermission().then(r=>{
+      if(r==='granted') window.addEventListener('deviceorientation',e=>{
+        tiltX=Math.max(-1,Math.min(1,(e.gamma||0)/35));
+      });
+    }).catch(()=>{});
   }
-}
-
-function serviceJoueur() {
-  etat.balle.x = 0; etat.balle.y = 2; etat.balle.z = 6;
-  etat.balle.vx = 0; etat.balle.vy = 0; etat.balle.vz = 0;
-  etat.balle.enVol = false;
-  etat.phase = 'service';
-  balleMesh.position.set(0,2,6);
-  setTimeout(() => lancerService(), 1200);
-}
-
-function lancerService() {
-  if (!jeuActif) return;
-  const d = DIFF[difficulte];
-  const angle = tiltX * 0.5;
-  etat.balle.vx = angle * d.vitesse * 5;
-  etat.balle.vz = -d.vitesse * 8;
-  etat.balle.vy = 0.05;
-  etat.balle.enVol = true;
-  etat.balle.direction = -1; // vers adversaire
-  etat.phase = 'echange';
-  // Animation bras J1
-  animerFrappe(miiJ1, raqJ1);
-}
-
-function animerFrappe(mii, raq) {
-  let t = 0;
-  function step() {
-    t++;
-    raq.rotation.z = -0.3 - Math.sin(t*0.3)*0.8;
-    if (t < 20) requestAnimationFrame(step);
-    else raq.rotation.z = -0.3;
-  }
-  requestAnimationFrame(step);
-}
-
-// Timer pour retour IA
-let iaTimer = 0;
-
-function updateBalle() {
-  if (!etat.balle.enVol) return;
-  const b = etat.balle;
-  const d = DIFF[difficulte];
-
-  b.x += b.vx;
-  b.z += b.vz;
-  b.y += b.vy;
-  b.vy -= 0.008; // gravité
-
-  // Rebond au sol
-  if (b.y < 0.065) {
-    b.y = 0.065;
-    b.vy = Math.abs(b.vy) * 0.7;
-    if (Math.abs(b.vy) < 0.02) b.vy = 0.02;
-  }
-
-  // Limites gauche/droite
-  if (Math.abs(b.x) > 5.5) {
-    b.vx *= -0.7;
-    b.x = Math.sign(b.x) * 5.5;
-  }
-
-  // IA retourne la balle quand elle arrive côté adverse
-  if (b.z < -7 && b.direction === -1) {
-    iaTimer++;
-    if (iaTimer > d.delaiIA) {
-      iaTimer = 0;
-      if (Math.random() > d.erreurIA) {
-        // Retour IA
-        const cibleX = tiltX * 3 + (Math.random()-0.5)*2;
-        b.vx = (cibleX - b.x) * 0.04;
-        b.vz = d.vitesse * 8;
-        b.vy = 0.06;
-        b.direction = 1;
-        animerFrappe(miiA1, raqA1);
-      } else {
-        // Faute IA
-        b.vz = -0.3; b.vx = (Math.random()-0.5)*0.2;
-        b.direction = 0;
-      }
-    }
-  }
-
-  // Joueur retourne quand balle arrive côté joueur
-  if (b.z > 6 && b.direction === 1) {
-    const d2 = DIFF[difficulte];
-    const angle = tiltX * 0.6;
-    b.vx = angle * d2.vitesse * 6;
-    b.vz = -d2.vitesse * 9;
-    b.vy = 0.05;
-    b.direction = -1;
-    animerFrappe(miiJ1, raqJ1);
-  }
-
-  // Balle sort (fond du terrain)
-  if (b.z > 13) {
-    // Faute joueur
-    pointAdversaire(); return;
-  }
-  if (b.z < -13) {
-    // Faute IA (ou bonne frappe joueur)
-    pointJoueur(); return;
-  }
-
-  // Balle dans le filet (y très bas au milieu)
-  if (Math.abs(b.z) < 0.3 && b.y < 0.91) {
-    if (b.direction === -1) pointAdversaire();
-    else pointJoueur();
-    return;
-  }
-
-  balleMesh.position.set(b.x, b.y, b.z);
-  ombreMesh.position.set(b.x, 0.02, b.z);
-  ombreMesh.scale.setScalar(Math.max(0.3, 1 - b.y*0.2));
-}
-
-function afficherFlash(msg, couleur) {
-  const f = document.getElementById('point-flash');
-  f.textContent = msg;
-  f.style.color = couleur || '#FFE500';
-  f.classList.add('show');
-  setTimeout(()=>f.classList.remove('show'), 800);
-}
-
-function pointJoueur() {
-  etat.balle.enVol = false;
-  etat.ptsJoueur++;
-  mettreAJourScore();
-  afficherFlash('Point ! 🎾', '#4FC3F7');
-  animerJoie([miiJ1,miiJ2]);
-  animerTristesse([miiA1,miiA2]);
-  animerSpec('joie');
-  setTimeout(()=>{ if(jeuActif) serviceJoueur(); }, 2000);
-}
-
-function pointAdversaire() {
-  etat.balle.enVol = false;
-  etat.ptsAdv++;
-  mettreAJourScore();
-  afficherFlash('Raté ! 😬', '#FF7043');
-  animerTristesse([miiJ1,miiJ2]);
-  animerJoie([miiA1,miiA2]);
-  setTimeout(()=>{ if(jeuActif) serviceJoueur(); }, 2000);
-}
-
-function mettreAJourScore() {
-  // Points tennis : 0 15 30 40 Avantage
-  const pj = etat.ptsJoueur, pa = etat.ptsAdv;
-  let labelJ, labelA;
-  if (pj >= 3 && pa >= 3) {
-    if (pj === pa) { labelJ = labelA = '40'; }
-    else if (pj > pa) { labelJ = 'Ad'; labelA = '40'; }
-    else { labelJ = '40'; labelA = 'Ad'; }
-  } else {
-    const pts = ['0','15','30','40'];
-    labelJ = pts[Math.min(pj,3)];
-    labelA = pts[Math.min(pa,3)];
-  }
-  document.getElementById('pts-joueur').textContent = labelJ;
-  document.getElementById('pts-adv').textContent = labelA;
-
-  // Vérifier fin de jeu
-  if ((pj >= 4 && pj - pa >= 2) || (pa >= 4 && pa - pj >= 2)) {
-    if (pj > pa) { etat.jeuxJoueur++; etat.ptsJoueur=0; etat.ptsAdv=0; }
-    else { etat.jeuxAdv++; etat.ptsJoueur=0; etat.ptsAdv=0; }
-    const sj = document.getElementById('score-joueur');
-    const sa = document.getElementById('score-adv');
-    sj.textContent = etat.jeuxJoueur;
-    sa.textContent = etat.jeuxAdv;
-    sj.classList.add('bump');
-    sa.classList.add('bump');
-    setTimeout(()=>{sj.classList.remove('bump');sa.classList.remove('bump');},400);
-
-    if (etat.jeuxJoueur >= 6 || etat.jeuxAdv >= 6) {
-      setTimeout(finDeMatch, 500);
-    }
-  } else {
-    document.getElementById('score-joueur').textContent = etat.jeuxJoueur;
-    document.getElementById('score-adv').textContent = etat.jeuxAdv;
-  }
-}
-
-function finDeMatch() {
-  jeuActif = false;
-  const victoire = etat.jeuxJoueur > etat.jeuxAdv;
-  document.getElementById('res-emoji').textContent = victoire ? '🏆' : '😢';
-  document.getElementById('res-title').textContent = victoire ? 'Victoire !' : 'Défaite...';
-  document.getElementById('res-sub').textContent = victoire
-    ? `${etat.jeuxJoueur} - ${etat.jeuxAdv} · Tu as dominé le match !`
-    : `${etat.jeuxJoueur} - ${etat.jeuxAdv} · Essaie encore !`;
-  document.getElementById('result-overlay').classList.add('show');
-  if (victoire) animerSpec('joieForte');
-}
-
-function resetJeu() {
-  document.getElementById('result-overlay').classList.remove('show');
-  document.getElementById('start-screen').style.display='flex';
-  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
-  document.getElementById('startBtn').classList.remove('visible');
-  etat.jeuxJoueur=0; etat.jeuxAdv=0;
-  etat.ptsJoueur=0; etat.ptsAdv=0;
-  mettreAJourScore();
+  setZoneTiming();
+  setTimeout(serviceJoueur, 800);
 }
 
 // ══════════════════════════════════════════
-//  ANIMATIONS MIIS
+//  BOUCLE
 // ══════════════════════════════════════════
-function animerJoie(miis) {
-  let t=0;
-  function step() {
-    t++;
-    miis.forEach(m => { m.position.y = Math.abs(Math.sin(t*0.4))*0.4; });
-    if (t<40) requestAnimationFrame(step);
-    else miis.forEach(m=>m.position.y=0);
-  }
-  requestAnimationFrame(step);
-}
+let frameCount=0;
+const CAM_BASE=new THREE.Vector3(0,2.2,11.5);
 
-function animerTristesse(miis) {
-  let t=0;
-  function step() {
-    t++;
-    miis.forEach(m => { m.rotation.z = Math.sin(t*0.3)*0.1; });
-    if (t<30) requestAnimationFrame(step);
-    else miis.forEach(m=>m.rotation.z=0);
-  }
-  requestAnimationFrame(step);
-}
-
-function animerSpec(type) {
-  const t0 = Date.now();
-  etat.animSpec = { type, fin: t0 + (type==='joieForte'?3000:1500) };
-}
-
-// ══════════════════════════════════════════
-//  BOUCLE PRINCIPALE
-// ══════════════════════════════════════════
-let dernierTps = 0;
-function animate(tps) {
+function animate() {
   requestAnimationFrame(animate);
-  const dt = tps - dernierTps;
-  dernierTps = tps;
-  etat.temps = tps;
+  frameCount++;
 
-  if (jeuActif) {
-    updateBalle();
-    // Mise à jour tilt indicator
-    const fill = document.getElementById('tiltFill');
-    const pct = (tiltX + 1) / 2 * 100;
-    fill.style.transform = `translateX(${pct-50}%)`;
-    etat.joueurTilt = tiltX;
+  // Curseur timing
+  if (ETAT.frappePossible && ETAT.niveau) {
+    const spd = DIFF[ETAT.niveau].cursorSpd;
+    ETAT.cursorPos += ETAT.cursorDir * spd;
+    if (ETAT.cursorPos>=1){ETAT.cursorPos=1;ETAT.cursorDir=-1;}
+    if (ETAT.cursorPos<=0){ETAT.cursorPos=0;ETAT.cursorDir=1;}
+    document.getElementById('timing-cursor').style.left=(ETAT.cursorPos*100)+'%';
   }
 
-  // Animations spectateurs
-  if (etat.animSpec && Date.now() < etat.animSpec.fin) {
-    const phase = tps * 0.01;
-    spectateursMiis.forEach((s,i) => {
-      if (etat.animSpec.type === 'joie' || etat.animSpec.type === 'joieForte') {
-        s.position.y = Math.abs(Math.sin(phase + i*0.5)) * 0.3;
-      } else {
-        s.rotation.z = Math.sin(phase*2 + i*0.4) * 0.2;
-      }
+  // Indicateur gyro
+  if (ETAT.frappePossible) {
+    const pct=(tiltX+1)/2*100;
+    document.getElementById('aim-dot').style.left=`calc(${pct}% - 6px)`;
+  }
+
+  // Physique
+  if (ETAT.phase!=='idle') updateBalle();
+
+  // Balle flottante (service)
+  if (ETAT.frappePossible && !balleEnVol) {
+    balleMesh.position.y=1.0+Math.sin(frameCount*.07)*.08;
+    balleMesh.rotation.y+=.04;
+  }
+
+  // Mii adversaire se déplace vers la balle
+  if (ETAT.phase==='ia_retour') {
+    miiA.g.position.x += (ballePos.x*.3 - miiA.g.position.x)*.06;
+  } else {
+    miiA.g.position.x += (0 - miiA.g.position.x)*.03;
+  }
+
+  // Spectateurs
+  if (animSpecData && Date.now()<animSpecData.fin) {
+    const ph=frameCount*.013;
+    specMiis.forEach((s,i)=>{
+      const beat=Math.abs(Math.sin(ph+i*.4));
+      s.brasGroup.rotation.z=.2+beat*1.2;
+      s.raq.rotation.z=-.2-beat*.5;
+      s.g.position.y=(s.g.userData.baseY||0)+beat*.12;
     });
-  } else if (etat.animSpec && Date.now() >= etat.animSpec.fin) {
-    spectateursMiis.forEach(s=>{ s.position.y=0; s.rotation.z=0; });
-    etat.animSpec = null;
+  } else {
+    if (animSpecData&&Date.now()>=animSpecData.fin) {
+      animSpecData=null;
+      specMiis.forEach(s=>{s.brasGroup.rotation.z=.15;s.g.position.y=s.g.userData.baseY||0;});
+    }
+    const t=frameCount*.008;
+    specMiis.forEach((s,i)=>s.g.position.y=(s.g.userData.baseY||0)+Math.sin(t+i)*.022);
   }
 
-  // Rotation légère raquettes
-  raqJ1.rotation.y = Math.sin(tps*0.001)*0.1;
-  raqA1.rotation.y = Math.sin(tps*0.001+1)*0.1;
+  // Caméra légèrement vers la balle
+  if (balleEnVol && ETAT.phase==='ia_retour') {
+    camera.position.x += (ballePos.x*.12-camera.position.x)*.05;
+    camera.lookAt(ballePos.x*.3,1.5,0);
+  } else {
+    camera.position.x += (CAM_BASE.x-camera.position.x)*.04;
+    camera.lookAt(0,1.2,0);
+  }
 
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
-animate(0);
 
-window.addEventListener('resize', ()=>{
-  camera.aspect = window.innerWidth/window.innerHeight;
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setSize(innerWidth,innerHeight);
 });
+
+animate();
 </script>
 </body>
 </html>
