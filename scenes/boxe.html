@@ -7,110 +7,163 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --red:       #D32F2F;
-      --red-dark:  #B71C1C;
-      --blue:      #1976D2;
-      --blue-dark: #0D47A1;
-      --orange:    #F5A623;
-      --white:     #FFFFFF;
+      --red:        #D32F2F;
+      --red-dark:   #B71C1C;
+      --blue:       #1565C0;
+      --blue-dark:  #0D47A1;
+      --orange:     #F5A623;
+      --green:      #2E7D32;
+      --green-dark: #1B5E20;
+      --purple:     #6A1B9A;
+      --purple-dark:#4A148C;
+      --white:      #FFFFFF;
     }
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-    body { background:#1a0a0a; font-family:'Nunito',sans-serif; overflow:hidden; height:100vh; width:100vw; }
+    body { background:#0d0005; font-family:'Nunito',sans-serif; overflow:hidden; height:100vh; width:100vw; }
     #gameCanvas { position:fixed; top:0; left:0; width:100%; height:100%; touch-action:none; }
 
-    /* ── HUD ── */
+    /* ── HUD TIMER ── */
     #hud {
       position:fixed; top:0; left:0; right:0; z-index:10;
-      padding:12px 14px; display:flex; justify-content:space-between; align-items:flex-start;
+      padding:10px 14px; display:flex; justify-content:center; align-items:flex-start;
       pointer-events:none;
     }
     .hud-card {
-      background:rgba(0,0,0,0.45); backdrop-filter:blur(10px);
-      border-radius:16px; padding:7px 12px; border:1px solid rgba(255,255,255,0.15);
+      background:rgba(0,0,0,0.55); backdrop-filter:blur(12px);
+      border-radius:20px; padding:6px 20px; border:1px solid rgba(255,255,255,0.15);
     }
-    .hud-label { font-size:0.58rem; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:1px; font-weight:700; }
-    .hud-value { font-family:'Fredoka One',cursive; font-size:1.3rem; color:white; line-height:1.1; }
+    .hud-label { font-size:0.55rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:2px; font-weight:800; text-align:center; }
+    .hud-value { font-family:'Fredoka One',cursive; font-size:1.5rem; color:white; line-height:1.1; text-align:center; }
 
     /* ── BARRES DE VIE ── */
     #life-bars {
       position:fixed; top:0; left:0; right:0; z-index:11;
-      padding:10px 14px; display:flex; gap:10px; align-items:center; pointer-events:none;
+      padding:8px 14px; display:flex; gap:8px; align-items:center; pointer-events:none;
     }
     .life-block { flex:1; }
-    .life-name  { font-family:'Fredoka One',cursive; font-size:0.78rem; color:rgba(255,255,255,0.75); margin-bottom:4px; }
+    .life-name  { font-family:'Fredoka One',cursive; font-size:0.75rem; color:rgba(255,255,255,0.8); margin-bottom:3px; }
     .life-name.right { text-align:right; }
     .life-track {
-      height:14px; background:rgba(0,0,0,0.5); border-radius:8px;
-      border:1.5px solid rgba(255,255,255,0.18); overflow:hidden;
+      height:13px; background:rgba(0,0,0,0.6); border-radius:8px;
+      border:1.5px solid rgba(255,255,255,0.15); overflow:hidden;
     }
-    .life-fill {
-      height:100%; border-radius:7px; transition:width .25s ease;
-    }
+    .life-fill { height:100%; border-radius:7px; transition:width .25s ease; }
     .life-fill.joueur { background:linear-gradient(90deg,#43A047,#76FF03); }
     .life-fill.adv    { background:linear-gradient(90deg,#F44336,#FF8A65); }
     #round-badge {
-      background:rgba(0,0,0,0.6); border:2px solid rgba(255,255,255,0.25);
-      border-radius:50%; width:42px; height:42px; display:flex;
+      background:rgba(0,0,0,0.7); border:2px solid rgba(255,255,255,0.2);
+      border-radius:50%; width:40px; height:40px; display:flex;
       align-items:center; justify-content:center; flex-shrink:0;
     }
-    #round-badge span { font-family:'Fredoka One',cursive; font-size:1rem; color:white; }
+    #round-badge span { font-family:'Fredoka One',cursive; font-size:0.9rem; color:white; }
 
-    /* ── MICRO INDICATEUR ── */
+    /* ── MICRO ── */
     #mic-wrap {
-      position:fixed; bottom:130px; left:50%; transform:translateX(-50%);
-      z-index:12; display:flex; flex-direction:column; align-items:center; gap:6px;
-      pointer-events:none; opacity:0; transition:opacity .3s;
+      position:fixed; bottom:148px; left:50%; transform:translateX(-50%);
+      z-index:12; display:flex; flex-direction:column; align-items:center; gap:4px;
+      pointer-events:none; opacity:0; transition:opacity .25s;
     }
     #mic-wrap.show { opacity:1; }
-    #mic-label { font-family:'Fredoka One',cursive; font-size:0.85rem; color:white; }
+    #mic-label { font-family:'Fredoka One',cursive; font-size:0.8rem; color:white; }
     #mic-track {
-      width:180px; height:16px; background:rgba(0,0,0,0.5);
-      border-radius:10px; border:2px solid rgba(255,255,255,0.2); overflow:hidden;
+      width:160px; height:14px; background:rgba(0,0,0,0.5);
+      border-radius:9px; border:2px solid rgba(255,255,255,0.2); overflow:hidden;
     }
     #mic-fill {
       height:100%; width:0%;
       background:linear-gradient(90deg,#43A047,#FFEB3B,#F44336);
-      border-radius:9px; transition:width .08s;
+      border-radius:8px; transition:width .06s;
     }
-    #mic-pct { font-family:'Fredoka One',cursive; font-size:0.9rem; color:white; }
+    #mic-pct { font-family:'Fredoka One',cursive; font-size:0.85rem; color:white; }
 
-    /* ── BOUTONS PUNCH ── */
-    #punch-btns {
-      position:fixed; bottom:20px; left:0; right:0; z-index:12;
-      display:flex; gap:20px; padding:0 24px; justify-content:space-between;
+    /* ══════════════════════════════════
+       BOUTONS DE JEU — LAYOUT 2×2
+       Haut : ESQUIVE gauche | ESQUIVE droite
+       Bas  : PUNCH gauche   | PUNCH droite
+    ══════════════════════════════════ */
+    #game-btns {
+      position:fixed; bottom:16px; left:0; right:0; z-index:12;
+      display:none;
+      flex-direction:column; gap:10px; padding:0 18px;
+    }
+
+    /* Rangée esquives */
+    #esquive-row {
+      display:flex; gap:10px;
+    }
+    .esq-btn {
+      flex:1; height:54px; border:none; border-radius:16px;
+      font-family:'Fredoka One',cursive; font-size:1.05rem; color:white;
+      cursor:pointer; position:relative; overflow:hidden;
+      -webkit-appearance:none; outline:none; user-select:none;
+      display:flex; align-items:center; justify-content:center; gap:6px;
+      background:var(--purple); box-shadow:0 5px 0 var(--purple-dark);
+      transition:transform .08s, box-shadow .08s, opacity .2s;
+    }
+    .esq-btn::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:45%;
+      background:rgba(255,255,255,0.15); border-radius:16px 16px 0 0;
+    }
+    .esq-btn:active, .esq-btn.active {
+      transform:translateY(4px); box-shadow:0 1px 0 var(--purple-dark) !important;
+    }
+    .esq-btn.cooldown { opacity:.45; pointer-events:none; }
+    .esq-btn span { position:relative; z-index:1; font-size:1.3rem; }
+    .esq-btn small { position:relative; z-index:1; font-size:0.62rem; font-weight:800; opacity:.85; letter-spacing:.5px; }
+
+    /* Barre de cooldown esquive */
+    .esq-cd-bar {
+      position:absolute; bottom:0; left:0; height:4px;
+      background:rgba(255,255,255,0.7); border-radius:0 0 16px 16px;
+      width:0%; transition:none;
+    }
+
+    /* Rangée punches */
+    #punch-row {
+      display:flex; gap:10px;
     }
     .punch-btn {
-      flex:1; height:90px; border:none; border-radius:22px;
-      font-family:'Fredoka One',cursive; font-size:1.5rem; color:white;
+      flex:1; height:78px; border:none; border-radius:20px;
+      font-family:'Fredoka One',cursive; font-size:1.4rem; color:white;
       cursor:pointer; position:relative; overflow:hidden;
       box-shadow:0 6px 0; transition:transform .08s, box-shadow .08s;
       -webkit-appearance:none; outline:none; user-select:none;
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
     }
-    #btn-gauche { background:var(--blue);  box-shadow:0 6px 0 var(--blue-dark); }
-    #btn-droite { background:var(--red);   box-shadow:0 6px 0 var(--red-dark);  }
+    #btn-gauche { background:var(--blue); box-shadow:0 6px 0 var(--blue-dark); }
+    #btn-droite { background:var(--red);  box-shadow:0 6px 0 var(--red-dark);  }
     .punch-btn::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:48%;
-      background:rgba(255,255,255,0.18); border-radius:22px 22px 0 0;
+      content:''; position:absolute; top:0; left:0; right:0; height:46%;
+      background:rgba(255,255,255,0.16); border-radius:20px 20px 0 0;
     }
     .punch-btn:active, .punch-btn.hit {
       transform:translateY(5px); box-shadow:0 1px 0 !important;
     }
-    .punch-btn span { position:relative; z-index:1; font-size:2rem; }
-    .punch-btn small { position:relative; z-index:1; font-size:0.72rem; font-weight:800; opacity:.85; letter-spacing:.5px; }
+    .punch-btn span  { position:relative; z-index:1; font-size:1.9rem; }
+    .punch-btn small { position:relative; z-index:1; font-size:0.68rem; font-weight:800; opacity:.85; letter-spacing:.5px; }
 
-    /* ── HINT MICRO ── */
+    /* ── HINT ── */
     #hint {
-      position:fixed; bottom:122px; left:50%; transform:translateX(-50%);
-      background:rgba(0,0,0,0.7); color:white;
-      font-family:'Fredoka One',cursive; font-size:0.88rem;
-      padding:8px 20px; border-radius:50px; z-index:11;
-      white-space:nowrap; pointer-events:none;
+      position:fixed; bottom:156px; left:50%; transform:translateX(-50%);
+      background:rgba(0,0,0,0.75); color:white;
+      font-family:'Fredoka One',cursive; font-size:0.82rem;
+      padding:7px 18px; border-radius:50px; z-index:11;
+      white-space:nowrap; pointer-events:none; opacity:0;
+      transition:opacity .4s;
       animation:bounceY 1.8s ease-in-out infinite;
     }
-    @keyframes bounceY { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-5px)} }
 
-    /* ── FLASH COUP ── */
+    /* ── INDICATEUR D'ESQUIVE (miss!) ── */
+    #esquive-indicator {
+      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      font-family:'Fredoka One',cursive; font-size:2.8rem; color:#FFD600;
+      text-shadow:3px 3px 0 rgba(0,0,0,0.5);
+      z-index:22; pointer-events:none;
+      opacity:0; transition:opacity .1s;
+    }
+    #esquive-indicator.show { opacity:1; }
+
+    /* ── FLASH ── */
     #flash {
       position:fixed; inset:0; z-index:20; pointer-events:none;
       opacity:0; transition:opacity .05s;
@@ -121,25 +174,24 @@
     #round-overlay {
       position:fixed; inset:0; z-index:25; display:none;
       align-items:center; justify-content:center; flex-direction:column; gap:10px;
-      background:rgba(0,0,0,0.65); backdrop-filter:blur(6px);
+      background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
     }
     #round-overlay.show { display:flex; }
-    .round-title { font-family:'Fredoka One',cursive; font-size:3.5rem; color:white; text-shadow:3px 3px 0 rgba(255,0,0,0.4); animation:popIn .4s cubic-bezier(0.34,1.56,0.64,1); }
-    .round-sub   { font-family:'Fredoka One',cursive; font-size:1.2rem; color:rgba(255,255,255,0.7); }
+    .round-title { font-family:'Fredoka One',cursive; font-size:3.8rem; color:white; text-shadow:3px 3px 0 rgba(255,0,0,0.4); animation:popIn .4s cubic-bezier(0.34,1.56,0.64,1); }
+    .round-sub   { font-family:'Fredoka One',cursive; font-size:1.2rem; color:rgba(255,255,255,0.65); }
 
-    /* ── OVERLAY KO / FIN ── */
+    /* ── OVERLAY KO ── */
     #ko-overlay {
       position:fixed; inset:0; z-index:30; display:none;
       align-items:center; justify-content:center; flex-direction:column; gap:16px;
-      background:rgba(0,0,0,0.8); backdrop-filter:blur(10px);
+      background:rgba(0,0,0,0.85); backdrop-filter:blur(12px);
     }
     #ko-overlay.show { display:flex; }
     .ko-title   { font-family:'Fredoka One',cursive; font-size:4rem; color:var(--orange); text-shadow:4px 4px 0 rgba(0,0,0,0.5); animation:popIn .5s cubic-bezier(0.34,1.56,0.64,1); }
     .ko-winner  { font-family:'Fredoka One',cursive; font-size:1.8rem; color:white; }
-    .ko-score   { font-size:1rem; color:rgba(255,255,255,0.55); font-weight:700; }
-    .ko-vs      { display:flex; gap:24px; align-items:center; background:rgba(255,255,255,0.06); border-radius:20px; padding:14px 28px; }
+    .ko-vs      { display:flex; gap:24px; align-items:center; background:rgba(255,255,255,0.07); border-radius:20px; padding:14px 28px; }
     .ko-pl      { text-align:center; }
-    .ko-pl-name { font-size:0.75rem; color:rgba(255,255,255,0.5); font-weight:700; text-transform:uppercase; }
+    .ko-pl-name { font-size:0.72rem; color:rgba(255,255,255,0.45); font-weight:800; text-transform:uppercase; }
     .ko-pl-hp   { font-family:'Fredoka One',cursive; font-size:1.8rem; color:white; }
     .ko-pl-hp.win { color:var(--orange); }
     .ko-sep     { font-family:'Fredoka One',cursive; font-size:1.4rem; color:rgba(255,255,255,0.3); }
@@ -149,46 +201,46 @@
     /* ── ÉCRAN DÉMARRAGE ── */
     #start-screen {
       position:fixed; inset:0; z-index:35; display:flex; flex-direction:column;
-      align-items:center; justify-content:center; gap:16px; padding:24px;
-      background:linear-gradient(180deg,#1a0505 0%,#0d0000 100%);
+      align-items:center; justify-content:center; gap:14px; padding:24px;
+      background:radial-gradient(ellipse at 50% 20%,#2a0010 0%,#0d0005 70%);
       text-align:center;
     }
-    .start-emoji { font-size:5rem; animation:bounceY 1.5s ease-in-out infinite; }
+    .start-emoji { font-size:4.5rem; animation:bounceY 1.5s ease-in-out infinite; }
     .start-title { font-family:'Fredoka One',cursive; font-size:2.8rem; color:white; }
     .niveau-btn {
       display:flex; align-items:center; gap:10px;
-      background:rgba(255,255,255,0.08); border:2px solid rgba(255,255,255,0.18);
-      border-radius:16px; padding:12px 18px; color:white;
-      font-family:'Fredoka One',cursive; font-size:1.1rem; cursor:pointer;
+      background:rgba(255,255,255,0.07); border:2px solid rgba(255,255,255,0.15);
+      border-radius:16px; padding:11px 16px; color:white;
+      font-family:'Fredoka One',cursive; font-size:1.05rem; cursor:pointer;
       transition:all .15s; width:100%; max-width:300px;
     }
     .niveau-btn:active { transform:scale(0.97); }
     .niveau-btn.selected { background:rgba(211,47,47,0.3); border-color:var(--red); box-shadow:0 0 0 3px rgba(211,47,47,0.2); }
     .niveau-btn span:nth-child(2) { flex:1; text-align:left; }
     .adv-card-start {
-      background:rgba(255,255,255,0.07); border-radius:18px; padding:14px 24px;
-      text-align:center; border:2px solid rgba(255,255,255,0.15);
+      background:rgba(255,255,255,0.07); border-radius:18px; padding:12px 22px;
+      text-align:center; border:2px solid rgba(255,255,255,0.12);
     }
-    .adv-lbl  { font-size:0.7rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:2px; font-weight:700; }
-    .adv-nom  { font-family:'Fredoka One',cursive; font-size:1.7rem; color:var(--orange); }
+    .adv-lbl { font-size:0.68rem; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:2px; font-weight:800; }
+    .adv-nom { font-family:'Fredoka One',cursive; font-size:1.6rem; color:var(--orange); }
     .start-btn {
       background:var(--red); color:white; font-family:'Fredoka One',cursive;
-      font-size:1.4rem; border:none; border-radius:50px; padding:16px 48px;
+      font-size:1.4rem; border:none; border-radius:50px; padding:15px 46px;
       box-shadow:0 8px 0 var(--red-dark); cursor:pointer; transition:transform .1s;
     }
     .start-btn:active { transform:translateY(4px); box-shadow:0 4px 0 var(--red-dark); }
-    .mic-info { font-size:0.78rem; color:rgba(255,255,255,0.35); max-width:260px; line-height:1.6; font-weight:700; }
+    .mic-info { font-size:0.75rem; color:rgba(255,255,255,0.3); max-width:260px; line-height:1.6; font-weight:700; }
 
-    @keyframes popIn { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
-    @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+    @keyframes bounceY { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-5px)} }
+    @keyframes popIn   { from{opacity:0;transform:scale(0.4)} to{opacity:1;transform:scale(1)} }
+    @keyframes floatUp { 0%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-120%) scale(1.4)} }
+    .float-up { animation:floatUp .7s ease-out forwards; }
   </style>
 </head>
 <body>
 
-<!-- Bouton retour -->
-<button style="position:fixed;top:12px;left:16px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:40px;height:40px;font-size:1.2rem;cursor:pointer;z-index:40;color:white;" onclick="window.location.href='../index.html'">←</button>
+<button style="position:fixed;top:10px;left:14px;background:rgba(255,255,255,0.1);border:none;border-radius:50%;width:38px;height:38px;font-size:1.1rem;cursor:pointer;z-index:40;color:white;" onclick="history.back()">←</button>
 
-<!-- Canvas -->
 <canvas id="gameCanvas"></canvas>
 
 <!-- Barres de vie -->
@@ -204,9 +256,8 @@
   </div>
 </div>
 
-<!-- HUD timer -->
+<!-- HUD Timer -->
 <div id="hud" style="display:none;">
-  <div style="flex:1"></div>
   <div class="hud-card">
     <div class="hud-label">Temps</div>
     <div class="hud-value" id="hud-timer">1:30</div>
@@ -221,25 +272,45 @@
 </div>
 
 <!-- Hint -->
-<div id="hint">🥊 Appuie sur un bouton et CRIE fort !</div>
+<div id="hint">🥊 Frappe + crie · 🛡️ Esquive les coups !</div>
 
 <!-- Flash coup reçu -->
 <div id="flash"></div>
 
-<!-- Boutons punch -->
-<div id="punch-btns" style="display:none;">
-  <button class="punch-btn" id="btn-gauche"
-    ontouchstart="preparerPunch('gauche',event)" ontouchend="annulerPunch(event)"
-    onmousedown="preparerPunch('gauche',event)" onmouseup="annulerPunch(event)">
-    <span>🥊</span>
-    <small>GAUCHE</small>
-  </button>
-  <button class="punch-btn" id="btn-droite"
-    ontouchstart="preparerPunch('droite',event)" ontouchend="annulerPunch(event)"
-    onmousedown="preparerPunch('droite',event)" onmouseup="annulerPunch(event)">
-    <span>🥊</span>
-    <small>DROITE</small>
-  </button>
+<!-- Indicateur ESQUIVE / MISS -->
+<div id="esquive-indicator"></div>
+
+<!-- ══ BOUTONS DE JEU : ESQUIVE + PUNCH ══ -->
+<div id="game-btns">
+
+  <!-- Rangée du haut : ESQUIVES -->
+  <div id="esquive-row">
+    <button class="esq-btn" id="esq-gauche"
+      ontouchstart="activerEsquive('gauche',event)" onmousedown="activerEsquive('gauche',event)">
+      <span>🛡️</span><small>← ESQUIVE</small>
+      <div class="esq-cd-bar" id="cd-gauche"></div>
+    </button>
+    <button class="esq-btn" id="esq-droite"
+      ontouchstart="activerEsquive('droite',event)" onmousedown="activerEsquive('droite',event)">
+      <small>ESQUIVE →</small><span>🛡️</span>
+      <div class="esq-cd-bar" id="cd-droite"></div>
+    </button>
+  </div>
+
+  <!-- Rangée du bas : PUNCHES -->
+  <div id="punch-row">
+    <button class="punch-btn" id="btn-gauche"
+      ontouchstart="preparerPunch('gauche',event)" ontouchend="annulerPunch(event)"
+      onmousedown="preparerPunch('gauche',event)" onmouseup="annulerPunch(event)">
+      <span>🥊</span><small>GAUCHE</small>
+    </button>
+    <button class="punch-btn" id="btn-droite"
+      ontouchstart="preparerPunch('droite',event)" ontouchend="annulerPunch(event)"
+      onmousedown="preparerPunch('droite',event)" onmouseup="annulerPunch(event)">
+      <span>🥊</span><small>DROITE</small>
+    </button>
+  </div>
+
 </div>
 
 <!-- Overlay Round -->
@@ -248,7 +319,7 @@
   <div class="round-sub"   id="round-sub">Prêt ?</div>
 </div>
 
-<!-- Overlay KO / Fin -->
+<!-- Overlay KO -->
 <div id="ko-overlay">
   <div class="ko-title"  id="ko-title">K.O. !</div>
   <div class="ko-winner" id="ko-winner">Tu gagnes !</div>
@@ -260,10 +331,10 @@
     <div class="ko-sep">VS</div>
     <div class="ko-pl">
       <div class="ko-pl-name" id="ko-adv-name">CPU</div>
-      <div class="ko-pl-hp" id="ko-hp-a">100</div>
+      <div class="ko-pl-hp"   id="ko-hp-a">100</div>
     </div>
   </div>
-  <button class="ko-btn" onclick="window.location.href='../index.html'">🏠 Menu</button>
+  <button class="ko-btn" onclick="history.back()">🏠 Menu</button>
   <button class="ko-btn blue" onclick="location.reload()">🔄 Rejouer</button>
 </div>
 
@@ -271,54 +342,70 @@
 <div id="start-screen">
   <span class="start-emoji">🥊</span>
   <div class="start-title">Boxe</div>
-
-  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;">
-    <div style="font-family:'Fredoka One',cursive;color:rgba(255,255,255,0.5);font-size:0.8rem;text-align:center;letter-spacing:2px;text-transform:uppercase;">Choisir ton adversaire</div>
-    <button class="niveau-btn" id="btn-facile"    onclick="choisirNiveau('facile')"><span>😊</span><span>Facile</span><span style="font-size:.68rem;opacity:.5">Punching-ball</span></button>
-    <button class="niveau-btn" id="btn-moyen"     onclick="choisirNiveau('moyen')"><span>😤</span><span>Moyen</span><span style="font-size:.68rem;opacity:.5">Adversaire sérieux</span></button>
-    <button class="niveau-btn" id="btn-difficile" onclick="choisirNiveau('difficile')"><span>💀</span><span>Difficile</span><span style="font-size:.68rem;opacity:.5">Imbattable ?</span></button>
+  <div style="display:flex;flex-direction:column;gap:9px;width:100%;max-width:300px;">
+    <div style="font-family:'Fredoka One',cursive;color:rgba(255,255,255,0.4);font-size:0.75rem;text-align:center;letter-spacing:2px;text-transform:uppercase;">Choisir ton adversaire</div>
+    <button class="niveau-btn" id="btn-facile"    onclick="choisirNiveau('facile')"><span>😊</span><span>Facile</span><span style="font-size:.65rem;opacity:.45">Punching-ball</span></button>
+    <button class="niveau-btn" id="btn-moyen"     onclick="choisirNiveau('moyen')"><span>😤</span><span>Moyen</span><span style="font-size:.65rem;opacity:.45">Adversaire sérieux</span></button>
+    <button class="niveau-btn" id="btn-difficile" onclick="choisirNiveau('difficile')"><span>💀</span><span>Difficile</span><span style="font-size:.65rem;opacity:.45">Imbattable ?</span></button>
   </div>
-
   <div class="adv-card-start" id="adv-card-start" style="display:none;">
     <div class="adv-lbl">Ton adversaire</div>
     <div class="adv-nom" id="adv-nom-start">Chargement...</div>
-    <div style="font-size:.75rem;color:rgba(255,255,255,.35);font-weight:700;margin-top:2px;" id="adv-niv-start"></div>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.3);font-weight:800;margin-top:2px;" id="adv-niv-start"></div>
   </div>
-
   <button class="start-btn" id="start-btn" style="display:none;" onclick="demarrerJeu()">🥊 Fight !</button>
-  <p class="mic-info">🎤 Crie dans le micro pour la puissance<br>👆 Bouton Gauche ou Droite pour frapper</p>
+  <p class="mic-info">🎤 Crie pour frapper fort · 🛡️ Esquive les attaques</p>
 </div>
 
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supabase.js"></script>
-<script src="../js/sensors.js"></script>
-
 <script>
 // ══════════════════════════════════════════════════════
-//  ÉTAT DU JEU
+//  DONNÉES ADVERSAIRES (autonome, sans Supabase)
 // ══════════════════════════════════════════════════════
-const ETAT = {
-  round:        1,       // 1-3
-  hpJoueur:     100,
-  hpAdv:        100,
-  enCombat:     false,
-  peutFrapper:  false,
-  punchCote:    null,    // 'gauche'|'droite' — bouton enfoncé
-  adversaire:   null,
-  niveau:       null,
-  timerSec:     90,      // 1min30 par round
-  timerInterval:null,
-  finDePartie:  false,
+const ADVERSAIRES_DB = {
+  facile:    [
+    { nom:'Marco',     avatar:'😊', boxe:'Facile'    },
+    { nom:'Léo',       avatar:'🐣', boxe:'Facile'    },
+    { nom:'Sam',       avatar:'🙂', boxe:'Facile'    },
+  ],
+  moyen:     [
+    { nom:'Viktor',    avatar:'😤', boxe:'Moyen'     },
+    { nom:'Aiko',      avatar:'🔥', boxe:'Moyen'     },
+    { nom:'Carlos',    avatar:'😠', boxe:'Moyen'     },
+  ],
+  difficile: [
+    { nom:'Iron Rex',  avatar:'💀', boxe:'Difficile' },
+    { nom:'Kira',      avatar:'👹', boxe:'Difficile' },
+    { nom:'Doom',      avatar:'☠️', boxe:'Difficile' },
+  ],
 };
 
-// Paramètres par niveau (dégâts de l'adversaire par coup)
+async function getAdversaire(sport, niveau) {
+  const liste = ADVERSAIRES_DB[niveau] || ADVERSAIRES_DB.moyen;
+  return liste[Math.floor(Math.random() * liste.length)];
+}
+
+// ══════════════════════════════════════════════════════
+//  ÉTAT
+// ══════════════════════════════════════════════════════
+const ETAT = {
+  round:1, hpJoueur:100, hpAdv:100,
+  enCombat:false, peutFrapper:false,
+  enEsquive:false,     // ← fenêtre d'invincibilité active
+  adversaire:null, niveau:null,
+  timerSec:90, timerInterval:null, finDePartie:false,
+};
+
 const NIVEAUX = {
   facile:    { degatsAdv:4,  vitesseAdv:3000, esquiveAdv:0.08 },
-  moyen:     { degatsAdv:9,  vitesseAdv:2000, esquiveAdv:0.25 },
-  difficile: { degatsAdv:16, vitesseAdv:1200, esquiveAdv:0.45 },
+  moyen:     { degatsAdv:9,  vitesseAdv:1900, esquiveAdv:0.28 },
+  difficile: { degatsAdv:16, vitesseAdv:1100, esquiveAdv:0.48 },
 };
+
+// Cooldowns esquive (ms)
+const ESQ_DUREE    = 500;   // fenêtre d'invincibilité
+const ESQ_COOLDOWN = 2200;  // temps avant de pouvoir re-esquiver
+let   esqCdG = false, esqCdD = false;
 
 // ══════════════════════════════════════════════════════
 //  CHOIX DU NIVEAU
@@ -331,10 +418,11 @@ async function choisirNiveau(niveau) {
   document.getElementById('adv-card-start').style.display = 'block';
   document.getElementById('start-btn').style.display = 'none';
 
-  const adv = await getAdversaire('boxe', niveau);
+  const adv    = await getAdversaire('boxe', niveau);
   ETAT.adversaire = adv;
-  const nom = adv ? adv.nom : 'CPU';
-  const avatar = adv ? (adv.avatar || '🥊') : '🥊';
+  const nom    = adv?.nom    || 'CPU';
+  const avatar = adv?.avatar || '🥊';
+
   document.getElementById('adv-nom-start').textContent = `${avatar} ${nom}`;
   document.getElementById('adv-niv-start').textContent = `Niveau : ${adv?.boxe || niveau}`;
   document.getElementById('adv-name-hud').textContent  = nom;
@@ -344,655 +432,569 @@ async function choisirNiveau(niveau) {
 }
 
 // ══════════════════════════════════════════════════════
-//  THREE.JS — RING DE BOXE
+//  THREE.JS
 // ══════════════════════════════════════════════════════
 const canvas   = document.getElementById('gameCanvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.95;
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled   = true;
+renderer.shadowMap.type      = THREE.PCFSoftShadowMap;
+renderer.toneMapping         = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
 
-const scene  = new THREE.Scene();
-scene.background = new THREE.Color(0x1a0505);
-scene.fog = new THREE.Fog(0x1a0505, 20, 60);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0005);
+scene.fog = new THREE.Fog(0x0d0005, 18, 55);
 
-const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 200);
-camera.position.set(0, 5, 14);
-camera.lookAt(0, 2, 0);
+const camera = new THREE.PerspectiveCamera(52, innerWidth/innerHeight, 0.1, 200);
+// Caméra légèrement plus basse et plus proche pour mieux voir les personnages
+camera.position.set(0, 4.5, 12);
+camera.lookAt(0, 2.5, 0);
 
-// Lumières
-const spotMain = new THREE.SpotLight(0xfff5e0, 2.5, 40, Math.PI/5, 0.3, 1.5);
-spotMain.position.set(0, 18, 0);
-spotMain.castShadow = true;
-spotMain.shadow.mapSize.set(1024,1024);
-spotMain.target.position.set(0, 0, 0);
+// ── Lumières ──
+const spotMain = new THREE.SpotLight(0xfff5e0, 3.0, 40, Math.PI/5, 0.3, 1.5);
+spotMain.position.set(0, 18, 0); spotMain.castShadow = true;
+spotMain.shadow.mapSize.set(1024,1024); spotMain.target.position.set(0,0,0);
 scene.add(spotMain, spotMain.target);
 
-const spotL = new THREE.SpotLight(0xff6060, 1.0, 30, Math.PI/6, 0.5, 2);
-spotL.position.set(-8, 14, 4); scene.add(spotL);
-const spotR = new THREE.SpotLight(0x6090ff, 1.0, 30, Math.PI/6, 0.5, 2);
-spotR.position.set(8, 14, 4); scene.add(spotR);
-scene.add(new THREE.AmbientLight(0x200808, 1.2));
+// Spot joueur (bleu)
+const spotJ = new THREE.SpotLight(0x4488ff, 1.8, 20, Math.PI/5, 0.4, 2);
+spotJ.position.set(-3, 10, 5); scene.add(spotJ);
+
+// Spot adversaire (rouge)
+const spotA = new THREE.SpotLight(0xff4422, 1.8, 20, Math.PI/5, 0.4, 2);
+spotA.position.set(3, 10, 5); scene.add(spotA);
+
+scene.add(new THREE.AmbientLight(0x331122, 1.5));
 
 function phong(color, shin=60, spec=0x222222) {
   return new THREE.MeshPhongMaterial({ color, shininess:shin, specular:spec });
 }
 
-// ── RING ──
-const ringGroupe = new THREE.Group();
+// ── Ring ──
+const ring = new THREE.Group();
+const toile = new THREE.Mesh(new THREE.BoxGeometry(12,0.18,12), phong(0xDDCC99,8,0x887766));
+toile.receiveShadow = true; ring.add(toile);
 
-// Sol du ring (toile)
-const toileG = new THREE.BoxGeometry(12, 0.18, 12);
-const toile  = new THREE.Mesh(toileG, phong(0xEEDDBB, 10, 0x888866));
-toile.receiveShadow = true; ringGroupe.add(toile);
-
-// Bords du ring (légèrement surélevés)
-[[0,0,6.2],[0,0,-6.2],[6.2,0,0],[-6.2,0,0]].forEach(([x,y,z]) => {
-  const isZ = z !== 0;
-  const bG = new THREE.BoxGeometry(isZ ? 12.4 : 0.3, 0.32, isZ ? 0.3 : 12.4);
-  const b  = new THREE.Mesh(bG, phong(0x222222, 20));
-  b.position.set(x, 0.25, z); ringGroupe.add(b);
+[[0,0,6.2],[0,0,-6.2],[6.2,0,0],[-6.2,0,0]].forEach(([x,y,z])=>{
+  const isZ = z!==0;
+  const b = new THREE.Mesh(new THREE.BoxGeometry(isZ?12.4:0.3,0.32,isZ?0.3:12.4), phong(0x222222,20));
+  b.position.set(x,0.25,z); ring.add(b);
 });
-
-// Cordes (3 hauteurs × 4 côtés)
-const cordeMat = phong(0xFFFFFF, 80, 0xAAAAAA);
-const cordeMatR = phong(0xFF3333, 80, 0x882222);
-[0.8, 1.4, 2.0].forEach((h, hi) => {
-  const mat = hi === 1 ? cordeMatR : cordeMat;
-  // Cordes avant/arrière
-  [-6, 6].forEach(z => {
-    const cG = new THREE.CylinderGeometry(0.045, 0.045, 12.4, 8);
-    const c  = new THREE.Mesh(cG, mat);
-    c.rotation.z = Math.PI/2; c.position.set(0, h, z); ringGroupe.add(c);
-  });
-  // Cordes gauche/droite
-  [-6, 6].forEach(x => {
-    const cG = new THREE.CylinderGeometry(0.045, 0.045, 12.4, 8);
-    const c  = new THREE.Mesh(cG, mat);
-    c.position.set(x, h, 0); ringGroupe.add(c);
-  });
+const cm = phong(0xFFFFFF,80,0xAAAAAA), cr = phong(0xFF3333,80,0x882222);
+[0.8,1.4,2.0].forEach((h,hi)=>{
+  const m = hi===1?cr:cm;
+  [-6,6].forEach(z=>{ const c=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,12.4,8),m); c.rotation.z=Math.PI/2; c.position.set(0,h,z); ring.add(c); });
+  [-6,6].forEach(x=>{ const c=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,12.4,8),m); c.position.set(x,h,0); ring.add(c); });
 });
-
-// Poteaux de coin
-[[-6,-6],[6,-6],[-6,6],[6,6]].forEach(([x,z]) => {
-  const pG = new THREE.CylinderGeometry(0.12, 0.12, 2.4, 8);
-  const p  = new THREE.Mesh(pG, phong(0xCC4400, 60, 0x882200));
-  p.position.set(x, 1.2, z); p.castShadow=true; ringGroupe.add(p);
-  // Protège-coin
-  const pcG = new THREE.BoxGeometry(0.35, 1.5, 0.35);
-  const pc  = new THREE.Mesh(pcG, phong(0xFF4422, 30));
-  pc.position.set(x, 1.2, z); ringGroupe.add(pc);
+[[-6,-6],[6,-6],[-6,6],[6,6]].forEach(([x,z])=>{
+  const p=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,2.4,8),phong(0xCC4400,60,0x882200));
+  p.position.set(x,1.2,z); p.castShadow=true; ring.add(p);
+  const pc=new THREE.Mesh(new THREE.BoxGeometry(.35,1.5,.35),phong(0xFF4422,30));
+  pc.position.set(x,1.2,z); ring.add(pc);
 });
+const estrade=new THREE.Mesh(new THREE.BoxGeometry(14,.5,14),phong(0x3a2010,20,0x221100));
+estrade.position.y=-0.34; estrade.receiveShadow=true; ring.add(estrade);
 
-// Estrade (plateforme sous le ring)
-const estradeG = new THREE.BoxGeometry(14, 0.5, 14);
-const estrade  = new THREE.Mesh(estradeG, phong(0x3a2010, 20, 0x221100));
-estrade.position.y = -0.34; estrade.receiveShadow=true; ringGroupe.add(estrade);
+const sol=new THREE.Mesh(new THREE.PlaneGeometry(80,80),phong(0x0a0005,4));
+sol.rotation.x=-Math.PI/2; sol.position.y=-0.6; sol.receiveShadow=true; scene.add(sol);
 
-// Sol de la salle
-const solG = new THREE.PlaneGeometry(80, 80);
-const sol  = new THREE.Mesh(solG, phong(0x111111, 5));
-sol.rotation.x = -Math.PI/2; sol.position.y = -0.6; sol.receiveShadow=true; scene.add(sol);
-
-// Lumières de scène (projecteurs style gymnase)
-[[-8,12,-8],[8,12,-8],[0,12,8],[-8,12,8],[8,12,8]].forEach(([x,y,z]) => {
-  const lampG = new THREE.CylinderGeometry(0.18, 0.35, 0.5, 8);
-  const lamp  = new THREE.Mesh(lampG, phong(0x888888, 120));
-  lamp.position.set(x, y, z); scene.add(lamp);
-  // Faisceau
-  const pointL = new THREE.PointLight(0xfff0cc, 0.5, 18);
-  pointL.position.set(x, y-0.3, z); scene.add(pointL);
+[[-8,12,-8],[8,12,-8],[0,12,8],[-8,12,8],[8,12,8]].forEach(([x,y,z])=>{
+  const l=new THREE.Mesh(new THREE.CylinderGeometry(.18,.35,.5,8),phong(0x888888,120));
+  l.position.set(x,y,z); scene.add(l);
+  const pl=new THREE.PointLight(0xfff0cc,.4,18); pl.position.set(x,y-.3,z); scene.add(pl);
 });
+scene.add(ring);
 
-scene.add(ringGroupe);
+// ── Spectateurs Mii ──
+const SPEC_MIIS=[];
+const CC=[0xe53935,0x1976D2,0xF57C00,0x7B1FA2,0x00796B,0x558B2F,0xFF4081,0x0097A7,0xFFC107,0x795548];
+const CP=[0xfad9b4,0xd4956a,0xf5c8a0,0xe8b080,0xc47a45];
 
-// ── MIIS SPECTATEURS (cercle autour du ring) ──
-const spectateursMiis = [];
-const COULEURS_CORPS = [0xe53935,0x1976D2,0xF57C00,0x7B1FA2,0x00796B,0x558B2F,0xFF4081,0x0097A7,0xFFC107,0x795548];
-const COULEURS_PEAU  = [0xfad9b4, 0xd4956a, 0xf5c8a0, 0xe8b080, 0xc47a45];
-
-function creerMiiSpectateur(x, z, angle, corps, peau) {
-  const g = new THREE.Group();
-  function mat(c) { return new THREE.MeshPhongMaterial({ color:c, shininess:40 }); }
-
-  const body  = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.72,0.35), mat(corps));
-  body.position.y = 0.7; g.add(body);
-  const head  = new THREE.Mesh(new THREE.SphereGeometry(0.28,10,10), mat(peau));
-  head.position.y = 1.44; g.add(head);
-  [-0.1,0.1].forEach(ex => {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6), mat(0x222244));
-    eye.position.set(ex, 1.49, 0.26); g.add(eye);
-  });
-  // Bouche souriante (petit cylindre horizontal)
-  const bG = new THREE.CylinderGeometry(0.06, 0.06, 0.12, 6);
-  const b  = new THREE.Mesh(bG, mat(0x992222));
-  b.position.set(0, 1.34, 0.26); b.rotation.z = Math.PI/2; g.add(b);
-  [-0.14,0.14].forEach(jx => {
-    const j = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.52,0.25), mat(0x1a1a2e));
-    j.position.set(jx, 0.23, 0); g.add(j);
-  });
-  const brasG = new THREE.Group(); brasG.position.set(-0.38, 1.06, 0);
-  brasG.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.18,0.46,0.18), mat(corps)), {position: new THREE.Vector3(0,-0.18,0)}));
-  g.add(brasG);
-  const brasD = new THREE.Group(); brasD.position.set(0.38, 1.06, 0);
-  brasD.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.18,0.46,0.18), mat(corps)), {position: new THREE.Vector3(0,-0.18,0)}));
-  g.add(brasD);
-
-  g.position.set(x, -0.55, z);
-  g.rotation.y = angle;
-  g.castShadow = true;
-  scene.add(g);
-  return { g, brasG, brasD };
+function creerSpec(x,z,ang,corps,peau){
+  const g=new THREE.Group();
+  const m=c=>new THREE.MeshPhongMaterial({color:c,shininess:35});
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.55,.72,.35),m(corps)); body.position.y=.7; g.add(body);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.28,10,10),m(peau)); head.position.y=1.44; g.add(head);
+  [-0.1,0.1].forEach(ex=>{ const e=new THREE.Mesh(new THREE.SphereGeometry(.05,6,6),m(0x222244)); e.position.set(ex,1.49,.26); g.add(e); });
+  const bMesh=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.12,6),m(0x992222)); bMesh.position.set(0,1.34,.26); bMesh.rotation.z=Math.PI/2; g.add(bMesh);
+  [-0.14,0.14].forEach(jx=>{ const j=new THREE.Mesh(new THREE.BoxGeometry(.22,.52,.25),m(0x1a1a2e)); j.position.set(jx,.23,0); g.add(j); });
+  const brasG=new THREE.Group(); brasG.position.set(-.38,1.06,0);
+  const bgm=new THREE.Mesh(new THREE.BoxGeometry(.18,.46,.18),m(corps)); bgm.position.set(0,-.18,0); brasG.add(bgm); g.add(brasG);
+  const brasD=new THREE.Group(); brasD.position.set(.38,1.06,0);
+  const bdm=new THREE.Mesh(new THREE.BoxGeometry(.18,.46,.18),m(corps)); bdm.position.set(0,-.18,0); brasD.add(bdm); g.add(brasD);
+  g.position.set(x,-.55,z); g.rotation.y=ang; g.castShadow=true; scene.add(g);
+  return {g,brasG,brasD};
+}
+for(let i=0;i<24;i++){
+  const a=(i/24)*Math.PI*2, r=8.5+(i%3)*1.2;
+  SPEC_MIIS.push(creerSpec(Math.sin(a)*r,Math.cos(a)*r,a+Math.PI,CC[i%CC.length],CP[i%CP.length]));
 }
 
-// Placer 24 Miis en cercle autour du ring
-const NB_SPEC = 24;
-for (let i = 0; i < NB_SPEC; i++) {
-  const angle = (i / NB_SPEC) * Math.PI * 2;
-  const r     = 8.5 + (i % 3) * 1.2; // 3 rangées
-  const x     = Math.sin(angle) * r;
-  const z     = Math.cos(angle) * r;
-  const corps = COULEURS_CORPS[i % COULEURS_CORPS.length];
-  const peau  = COULEURS_PEAU[i % COULEURS_PEAU.length];
-  const faceAngle = angle + Math.PI; // regarde vers le ring
-  spectateursMiis.push(creerMiiSpectateur(x, z, faceAngle, corps, peau));
+// ══════════════════════════════════════════════════════
+//  MII JOUEUR — OPAQUE, VISIBLE, CÔTÉ GAUCHE DU RING
+// ══════════════════════════════════════════════════════
+let miiJ=null, miiJBG=null, miiJBD=null;
+
+function creerMiiJoueur(){
+  if(miiJ) scene.remove(miiJ);
+  miiJ=new THREE.Group();
+  // Matériaux OPAQUES (opacity=1)
+  const m=c=>new THREE.MeshPhongMaterial({color:c,shininess:55});
+
+  // Corps bleu
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.9,1.1,.52),m(0x1565C0)); body.position.y=1.0; body.castShadow=true; miiJ.add(body);
+  // Tête
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.45,14,14),m(0xfad9b4)); head.position.y=2.08; head.castShadow=true; miiJ.add(head);
+  // Yeux
+  [-0.14,0.14].forEach(x=>{ const e=new THREE.Mesh(new THREE.SphereGeometry(.075,8,8),m(0x1a1a44)); e.position.set(x,2.15,.40); miiJ.add(e); });
+  // Sourcils
+  [-0.14,0.14].forEach(x=>{ const s=new THREE.Mesh(new THREE.BoxGeometry(.12,.04,.08),m(0x2a1800)); s.position.set(x,2.24,.41); miiJ.add(s); });
+  // Cheveux bruns
+  const chev=new THREE.Mesh(new THREE.SphereGeometry(.47,14,8,0,Math.PI*2,0,Math.PI*.52),m(0x3d2200)); chev.position.set(0,2.1,0); chev.rotation.x=.12; miiJ.add(chev);
+  // Bouche
+  const bch=new THREE.Mesh(new THREE.BoxGeometry(.14,.05,.06),m(0x993333)); bch.position.set(0,1.96,.41); miiJ.add(bch);
+  // Jambes
+  [-0.22,0.22].forEach(x=>{ const j=new THREE.Mesh(new THREE.BoxGeometry(.34,.78,.36),m(0x0d2a5c)); j.position.set(x,.26,0); j.castShadow=true; miiJ.add(j); });
+  // Chaussures
+  [-0.22,0.22].forEach(x=>{ const sh=new THREE.Mesh(new THREE.BoxGeometry(.36,.18,.42),m(0x111111)); sh.position.set(x,-.08,.04); miiJ.add(sh); });
+
+  // Bras gauche (gant rouge)
+  miiJBG=new THREE.Group(); miiJBG.position.set(-.60,1.55,0);
+  const bgArm=new THREE.Mesh(new THREE.BoxGeometry(.24,.68,.24),m(0x1565C0)); bgArm.position.set(0,-.24,0); miiJBG.add(bgArm);
+  const bgGant=new THREE.Mesh(new THREE.BoxGeometry(.34,.34,.40),m(0xCC0000)); bgGant.position.set(0,-.66,0); miiJBG.add(bgGant);
+  miiJ.add(miiJBG);
+
+  // Bras droit (gant rouge)
+  miiJBD=new THREE.Group(); miiJBD.position.set(.60,1.55,0);
+  const bdArm=new THREE.Mesh(new THREE.BoxGeometry(.24,.68,.24),m(0x1565C0)); bdArm.position.set(0,-.24,0); miiJBD.add(bdArm);
+  const bdGant=new THREE.Mesh(new THREE.BoxGeometry(.34,.34,.40),m(0xCC0000)); bdGant.position.set(0,-.66,0); miiJBD.add(bdGant);
+  miiJ.add(miiJBD);
+
+  // Positionné à gauche, légèrement en avant, face à l'adversaire
+  miiJ.position.set(-1.8, -.55, 3.5);
+  miiJ.rotation.y = .3; // légèrement tourné vers le centre
+  scene.add(miiJ);
 }
 
-// ── MII JOUEUR (avant-plan gauche) ──
-let miiJoueur = null, miiJBrasG = null, miiJBrasD = null;
-function creerMiiJoueur() {
-  if (miiJoueur) scene.remove(miiJoueur);
-  miiJoueur = new THREE.Group();
-  const a = 0.45;
-  function mm(c) { return new THREE.MeshPhongMaterial({color:c,transparent:true,opacity:a,shininess:60,depthWrite:false}); }
+// ══════════════════════════════════════════════════════
+//  MII ADVERSAIRE — OPAQUE, VISIBLE, CÔTÉ DROIT DU RING
+// ══════════════════════════════════════════════════════
+let miiA=null, miiABG=null, miiABD=null;
 
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.8,1.0,0.5), mm(0x1976D2));
-  body.position.y = 1.0; miiJoueur.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.42,14,14), mm(0xfad9b4));
-  head.position.y = 2.0; miiJoueur.add(head);
-  [-0.13,0.13].forEach(x => {
-    const e = new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8), mm(0x222266));
-    e.position.set(x, 2.07, 0.38); miiJoueur.add(e);
-  });
-  const chev = new THREE.Mesh(new THREE.SphereGeometry(0.44,14,8,0,Math.PI*2,0,Math.PI*0.55), mm(0x3d2200));
-  chev.position.set(0, 2.03, 0); chev.rotation.x=0.15; miiJoueur.add(chev);
-  [-0.2,0.2].forEach(x => {
-    const j = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.72,0.35), mm(0x1a1a2e));
-    j.position.set(x, 0.30, 0); miiJoueur.add(j);
-  });
+function creerMiiAdv(){
+  if(miiA) scene.remove(miiA);
+  miiA=new THREE.Group();
+  const m=c=>new THREE.MeshPhongMaterial({color:c,shininess:55});
 
-  // Gants de boxe
-  const gantMat = mm(0xFF2222);
-  miiJBrasG = new THREE.Group(); miiJBrasG.position.set(-0.55, 1.5, 0);
-  const bGG = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.65,0.22), mm(0x1976D2));
-  bGG.position.set(0,-0.22,0); miiJBrasG.add(bGG);
-  const gantG = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.32,0.38), gantMat);
-  gantG.position.set(0,-0.62,0); miiJBrasG.add(gantG);
-  miiJoueur.add(miiJBrasG);
+  // Corps rouge (couleur adversaire)
+  const body=new THREE.Mesh(new THREE.BoxGeometry(.95,1.15,.54),m(0xB71C1C)); body.position.y=1.0; body.castShadow=true; miiA.add(body);
+  // Tête (peau foncée, plus intimidant)
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.47,14,14),m(0xc47a45)); head.position.y=2.10; head.castShadow=true; miiA.add(head);
+  // Yeux
+  [-0.15,0.15].forEach(x=>{ const e=new THREE.Mesh(new THREE.SphereGeometry(.08,8,8),m(0x220000)); e.position.set(x,2.17,.42); miiA.add(e); });
+  // Sourcils froncés (inclinés vers le bas au centre = air méchant)
+  [-1,1].forEach(side=>{ const s=new THREE.Mesh(new THREE.BoxGeometry(.14,.06,.08),m(0x110000)); s.position.set(side*.15,2.28,.42); s.rotation.z=side*.25; miiA.add(s); });
+  // Cheveux noirs courts
+  const chev=new THREE.Mesh(new THREE.SphereGeometry(.49,14,8,0,Math.PI*2,0,Math.PI*.42),m(0x0a0a0a)); chev.position.set(0,2.14,0); chev.rotation.x=.08; miiA.add(chev);
+  // Bouche serrée (grimace)
+  const bch=new THREE.Mesh(new THREE.BoxGeometry(.16,.05,.06),m(0x661111)); bch.position.set(0,1.97,.42); miiA.add(bch);
+  // Jambes noires
+  [-0.23,0.23].forEach(x=>{ const j=new THREE.Mesh(new THREE.BoxGeometry(.36,.80,.37),m(0x111111)); j.position.set(x,.26,0); j.castShadow=true; miiA.add(j); });
+  // Chaussures
+  [-0.23,0.23].forEach(x=>{ const sh=new THREE.Mesh(new THREE.BoxGeometry(.38,.19,.43),m(0x1a0000)); sh.position.set(x,-.08,.04); miiA.add(sh); });
 
-  miiJBrasD = new THREE.Group(); miiJBrasD.position.set(0.55, 1.5, 0);
-  const bDG = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.65,0.22), mm(0x1976D2));
-  bDG.position.set(0,-0.22,0); miiJBrasD.add(bDG);
-  const gantD = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.32,0.38), gantMat);
-  gantD.position.set(0,-0.62,0); miiJBrasD.add(gantD);
-  miiJoueur.add(miiJBrasD);
+  // Bras gauche (gant orange)
+  miiABG=new THREE.Group(); miiABG.position.set(-.62,1.57,0);
+  const agArm=new THREE.Mesh(new THREE.BoxGeometry(.26,.70,.25),m(0xB71C1C)); agArm.position.set(0,-.25,0); miiABG.add(agArm);
+  const agGant=new THREE.Mesh(new THREE.BoxGeometry(.36,.36,.42),m(0xFF6600)); agGant.position.set(0,-.68,0); miiABG.add(agGant);
+  miiA.add(miiABG);
 
-  miiJoueur.position.set(-2.2, -0.55, 4.5);
-  miiJoueur.rotation.y = 0.25;
-  scene.add(miiJoueur);
-}
+  // Bras droit (gant orange)
+  miiABD=new THREE.Group(); miiABD.position.set(.62,1.57,0);
+  const adArm=new THREE.Mesh(new THREE.BoxGeometry(.26,.70,.25),m(0xB71C1C)); adArm.position.set(0,-.25,0); miiABD.add(adArm);
+  const adGant=new THREE.Mesh(new THREE.BoxGeometry(.36,.36,.42),m(0xFF6600)); adGant.position.set(0,-.68,0); miiABD.add(adGant);
+  miiA.add(miiABD);
 
-// ── MII ADVERSAIRE (avant-plan droite) ──
-let miiAdv = null, miiABrasG = null, miiABrasD = null;
-function creerMiiAdv() {
-  if (miiAdv) scene.remove(miiAdv);
-  miiAdv = new THREE.Group();
-  const a = 0.45;
-  function mm(c) { return new THREE.MeshPhongMaterial({color:c,transparent:true,opacity:a,shininess:60,depthWrite:false}); }
-
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.85,1.05,0.5), mm(0xD32F2F));
-  body.position.y = 1.0; miiAdv.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.44,14,14), mm(0xd4956a));
-  head.position.y = 2.02; miiAdv.add(head);
-  [-0.14,0.14].forEach(x => {
-    const e = new THREE.Mesh(new THREE.SphereGeometry(0.075,8,8), mm(0x441111));
-    e.position.set(x, 2.09, 0.40); miiAdv.add(e);
-  });
-  // Cheveux courts (couleur foncée)
-  const chev = new THREE.Mesh(new THREE.SphereGeometry(0.46,14,8,0,Math.PI*2,0,Math.PI*0.45), mm(0x111111));
-  chev.position.set(0, 2.06, 0); chev.rotation.x=0.1; miiAdv.add(chev);
-  [-0.21,0.21].forEach(x => {
-    const j = new THREE.Mesh(new THREE.BoxGeometry(0.33,0.74,0.36), mm(0x111111));
-    j.position.set(x, 0.30, 0); miiAdv.add(j);
-  });
-
-  const gantMat = mm(0xFF8800);
-  miiABrasG = new THREE.Group(); miiABrasG.position.set(-0.58, 1.52, 0);
-  const bGG = new THREE.Mesh(new THREE.BoxGeometry(0.23,0.66,0.23), mm(0xD32F2F));
-  bGG.position.set(0,-0.22,0); miiABrasG.add(bGG);
-  const gantG = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.34,0.40), gantMat);
-  gantG.position.set(0,-0.63,0); miiABrasG.add(gantG);
-  miiAdv.add(miiABrasG);
-
-  miiABrasD = new THREE.Group(); miiABrasD.position.set(0.58, 1.52, 0);
-  const bDG = new THREE.Mesh(new THREE.BoxGeometry(0.23,0.66,0.23), mm(0xD32F2F));
-  bDG.position.set(0,-0.22,0); miiABrasD.add(bDG);
-  const gantD = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.34,0.40), gantMat);
-  gantD.position.set(0,-0.63,0); miiABrasD.add(gantD);
-  miiAdv.add(miiABrasD);
-
-  miiAdv.position.set(2.2, -0.55, 4.5);
-  miiAdv.rotation.y = -0.25;
-  scene.add(miiAdv);
+  // Positionné à droite, en face du joueur
+  miiA.position.set(1.8, -.55, 3.5);
+  miiA.rotation.y = -.3; // légèrement tourné vers le centre
+  scene.add(miiA);
 }
 
 // ══════════════════════════════════════════════════════
 //  MICROPHONE
 // ══════════════════════════════════════════════════════
-let micStream = null, micAnalyser = null, micDataArr = null, micAudioCtx = null;
+let micAnalyser=null, micDataArr=null, micAudioCtx=null;
 
-async function initMicro() {
-  try {
-    micAudioCtx  = new (window.AudioContext || window.webkitAudioContext)();
-    micStream    = await navigator.mediaDevices.getUserMedia({ audio:true });
-    const src    = micAudioCtx.createMediaStreamSource(micStream);
+async function initMicro(){
+  try{
+    micAudioCtx = new(window.AudioContext||window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const src    = micAudioCtx.createMediaStreamSource(stream);
     micAnalyser  = micAudioCtx.createAnalyser();
     micAnalyser.fftSize = 256;
     micDataArr   = new Uint8Array(micAnalyser.frequencyBinCount);
     src.connect(micAnalyser);
-  } catch(e) {
-    console.warn('Micro non disponible:', e);
-  }
+  }catch(e){ micAnalyser=null; console.warn('Micro indisponible (fallback 50%):',e); }
 }
 
-function getNiveauMicro() { // retourne 0..100
-  if (!micAnalyser) return 50; // fallback si pas de micro
+function getNiveauMicro(){
+  if(!micAnalyser) return 50;
   micAnalyser.getByteFrequencyData(micDataArr);
-  let sum = 0;
-  for (let i = 0; i < micDataArr.length; i++) sum += micDataArr[i];
-  const avg = sum / micDataArr.length;
-  return Math.min(100, (avg / 60) * 100);
+  let s=0; for(let i=0;i<micDataArr.length;i++) s+=micDataArr[i];
+  return Math.min(100,(s/micDataArr.length/60)*100);
 }
 
 // ══════════════════════════════════════════════════════
-//  SYSTÈME DE PUNCH
+//  ESQUIVE JOUEUR
 // ══════════════════════════════════════════════════════
-let punchCote   = null; // côté enfoncé actuellement
-let punchPret   = false;
-let micLevel    = 0;
+function activerEsquive(cote, e){
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  if(!ETAT.enCombat || ETAT.finDePartie) return;
+  const enCd = cote==='gauche' ? esqCdG : esqCdD;
+  if(enCd) return; // cooldown actif
 
-function preparerPunch(cote, e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
-  if (!ETAT.enCombat || !ETAT.peutFrapper) return;
-  punchCote = cote;
-  punchPret = true;
+  ETAT.enEsquive = true;
+  if(navigator.vibrate) navigator.vibrate(25);
+
+  const btn  = document.getElementById(`esq-${cote}`);
+  const cdBar = document.getElementById(`cd-${cote}`);
+  btn.classList.add('active');
+
+  // Animation esquive du Mii joueur
+  animerEsquiveJoueur(cote);
+
+  // Fenêtre d'invincibilité
+  setTimeout(()=>{ ETAT.enEsquive = false; }, ESQ_DUREE);
+
+  // Déclenche le cooldown
+  if(cote==='gauche') esqCdG=true; else esqCdD=true;
+  btn.classList.remove('active');
+  btn.classList.add('cooldown');
+
+  // Anime la barre de cooldown
+  cdBar.style.transition='none'; cdBar.style.width='100%';
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      cdBar.style.transition=`width ${ESQ_COOLDOWN}ms linear`;
+      cdBar.style.width='0%';
+    });
+  });
+
+  setTimeout(()=>{
+    if(cote==='gauche') esqCdG=false; else esqCdD=false;
+    btn.classList.remove('cooldown');
+  }, ESQ_COOLDOWN);
+}
+
+// ══════════════════════════════════════════════════════
+//  PUNCH JOUEUR
+// ══════════════════════════════════════════════════════
+let punchCote=null, punchPret=false, micLevel=0;
+
+function preparerPunch(cote,e){
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  if(!ETAT.enCombat||!ETAT.peutFrapper) return;
+  punchCote=cote; punchPret=true;
   document.getElementById('mic-wrap').classList.add('show');
-  document.getElementById('hint').style.opacity = '0';
   document.getElementById(`btn-${cote}`).classList.add('hit');
-  if (navigator.vibrate) navigator.vibrate(15);
+  if(navigator.vibrate) navigator.vibrate(12);
 }
 
-function annulerPunch(e) {
-  if (e) e.preventDefault();
-  if (!punchPret) return;
-  // Lance le coup avec la puissance accumulée
-  const puissance = micLevel;
-  lancerCoup(punchCote, puissance);
-  punchPret = false;
-  punchCote = null;
+function annulerPunch(e){
+  if(e) e.preventDefault();
+  if(!punchPret) return;
+  lancerCoup(punchCote, micLevel);
+  punchPret=false; punchCote=null;
   document.getElementById('mic-wrap').classList.remove('show');
   document.getElementById('btn-gauche').classList.remove('hit');
   document.getElementById('btn-droite').classList.remove('hit');
 }
 
-function lancerCoup(cote, puissance) {
-  if (!ETAT.enCombat || !ETAT.peutFrapper || ETAT.finDePartie) return;
-  ETAT.peutFrapper = false;
-  setTimeout(() => { ETAT.peutFrapper = true; }, 400);
+function lancerCoup(cote, puissance){
+  if(!ETAT.enCombat||!ETAT.peutFrapper||ETAT.finDePartie) return;
+  ETAT.peutFrapper=false;
+  setTimeout(()=>{ ETAT.peutFrapper=true; },380);
 
-  const cfg = NIVEAUX[ETAT.niveau] || NIVEAUX.moyen;
-  // Esquive adversaire selon niveau
-  if (Math.random() < cfg.esquiveAdv) {
+  const cfg=NIVEAUX[ETAT.niveau]||NIVEAUX.moyen;
+  if(Math.random()<cfg.esquiveAdv){
     animerEsquiveAdv(cote);
-    if (navigator.vibrate) navigator.vibrate(10);
-    setTimeout(() => { ETAT.peutFrapper = true; }, 300);
+    afficherIndicateur('💨 Esquivé !', '#FFD600');
+    setTimeout(()=>{ ETAT.peutFrapper=true; },280);
     return;
   }
 
-  // Dégâts = puissance (0-100) × facteur
-  const dmg = Math.max(3, Math.round(puissance * 0.28 + 3));
-  ETAT.hpAdv = Math.max(0, ETAT.hpAdv - dmg);
+  const dmg=Math.max(3,Math.round(puissance*.28+3));
+  ETAT.hpAdv=Math.max(0,ETAT.hpAdv-dmg);
   mettreAJourBarresVie();
-
-  // Animation punch joueur
   animerPunchJoueur(cote);
-  // Flash éclair
   flashCoup(false);
-  if (navigator.vibrate) navigator.vibrate(30);
+  if(navigator.vibrate) navigator.vibrate(28);
 
-  // Secouer adversaire
-  if (miiAdv) {
-    const tOrig = miiAdv.position.clone();
-    const t0 = Date.now();
-    const shk = () => {
-      const dt = (Date.now()-t0)/200;
-      if (dt < 1) { miiAdv.position.x = tOrig.x + Math.sin(dt*Math.PI*6)*(0.2*(1-dt)); requestAnimationFrame(shk); }
-      else { miiAdv.position.x = tOrig.x; }
-    };
+  // Recul adversaire
+  if(miiA){
+    const ox=miiA.position.x; const t0=Date.now();
+    const shk=()=>{ const dt=(Date.now()-t0)/200; if(dt<1){ miiA.position.x=ox+Math.sin(dt*Math.PI*6)*(.22*(1-dt)); requestAnimationFrame(shk); } else miiA.position.x=ox; };
     shk();
   }
 
-  // KO ?
-  if (ETAT.hpAdv <= 0) { finCombat('joueur'); return; }
-  // Applaudissements spectateurs si beau coup
-  if (dmg >= 18) animerApplaudsSpec(1200);
+  if(ETAT.hpAdv<=0){ finCombat('joueur'); return; }
+  if(dmg>=18) animerApplaudsSpec(1200);
 }
 
 // ══════════════════════════════════════════════════════
-//  COUPS ADVERSAIRE (IA)
+//  IA ADVERSAIRE
 // ══════════════════════════════════════════════════════
-let advTimerRef = null;
-function planifierCoupAdv() {
-  if (!ETAT.enCombat || ETAT.finDePartie) return;
-  const cfg = NIVEAUX[ETAT.niveau] || NIVEAUX.moyen;
-  advTimerRef = setTimeout(() => {
-    if (!ETAT.enCombat || ETAT.finDePartie) return;
-    const cote = Math.random() < 0.5 ? 'gauche' : 'droite';
+let advTimerRef=null;
+
+function planifierCoupAdv(){
+  if(!ETAT.enCombat||ETAT.finDePartie) return;
+  const cfg=NIVEAUX[ETAT.niveau]||NIVEAUX.moyen;
+  advTimerRef=setTimeout(()=>{
+    if(!ETAT.enCombat||ETAT.finDePartie) return;
+    const cote=Math.random()<.5?'gauche':'droite';
     animerPunchAdv(cote);
-    flashCoup(true);
-    // Dégâts
-    const dmg = cfg.degatsAdv + Math.floor(Math.random() * 5);
-    ETAT.hpJoueur = Math.max(0, ETAT.hpJoueur - dmg);
-    mettreAJourBarresVie();
-    if (navigator.vibrate) navigator.vibrate([20,10,20]);
-    // Secouer caméra
-    secouerCamera();
-    if (ETAT.hpJoueur <= 0) { finCombat('adv'); return; }
+
+    // Le joueur est-il en train d'esquiver ?
+    if(ETAT.enEsquive){
+      // Coup raté !
+      flashCoup(false); // flash jaune (coup évité)
+      afficherIndicateur('🛡️ Esquive !', '#00E676');
+      if(navigator.vibrate) navigator.vibrate(15);
+    } else {
+      flashCoup(true);
+      const dmg=cfg.degatsAdv+Math.floor(Math.random()*5);
+      ETAT.hpJoueur=Math.max(0,ETAT.hpJoueur-dmg);
+      mettreAJourBarresVie();
+      if(navigator.vibrate) navigator.vibrate([18,8,18]);
+      secouerCamera();
+      if(ETAT.hpJoueur<=0){ finCombat('adv'); return; }
+    }
     planifierCoupAdv();
-  }, cfg.vitesseAdv + Math.random()*800);
+  }, cfg.vitesseAdv+Math.random()*700);
 }
 
 // ══════════════════════════════════════════════════════
 //  ANIMATIONS MIIS
 // ══════════════════════════════════════════════════════
-function animerPunchJoueur(cote) {
-  const bras = cote === 'gauche' ? miiJBrasG : miiJBrasD;
-  if (!bras) return;
-  const signe = cote === 'gauche' ? -1 : 1;
-  const t0 = Date.now();
-  const step = () => {
-    const dt = (Date.now()-t0)/250;
-    if (dt < 1) {
-      bras.rotation.x = -Math.sin(dt * Math.PI) * 1.4;
-      bras.rotation.z = signe * Math.sin(dt * Math.PI * 0.5) * 0.4;
+function animerPunchJoueur(cote){
+  const bras=cote==='gauche'?miiJBG:miiJBD;
+  const sg=cote==='gauche'?-1:1;
+  if(!bras) return;
+  const t0=Date.now();
+  const step=()=>{ const dt=(Date.now()-t0)/240; if(dt<1){ bras.rotation.x=-Math.sin(dt*Math.PI)*1.5; bras.rotation.z=sg*Math.sin(dt*Math.PI*.5)*.45; requestAnimationFrame(step); } else{ bras.rotation.x=0; bras.rotation.z=0; } };
+  step();
+}
+
+function animerPunchAdv(cote){
+  const bras=cote==='gauche'?miiABG:miiABD;
+  const sg=cote==='gauche'?-1:1;
+  if(!bras) return;
+  const t0=Date.now();
+  const step=()=>{ const dt=(Date.now()-t0)/220; if(dt<1){ bras.rotation.x=-Math.sin(dt*Math.PI)*1.4; bras.rotation.z=sg*Math.sin(dt*Math.PI*.5)*.4; requestAnimationFrame(step); } else{ bras.rotation.x=0; bras.rotation.z=0; } };
+  step();
+}
+
+function animerEsquiveAdv(cote){
+  if(!miiA) return;
+  const dir=cote==='gauche'?.7:-.7;
+  const ox=miiA.position.x, oy=miiA.rotation.y;
+  const t0=Date.now();
+  const step=()=>{ const dt=(Date.now()-t0)/360; if(dt<1){ miiA.position.x=ox+Math.sin(dt*Math.PI)*dir; miiA.rotation.y=oy+Math.sin(dt*Math.PI)*.45; requestAnimationFrame(step); } else{ miiA.position.x=ox; miiA.rotation.y=oy; } };
+  step();
+}
+
+// Animation esquive joueur : glisse sur le côté opposé à l'attaque
+function animerEsquiveJoueur(cote){
+  if(!miiJ) return;
+  // Esquive gauche → Mii se décale à gauche; droite → à droite
+  const dir=cote==='gauche'?-.9:.9;
+  const ox=miiJ.position.x, oy=miiJ.rotation.y;
+  const t0=Date.now();
+  const step=()=>{
+    const dt=(Date.now()-t0)/400;
+    if(dt<1){
+      miiJ.position.x = ox+Math.sin(dt*Math.PI)*dir;
+      miiJ.rotation.y = oy+Math.sin(dt*Math.PI)*(cote==='gauche'?-.3:.3);
       requestAnimationFrame(step);
-    } else { bras.rotation.x = 0; bras.rotation.z = 0; }
+    } else { miiJ.position.x=ox; miiJ.rotation.y=oy; }
   };
   step();
 }
 
-function animerPunchAdv(cote) {
-  const bras = cote === 'gauche' ? miiABrasG : miiABrasD;
-  if (!bras) return;
-  const signe = cote === 'gauche' ? -1 : 1;
-  const t0 = Date.now();
-  const step = () => {
-    const dt = (Date.now()-t0)/220;
-    if (dt < 1) {
-      bras.rotation.x = -Math.sin(dt * Math.PI) * 1.3;
-      bras.rotation.z = signe * Math.sin(dt * Math.PI * 0.5) * 0.35;
-      requestAnimationFrame(step);
-    } else { bras.rotation.x = 0; bras.rotation.z = 0; }
-  };
-  step();
+// ── Indicateur flottant (MISS / ESQUIVE) ──
+function afficherIndicateur(texte, couleur){
+  const el=document.getElementById('esquive-indicator');
+  el.textContent=texte;
+  el.style.color=couleur;
+  el.className='show float-up';
+  setTimeout(()=>{ el.className=''; },750);
 }
 
-function animerEsquiveAdv(cote) {
-  if (!miiAdv) return;
-  const dir = cote === 'gauche' ? 0.6 : -0.6;
-  const t0 = Date.now();
-  const origX = miiAdv.position.x, origY = miiAdv.rotation.y;
-  const step = () => {
-    const dt = (Date.now()-t0)/350;
-    if (dt < 1) {
-      miiAdv.position.x = origX + Math.sin(dt*Math.PI)*dir;
-      miiAdv.rotation.y = origY + Math.sin(dt*Math.PI)*0.4;
-      requestAnimationFrame(step);
-    } else { miiAdv.position.x = origX; miiAdv.rotation.y = origY; }
-  };
-  step();
-}
-
-// Spectateurs qui applaudissent
-let animSpec = null;
-function animerApplaudsSpec(duree) {
-  const fin = Date.now() + duree;
-  animSpec = { fin, fn: () => {
-    const phase = Date.now() * 0.009;
-    spectateursMiis.forEach((s,i) => {
-      const beat = Math.abs(Math.sin(phase + i*0.35));
-      s.brasG.rotation.z =  0.2 + beat * 1.3;
-      s.brasD.rotation.z = -0.2 - beat * 1.3;
-      s.g.position.y = -0.55 + beat * 0.1;
-    });
+// ── Applaudissements ──
+let animSpec=null;
+function animerApplaudsSpec(duree){
+  animSpec={fin:Date.now()+duree,fn:()=>{
+    const ph=Date.now()*.009;
+    SPEC_MIIS.forEach((s,i)=>{ const b=Math.abs(Math.sin(ph+i*.35)); s.brasG.rotation.z=.2+b*1.3; s.brasD.rotation.z=-.2-b*1.3; s.g.position.y=-.55+b*.1; });
   }};
-  jouerApplaudsSON(duree/1000);
-}
-
-function jouerApplaudsSON(duree) {
-  try {
-    const ctx = micAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const nb  = Math.floor(duree * 15);
-    for (let i=0; i<nb; i++) {
-      const buf  = ctx.createBuffer(1, ctx.sampleRate*0.065, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let j=0; j<data.length; j++) data[j] = (Math.random()*2-1)*Math.exp(-j/700);
-      const src  = ctx.createBufferSource(); src.buffer=buf;
-      const filt = ctx.createBiquadFilter(); filt.type='highpass'; filt.frequency.value=1000;
-      const gain = ctx.createGain(); gain.gain.value = 0.35+Math.random()*0.25;
+  try{
+    const ctx=micAudioCtx||new(window.AudioContext||window.webkitAudioContext)();
+    const nb=Math.floor(duree/1000*15);
+    for(let i=0;i<nb;i++){
+      const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*.065),ctx.sampleRate);
+      const d=buf.getChannelData(0); for(let j=0;j<d.length;j++) d[j]=(Math.random()*2-1)*Math.exp(-j/700);
+      const src=ctx.createBufferSource(); src.buffer=buf;
+      const filt=ctx.createBiquadFilter(); filt.type='highpass'; filt.frequency.value=1000;
+      const gain=ctx.createGain(); gain.gain.value=.35+Math.random()*.25;
       src.connect(filt); filt.connect(gain); gain.connect(ctx.destination);
-      src.start(ctx.currentTime + i/15 + Math.random()*0.05);
+      src.start(ctx.currentTime+i/15+Math.random()*.05);
     }
-  } catch(e){}
+  }catch(e){}
 }
 
-// ══════════════════════════════════════════════════════
-//  FLASH COUP REÇU
-// ══════════════════════════════════════════════════════
-function flashCoup(recu) {
-  const el = document.getElementById('flash');
-  el.style.background = recu ? 'rgba(255,0,0,0.25)' : 'rgba(255,255,100,0.18)';
+// ── Flash & caméra ──
+function flashCoup(recu){
+  const el=document.getElementById('flash');
+  el.style.background=recu?'rgba(255,0,0,0.28)':'rgba(255,220,0,0.15)';
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 80);
+  setTimeout(()=>el.classList.remove('show'),85);
 }
 
-// ── Secouer caméra ──
-let camShake = 0;
-function secouerCamera() { camShake = 8; }
+let camShake=0;
+function secouerCamera(){ camShake=9; }
 
 // ══════════════════════════════════════════════════════
 //  BARRES DE VIE
 // ══════════════════════════════════════════════════════
-function mettreAJourBarresVie() {
-  document.getElementById('life-joueur').style.width = ETAT.hpJoueur + '%';
-  document.getElementById('life-adv').style.width    = ETAT.hpAdv    + '%';
+function mettreAJourBarresVie(){
+  document.getElementById('life-joueur').style.width=ETAT.hpJoueur+'%';
+  document.getElementById('life-adv').style.width   =ETAT.hpAdv+'%';
 }
 
 // ══════════════════════════════════════════════════════
-//  TIMER DE ROUND
+//  TIMER
 // ══════════════════════════════════════════════════════
-function demarrerTimer() {
-  ETAT.timerSec = 90;
-  clearInterval(ETAT.timerInterval);
-  ETAT.timerInterval = setInterval(() => {
+function demarrerTimer(){
+  ETAT.timerSec=90; clearInterval(ETAT.timerInterval);
+  ETAT.timerInterval=setInterval(()=>{
+    if(ETAT.finDePartie){ clearInterval(ETAT.timerInterval); return; }
     ETAT.timerSec--;
-    const m = Math.floor(ETAT.timerSec/60);
-    const s = ETAT.timerSec % 60;
-    document.getElementById('hud-timer').textContent = `${m}:${s.toString().padStart(2,'0')}`;
-    if (ETAT.timerSec <= 0) {
-      clearInterval(ETAT.timerInterval);
-      finRound();
-    }
-  }, 1000);
+    const m=Math.floor(ETAT.timerSec/60), s=ETAT.timerSec%60;
+    document.getElementById('hud-timer').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    if(ETAT.timerSec<=0){ clearInterval(ETAT.timerInterval); finRound(); }
+  },1000);
 }
 
 // ══════════════════════════════════════════════════════
-//  GESTION DES ROUNDS
+//  ROUNDS
 // ══════════════════════════════════════════════════════
-function demarrerRound(num) {
-  ETAT.round       = num;
-  ETAT.enCombat    = false;
-  ETAT.peutFrapper = false;
+function demarrerRound(num){
+  ETAT.round=num; ETAT.enCombat=false; ETAT.peutFrapper=false; ETAT.enEsquive=false;
   clearTimeout(advTimerRef);
+  document.getElementById('round-title').textContent=`Round ${num}`;
+  document.getElementById('round-sub').textContent=num===1?'Prêt ?':'Nouveau round !';
+  document.getElementById('round-num').textContent=`R${num}`;
+  document.getElementById('round-overlay').classList.add('show');
 
-  const overlay = document.getElementById('round-overlay');
-  document.getElementById('round-title').textContent = num <= 3 ? `Round ${num}` : 'FIGHT !';
-  document.getElementById('round-sub').textContent   = num === 1 ? 'Prêt ?' : num <= 3 ? 'Nouveau round !' : '';
-  document.getElementById('round-num').textContent   = `R${num}`;
-  overlay.classList.add('show');
-
-  // Compte à rebours 3…2…1…FIGHT !
-  let cpt = 3;
-  const countDown = setInterval(() => {
+  let cpt=3;
+  const cd=setInterval(()=>{
     cpt--;
-    if (cpt > 0) {
-      document.getElementById('round-title').textContent = cpt.toString();
-      if (navigator.vibrate) navigator.vibrate(40);
-    } else {
-      clearInterval(countDown);
-      document.getElementById('round-title').textContent = 'FIGHT !';
-      setTimeout(() => {
-        overlay.classList.remove('show');
-        ETAT.enCombat    = true;
-        ETAT.peutFrapper = true;
-        demarrerTimer();
-        planifierCoupAdv();
-      }, 600);
+    if(cpt>0){ document.getElementById('round-title').textContent=cpt.toString(); if(navigator.vibrate) navigator.vibrate(40); }
+    else{
+      clearInterval(cd);
+      document.getElementById('round-title').textContent='FIGHT !';
+      setTimeout(()=>{
+        document.getElementById('round-overlay').classList.remove('show');
+        ETAT.enCombat=true; ETAT.peutFrapper=true;
+        if(num===1){
+          const h=document.getElementById('hint'); h.style.opacity='1';
+          setTimeout(()=>{ h.style.opacity='0'; },3500);
+        }
+        demarrerTimer(); planifierCoupAdv();
+      },600);
     }
-  }, 800);
+  },800);
 }
 
-function finRound() {
-  ETAT.enCombat = false;
-  clearTimeout(advTimerRef);
-
-  if (ETAT.round >= 3) {
-    // Décision aux points
-    const gagne = ETAT.hpJoueur > ETAT.hpAdv;
-    finCombat(gagne ? 'joueur' : 'adv', true);
-    return;
-  }
-  // Prochain round — récupération partielle
-  ETAT.hpJoueur = Math.min(100, ETAT.hpJoueur + 25);
-  ETAT.hpAdv    = Math.min(100, ETAT.hpAdv    + 25);
+function finRound(){
+  ETAT.enCombat=false; clearTimeout(advTimerRef);
+  if(ETAT.round>=3){ finCombat(ETAT.hpJoueur>ETAT.hpAdv?'joueur':'adv',true); return; }
+  ETAT.hpJoueur=Math.min(100,ETAT.hpJoueur+25);
+  ETAT.hpAdv=Math.min(100,ETAT.hpAdv+25);
   mettreAJourBarresVie();
-  setTimeout(() => demarrerRound(ETAT.round + 1), 1200);
+  setTimeout(()=>demarrerRound(ETAT.round+1),1200);
 }
 
-function finCombat(vainqueur, decision=false) {
-  ETAT.finDePartie = true;
-  ETAT.enCombat    = false;
-  clearInterval(ETAT.timerInterval);
-  clearTimeout(advTimerRef);
-
-  const joueurGagne = vainqueur === 'joueur';
-  const titre  = decision ? (joueurGagne ? '🏆 Victoire !' : '😔 Défaite') : (joueurGagne ? '🥊 K.O. !' : '💥 K.O. !');
-  const winner = joueurGagne ? 'Tu gagnes !' : `${ETAT.adversaire?.nom || 'CPU'} gagne !`;
-
-  document.getElementById('ko-title').textContent  = titre;
-  document.getElementById('ko-winner').textContent = winner;
+function finCombat(vainqueur,decision=false){
+  ETAT.finDePartie=true; ETAT.enCombat=false;
+  clearInterval(ETAT.timerInterval); clearTimeout(advTimerRef);
+  const jg=vainqueur==='joueur';
+  document.getElementById('ko-title').textContent  = decision?(jg?'🏆 Victoire !':'😔 Défaite'):(jg?'🥊 K.O. !':'💥 K.O. !');
+  document.getElementById('ko-winner').textContent = jg?'Tu gagnes !':`${ETAT.adversaire?.nom||'CPU'} gagne !`;
   document.getElementById('ko-hp-j').textContent   = `${ETAT.hpJoueur} PV`;
   document.getElementById('ko-hp-a').textContent   = `${ETAT.hpAdv} PV`;
-  document.getElementById('ko-hp-j').className     = `ko-pl-hp${joueurGagne?' win':''}`;
-  document.getElementById('ko-hp-a').className     = `ko-pl-hp${!joueurGagne?' win':''}`;
-
-  if (joueurGagne) {
-    animerApplaudsSpec(3500);
-    if (navigator.vibrate) navigator.vibrate([60,30,60,30,120]);
-  }
-
-  setTimeout(() => document.getElementById('ko-overlay').classList.add('show'), 400);
+  document.getElementById('ko-hp-j').className     = `ko-pl-hp${jg?' win':''}`;
+  document.getElementById('ko-hp-a').className     = `ko-pl-hp${!jg?' win':''}`;
+  if(jg){ animerApplaudsSpec(3500); if(navigator.vibrate) navigator.vibrate([60,30,60,30,120]); }
+  setTimeout(()=>document.getElementById('ko-overlay').classList.add('show'),400);
 }
 
 // ══════════════════════════════════════════════════════
 //  DÉMARRAGE
 // ══════════════════════════════════════════════════════
-async function demarrerJeu() {
-  document.getElementById('start-screen').style.display = 'none';
-  document.getElementById('punch-btns').style.display   = 'flex';
-  document.getElementById('life-bars').style.display    = 'flex';
-  document.getElementById('hud').style.display          = 'flex';
-
+async function demarrerJeu(){
+  document.getElementById('start-screen').style.display='none';
+  document.getElementById('game-btns').style.display='flex';
+  document.getElementById('life-bars').style.display='flex';
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('hint').style.opacity='0';
   creerMiiJoueur();
   creerMiiAdv();
   await initMicro();
-  setTimeout(() => demarrerRound(1), 500);
+  setTimeout(()=>demarrerRound(1),500);
 }
 
 // ══════════════════════════════════════════════════════
-//  BOUCLE DE JEU
+//  BOUCLE DE RENDU
 // ══════════════════════════════════════════════════════
-let frameCount = 0;
-const CAM_ORIG = new THREE.Vector3(0, 5, 14);
+let frameCount=0;
+const CAM_ORIG=new THREE.Vector3(0,4.5,12);
 
-function animate() {
+function animate(){
   requestAnimationFrame(animate);
   frameCount++;
 
-  // Mise à jour micro en temps réel
-  if (punchPret && micAnalyser) {
-    micLevel = getNiveauMicro();
-    document.getElementById('mic-fill').style.width = micLevel + '%';
-    document.getElementById('mic-pct').textContent  = Math.round(micLevel) + '%';
+  if(punchPret){
+    micLevel=getNiveauMicro();
+    document.getElementById('mic-fill').style.width=micLevel+'%';
+    document.getElementById('mic-pct').textContent=Math.round(micLevel)+'%';
   }
 
-  // Drapeau respiration Miis spectateurs
-  if (animSpec) {
-    animSpec.fn();
-    if (Date.now() >= animSpec.fin) {
-      animSpec = null;
-      spectateursMiis.forEach(s => { s.brasG.rotation.z=0.15; s.brasD.rotation.z=-0.15; s.g.position.y=-0.55; });
-    }
-  } else {
-    const t = frameCount * 0.01;
-    spectateursMiis.forEach((s,i) => {
-      s.g.position.y = -0.55 + Math.sin(t + i) * 0.02;
-      // Légère agitation aléatoire
-      if (ETAT.enCombat && Math.random() < 0.003) {
-        s.brasG.rotation.z = 0.1 + Math.random()*0.5;
-        s.brasD.rotation.z = -(0.1 + Math.random()*0.5);
-      }
-    });
+  if(animSpec){ animSpec.fn(); if(Date.now()>=animSpec.fin){ animSpec=null; SPEC_MIIS.forEach(s=>{ s.brasG.rotation.z=.15; s.brasD.rotation.z=-.15; s.g.position.y=-.55; }); } }
+  else{ const t=frameCount*.01; SPEC_MIIS.forEach((s,i)=>{ s.g.position.y=-.55+Math.sin(t+i)*.02; if(ETAT.enCombat&&Math.random()<.003){ s.brasG.rotation.z=.1+Math.random()*.5; s.brasD.rotation.z=-(Math.random()*.5+.1); } }); }
+
+  if(camShake>0){ camera.position.x=CAM_ORIG.x+(Math.random()-.5)*camShake*.04; camera.position.y=CAM_ORIG.y+(Math.random()-.5)*camShake*.02; camShake*=.74; if(camShake<.1){ camera.position.copy(CAM_ORIG); camShake=0; } }
+
+  // Idle boxing : balancement gauche-droite des Miis
+  if(miiJ&&ETAT.enCombat){
+    miiJ.position.y=-.55+Math.sin(frameCount*.055)*.05;
+    miiJ.rotation.y=.3+Math.sin(frameCount*.035)*.07;
+  }
+  if(miiA&&ETAT.enCombat){
+    miiA.position.y=-.55+Math.sin(frameCount*.055+1.2)*.05;
+    miiA.rotation.y=-.3+Math.sin(frameCount*.035+1.2)*.07;
   }
 
-  // Secousse caméra après coup reçu
-  if (camShake > 0) {
-    camera.position.x = CAM_ORIG.x + (Math.random()-0.5)*camShake*0.04;
-    camera.position.y = CAM_ORIG.y + (Math.random()-0.5)*camShake*0.02;
-    camShake *= 0.75;
-    if (camShake < 0.1) { camera.position.copy(CAM_ORIG); camShake = 0; }
-  }
-
-  // Balancement idle Mii joueur
-  if (miiJoueur && ETAT.enCombat) {
-    miiJoueur.position.y = -0.55 + Math.sin(frameCount*0.05)*0.04;
-    miiJoueur.rotation.y = 0.25 + Math.sin(frameCount*0.03)*0.06;
-  }
-  if (miiAdv && ETAT.enCombat) {
-    miiAdv.position.y = -0.55 + Math.sin(frameCount*0.05 + 1)*0.04;
-    miiAdv.rotation.y = -0.25 + Math.sin(frameCount*0.03 + 1)*0.06;
-  }
-
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth/innerHeight;
+window.addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(innerWidth,innerHeight);
 });
 
 animate();
