@@ -196,7 +196,7 @@ canvas { display:block; }
   </div>
   <div class="score-divider">
     <span>VS</span>
-    <span id="set-label">Set 1</span>
+    <span id="set-label">Jeu 1</span>
   </div>
   <div class="team-score right">
     <div class="tennis-pts" id="pts-adv">0</div>
@@ -230,7 +230,7 @@ canvas { display:block; }
 <div id="start-screen">
   <div class="start-emoji">🎾</div>
   <div class="start-title">Tennis</div>
-  <div class="start-sub">2 contre 2 · Penche ton téléphone<br>pour diriger tes tirs !</div>
+  <div class="start-sub">2 contre 2 · Penche ton téléphone<br>pour diriger tes tirs · 3 jeux pour gagner !</div>
   <div class="diff-grid">
     <div class="diff-btn" onclick="choisirDiff('facile',this)">😊 Facile</div>
     <div class="diff-btn" onclick="choisirDiff('moyen',this)">😤 Moyen</div>
@@ -255,9 +255,9 @@ canvas { display:block; }
 //  Doit être petit (≤ temps de vol dans la zone arrière).
 // ══════════════════════════════════════════
 const DIFF = {
-  facile:    { vitesse:0.07, erreurIA:0.55, delaiIA:5 },
-  moyen:     { vitesse:0.10, erreurIA:0.28, delaiIA:3 },
-  difficile: { vitesse:0.14, erreurIA:0.08, delaiIA:1 },
+  facile:    { vitesse:0.042, erreurIA:0.55, delaiIA:5 },
+  moyen:     { vitesse:0.060, erreurIA:0.28, delaiIA:3 },
+  difficile: { vitesse:0.082, erreurIA:0.08, delaiIA:1 },
 };
 
 // ══════════════════════════════════════════
@@ -423,9 +423,9 @@ function creerRaquette(couleur) {
   return g;
 }
 
-// ── Équipe bleue (joueur) — côté Z positif ──
-const miiJ1 = creerMii(0x1565C0, 0xFFCBA4, -2.2, 8.5, 0.1);
-const miiJ2 = creerMii(0x0288D1, 0xFFD1A0,  2.2, 5.0,-0.1); // filet côté joueur
+// ── Équipe bleue (joueur) — côté Z positif, orientés vers le filet (−Z) ──
+const miiJ1 = creerMii(0x1565C0, 0xFFCBA4, -2.2, 8.5, Math.PI); // face vers z négatif
+const miiJ2 = creerMii(0x0288D1, 0xFFD1A0,  2.2, 3.0, Math.PI); // face vers z négatif
 const raqJ1  = creerRaquette(0x1565C0);
 miiJ1.g.add(raqJ1);
 raqJ1.position.set(0.48,0.65,0); raqJ1.rotation.z=-0.35;
@@ -434,9 +434,9 @@ const raqJ2 = creerRaquette(0x0288D1);
 miiJ2.g.add(raqJ2);
 raqJ2.position.set(0.48,0.65,0); raqJ2.rotation.z=-0.35;
 
-// ── Équipe rouge (adversaire) — côté Z négatif ──
-const miiA1 = creerMii(0xC62828, 0xFFCBA4, -2.2,-8.5, Math.PI-0.1);
-const miiA2 = creerMii(0xE53935, 0xFFC090,  2.2,-5.0, Math.PI+0.1); // filet côté IA
+// ── Équipe rouge (adversaire) — côté Z négatif, orientés vers le filet (+Z) ──
+const miiA1 = creerMii(0xC62828, 0xFFCBA4, -2.2,-8.5, 0); // face vers z positif
+const miiA2 = creerMii(0xE53935, 0xFFC090,  2.2,-3.0, 0); // face vers z positif
 const raqA1  = creerRaquette(0xC62828);
 miiA1.g.add(raqA1);
 raqA1.position.set(0.48,0.65,0); raqA1.rotation.z=-0.35;
@@ -589,43 +589,69 @@ function updateBalle() {
   }
 
   // ── IA retourne la balle ──
-  // Déclenche dès que la balle entre dans la zone arrière de l'IA (z < -5.5)
-  // et se dirige vers elle (direction === -1), sans avoir encore frappé cet échange.
-  if (b.z < -5.5 && b.z > -8.5 && b.direction === -1 && !iaADejaFrappe) {
+  // Zone fond de court : miiA1 (gauche, arrière) — fenêtre réduite
+  if (b.z < -5.2 && b.z > -7.5 && b.direction === -1 && !iaADejaFrappe) {
     iaTimer++;
     if (iaTimer >= d.delaiIA) {
       iaTimer = 0;
-      iaADejaFrappe = true; // l'IA ne frappe qu'une seule fois par échange
+      iaADejaFrappe = true;
 
       if (Math.random() > d.erreurIA) {
-        // Retour réussi : vise le côté opposé au tilt du joueur
         const cibleX = -tiltX * 3 + (Math.random()-0.5)*2.0;
         b.vx = (cibleX - b.x) * 0.04;
-        b.vz = d.vitesse * 8;   // positive → revient vers le joueur
+        b.vz = d.vitesse * 8;
         b.vy = 0.045;
         b.direction = 1;
         animerFrappe(miiA1.brasG, raqA1);
-        if (b.x > 1.0 && Math.random()>0.4) setTimeout(()=>animerFrappe(miiA2.brasG,raqA2),120);
       } else {
-        // Faute IA : balle part dans le filet / hors terrain
         b.vz = (Math.random() > 0.5) ? 0.05 : -0.8;
         b.vx = (Math.random()-0.5)*0.2;
         b.vy = 0.01;
-        b.direction = 0; // neutre → sera capturé par les bornes hors-limites
+        b.direction = 0;
       }
     }
   }
 
-  // Joueur retourne (automatique, guidé par le tilt)
-  if (b.z > 6.2 && b.z < 8.5 && b.direction === 1) {
-    iaADejaFrappe = false; // reset pour le prochain échange
+  // Zone filet : miiA2 (droite, avancé) — fenêtre courte et étroite en x
+  if (b.z < -2.2 && b.z > -4.0 && b.x > 0.5 && b.direction === -1 && !iaADejaFrappe) {
+    iaTimer++;
+    if (iaTimer >= d.delaiIA) {
+      iaTimer = 0;
+      iaADejaFrappe = true;
+
+      if (Math.random() > d.erreurIA + 0.1) { // légèrement moins précis au filet
+        const cibleX = -tiltX * 2 + (Math.random()-0.5)*1.5;
+        b.vx = (cibleX - b.x) * 0.05;
+        b.vz = d.vitesse * 9;  // smash plus rapide depuis le filet
+        b.vy = 0.02;
+        b.direction = 1;
+        animerFrappe(miiA2.brasG, raqA2);
+      } else {
+        b.vz = -0.6; b.vx = (Math.random()-0.5)*0.3; b.vy = 0.01; b.direction = 0;
+      }
+    }
+  }
+
+  // Joueur retourne — fond de court miiJ1 (gauche, arrière)
+  if (b.z > 6.5 && b.z < 8.0 && b.direction === 1) {
+    iaADejaFrappe = false;
     const angle = tiltX * 0.6;
     b.vx = angle * d.vitesse * 6;
     b.vz = -d.vitesse * 9;
     b.vy = 0.038;
     b.direction = -1;
     animerFrappe(miiJ1.brasG, raqJ1);
-    if (b.x > 1.0 && Math.random()>0.4) setTimeout(()=>animerFrappe(miiJ2.brasG,raqJ2),110);
+  }
+
+  // Joueur retourne — filet miiJ2 (droite, avancé) — zone courte et étroite
+  if (b.z > 2.5 && b.z < 3.8 && b.x > 0.5 && b.direction === 1) {
+    iaADejaFrappe = false;
+    const angle = tiltX * 0.5;
+    b.vx = angle * d.vitesse * 5;
+    b.vz = -d.vitesse * 10;
+    b.vy = 0.02;
+    b.direction = -1;
+    animerFrappe(miiJ2.brasG, raqJ2);
   }
 
   // Hors limites
@@ -670,12 +696,12 @@ function pointJoueur() {
   iaADejaFrappe=false;
   iaTimer=0;
   etat.ptsJoueur++;
-  mettreAJourScore();
   afficherFlash('Point ! 🎾','#4FC3F7');
+  mettreAJourScore(); // peut écraser le flash si c'est un jeu
   animerJoie([miiJ1.g,miiJ2.g]);
   animerSpec('joie');
   if (navigator.vibrate) navigator.vibrate([30,15,30]);
-  setTimeout(()=>{ if(jeuActif) serviceJoueur(); },2000);
+  setTimeout(()=>{ if(jeuActif) serviceJoueur(); },2200);
 }
 
 function pointAdversaire() {
@@ -683,37 +709,55 @@ function pointAdversaire() {
   iaADejaFrappe=false;
   iaTimer=0;
   etat.ptsAdv++;
-  mettreAJourScore();
   afficherFlash('Raté ! 😬','#FF7043');
+  mettreAJourScore(); // peut écraser le flash si c'est un jeu
   animerTristesse([miiJ1.g,miiJ2.g]);
   animerJoie([miiA1.g,miiA2.g]);
   if (navigator.vibrate) navigator.vibrate([10,10,10]);
-  setTimeout(()=>{ if(jeuActif) serviceJoueur(); },2000);
+  setTimeout(()=>{ if(jeuActif) serviceJoueur(); },2200);
 }
 
-// ── Scoring tennis officiel ──
+// ── Scoring tennis officiel — 3 jeux pour gagner ──
 const PTS_LBL = ['0','15','30','40'];
 function mettreAJourScore() {
   const pj=etat.ptsJoueur, pa=etat.ptsAdv;
-  let lj,la;
-  if (pj>=3&&pa>=3) {
-    if (pj===pa)  { lj=la='40'; }
-    else if(pj>pa){ lj='Ad';la='40'; }
-    else          { lj='40';la='Ad'; }
-  } else { lj=PTS_LBL[Math.min(pj,3)]; la=PTS_LBL[Math.min(pa,3)]; }
-  document.getElementById('pts-joueur').textContent=lj;
-  document.getElementById('pts-adv').textContent=la;
+  let lj, la;
 
-  if ((pj>=4&&pj-pa>=2)||(pa>=4&&pa-pj>=2)) {
-    if (pj>pa) etat.jeuxJoueur++; else etat.jeuxAdv++;
+  // Deuce & avantage
+  if (pj>=3 && pa>=3) {
+    if (pj===pa)       { lj=la='Egal'; }
+    else if (pj > pa)  { lj='Adv'; la='40'; }
+    else               { lj='40';  la='Adv'; }
+  } else {
+    lj = PTS_LBL[Math.min(pj,3)];
+    la = PTS_LBL[Math.min(pa,3)];
+  }
+  document.getElementById('pts-joueur').textContent = lj;
+  document.getElementById('pts-adv').textContent    = la;
+
+  // Jeu gagné ?
+  const joueurGagne = (pj>=4 && pj-pa>=2);
+  const advGagne    = (pa>=4 && pa-pj>=2);
+  if (joueurGagne || advGagne) {
+    if (joueurGagne) etat.jeuxJoueur++; else etat.jeuxAdv++;
     etat.ptsJoueur=0; etat.ptsAdv=0;
+
     const sj=document.getElementById('score-joueur');
     const sa=document.getElementById('score-adv');
     sj.textContent=etat.jeuxJoueur;
     sa.textContent=etat.jeuxAdv;
     sj.classList.add('bump'); sa.classList.add('bump');
-    setTimeout(()=>{sj.classList.remove('bump');sa.classList.remove('bump');},450);
-    if (etat.jeuxJoueur>=6||etat.jeuxAdv>=6) { setTimeout(finDeMatch,500); return; }
+    setTimeout(()=>{ sj.classList.remove('bump'); sa.classList.remove('bump'); },500);
+
+    // Flash "Jeu !"
+    afficherFlash(joueurGagne ? 'Jeu ! 🎾' : 'Jeu adverse 😬', joueurGagne ? '#FFE500' : '#FF7043');
+
+    // Mise à jour label set
+    const setNum = etat.jeuxJoueur + etat.jeuxAdv + 1;
+    document.getElementById('set-label').textContent = `Jeu ${setNum}`;
+
+    // Match à 3 jeux
+    if (etat.jeuxJoueur>=3 || etat.jeuxAdv>=3) { setTimeout(finDeMatch,800); return; }
   } else {
     document.getElementById('score-joueur').textContent=etat.jeuxJoueur;
     document.getElementById('score-adv').textContent=etat.jeuxAdv;
