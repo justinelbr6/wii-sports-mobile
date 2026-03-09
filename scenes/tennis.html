@@ -281,9 +281,9 @@ canvas { display:block; }
 //  Doit être petit (≤ temps de vol dans la zone arrière).
 // ══════════════════════════════════════════
 const DIFF = {
-  facile:    { vitesse:0.018, erreurIA:0.55, delaiIA:5 },
-  moyen:     { vitesse:0.026, erreurIA:0.28, delaiIA:3 },
-  difficile: { vitesse:0.036, erreurIA:0.08, delaiIA:1 },
+  facile:    { vitesse:0.030, erreurIA:0.45, delaiIA:3 },
+  moyen:     { vitesse:0.042, erreurIA:0.20, delaiIA:2 },
+  difficile: { vitesse:0.058, erreurIA:0.04, delaiIA:0 },
 };
 
 // ══════════════════════════════════════════
@@ -674,8 +674,10 @@ function attacherSwipeService() {
 
 // ── Compteur de frames pour le délai IA ──
 let iaTimer = 0;
-// Flag pour éviter qu'on appelle la logique IA plusieurs fois par échange
 let iaADejaFrappe = false;
+
+// Position x courante des joueurs IA (ils se déplacent vers la balle)
+let iaA1_x = 2.2, iaA2_x = -2.2;
 
 function updateBalle() {
   if (!etat.balle.enVol) return;
@@ -685,68 +687,76 @@ function updateBalle() {
   b.x += b.vx;
   b.z += b.vz;
   b.y += b.vy;
-  b.vy -= 0.006; // gravité douce
+  b.vy -= 0.005;
 
   // Rebond sol
-  if (b.y < 0.068) {
-    b.y = 0.068;
-    b.vy = Math.abs(b.vy) * 0.65;
-    if (Math.abs(b.vy) < 0.018) b.vy = 0.018;
+  if (b.y < 0.16) {
+    b.y = 0.16;
+    b.vy = Math.abs(b.vy) * 0.62;
+    if (Math.abs(b.vy) < 0.015) b.vy = 0.015;
   }
 
   // Rebond murs latéraux
   if (Math.abs(b.x) > 5.5) {
     b.vx *= -0.72;
-    b.x   = Math.sign(b.x) * 5.5;
+    b.x = Math.sign(b.x) * 5.5;
   }
 
-  // ── IA retourne la balle ──
-  // Zone fond de court : miiA1 (gauche, arrière) — fenêtre réduite
-  if (b.z < -5.2 && b.z > -7.5 && b.direction === -1 && !iaADejaFrappe) {
-    iaTimer++;
-    if (iaTimer >= d.delaiIA) {
-      iaTimer = 0;
-      iaADejaFrappe = true;
-
-      if (Math.random() > d.erreurIA) {
-        const cibleX = -tiltX * 3 + (Math.random()-0.5)*2.0;
-        b.vx = (cibleX - b.x) * 0.04;
-        b.vz = d.vitesse * 8;
-        b.vy = 0.045;
-        b.direction = 1;
-        animerFrappe(miiA1.brasG, raqA1);
-      } else {
-        b.vz = (Math.random() > 0.5) ? 0.05 : -0.8;
-        b.vx = (Math.random()-0.5)*0.2;
-        b.vy = 0.01;
-        b.direction = 0;
-      }
+  // ── IA se déplace vers la balle en temps réel ──
+  if (b.direction === -1 && b.z < 0) {
+    // A1 (fond) se repositionne vers la balle si elle est dans son territoire
+    if (b.z < -4.5) {
+      iaA1_x += (b.x - iaA1_x) * 0.12;
+      miiA1.g.position.x = iaA1_x;
+    }
+    // A2 (filet) se repositionne si la balle est côté filet
+    if (b.z > -4.5 && b.z < -1.5) {
+      iaA2_x += (b.x - iaA2_x) * 0.14;
+      miiA2.g.position.x = iaA2_x;
     }
   }
 
-  // Zone filet : miiA2 (gauche monde, avant) — fenêtre courte, côté gauche
-  if (b.z < -2.2 && b.z > -4.0 && b.x < -0.5 && b.direction === -1 && !iaADejaFrappe) {
+  // ── IA frappe — fond de court A1 : toute la largeur, grande zone ──
+  if (b.z < -5.0 && b.z > -9.0 && b.direction === -1 && !iaADejaFrappe) {
     iaTimer++;
     if (iaTimer >= d.delaiIA) {
       iaTimer = 0;
       iaADejaFrappe = true;
 
-      if (Math.random() > d.erreurIA + 0.1) { // légèrement moins précis au filet
-        const cibleX = -tiltX * 2 + (Math.random()-0.5)*1.5;
-        b.vx = (cibleX - b.x) * 0.05;
-        b.vz = d.vitesse * 9;  // smash plus rapide depuis le filet
-        b.vy = 0.02;
+      // Cible aléatoire dans le terrain joueur, légèrement biaisée vers les côtés
+      const cibleX = (Math.random() * 8) - 4; // entre -4 et +4
+      const vitesse = d.vitesse * (4 + Math.random() * 3); // moins fort
+      b.vx = (cibleX - b.x) * (vitesse / 14);
+      b.vz = vitesse;
+      b.vy = 0.05 + Math.random() * 0.03;
+      b.direction = 1;
+      animerFrappe(miiA1.brasG, raqA1);
+    }
+  }
+
+  // ── IA frappe — filet A2 : retour doux aléatoire ──
+  if (b.z < -1.5 && b.z > -5.0 && b.direction === -1 && !iaADejaFrappe) {
+    const distX = Math.abs(b.x - iaA2_x);
+    if (distX < 2.5) {
+      iaTimer++;
+      if (iaTimer >= d.delaiIA) {
+        iaTimer = 0;
+        iaADejaFrappe = true;
+
+        const cibleX = (Math.random() * 8) - 4; // aléatoire
+        const vitesse = d.vitesse * (3.5 + Math.random() * 2.5); // doux
+        b.vx = (cibleX - b.x) * (vitesse / 12);
+        b.vz = vitesse;
+        b.vy = 0.03 + Math.random() * 0.02;
         b.direction = 1;
         animerFrappe(miiA2.brasG, raqA2);
-      } else {
-        b.vz = -0.6; b.vx = (Math.random()-0.5)*0.3; b.vy = 0.01; b.direction = 0;
       }
     }
   }
 
-  // Joueur retourne — fond de court miiJ1 (gauche, arrière)
-  if (b.z > 6.5 && b.z < 8.0 && b.direction === 1) {
-    iaADejaFrappe = false;
+  // ── Joueur retourne — fond de court J1 ──
+  if (b.z > 6.5 && b.z < 9.5 && b.direction === 1) {
+    iaADejaFrappe = false; iaTimer = 0;
     const angle = tiltX * 0.6;
     b.vx = angle * d.vitesse * 6;
     b.vz = -d.vitesse * 9;
@@ -755,9 +765,9 @@ function updateBalle() {
     animerFrappe(miiJ1.brasG, raqJ1);
   }
 
-  // Joueur retourne — filet miiJ2 (droite, avancé) — zone courte et étroite
-  if (b.z > 2.5 && b.z < 3.8 && b.x > 0.5 && b.direction === 1) {
-    iaADejaFrappe = false;
+  // ── Joueur retourne — filet J2 ──
+  if (b.z > 2.0 && b.z < 4.2 && b.x > 0.5 && b.direction === 1) {
+    iaADejaFrappe = false; iaTimer = 0;
     const angle = tiltX * 0.5;
     b.vx = angle * d.vitesse * 5;
     b.vz = -d.vitesse * 10;
@@ -772,13 +782,13 @@ function updateBalle() {
 
   // Filet
   if (Math.abs(b.z) < 0.3 && b.y < 0.91) {
-    if (b.direction===-1) pointAdversaire(); else pointJoueur();
+    if (b.direction === -1) pointAdversaire(); else pointJoueur();
     return;
   }
 
   balleMesh.position.set(b.x, b.y, b.z);
   ombreMesh.position.set(b.x, 0.02, b.z);
-  ombreMesh.scale.setScalar(Math.max(0.25, 1-b.y*0.18));
+  ombreMesh.scale.setScalar(Math.max(0.3, 1 - b.y * 0.15));
 }
 
 // ── Animations frappe ──
@@ -805,8 +815,9 @@ function afficherFlash(msg, couleur) {
 // ── Points ──
 function pointJoueur() {
   etat.balle.enVol=false;
-  iaADejaFrappe=false;
-  iaTimer=0;
+  iaADejaFrappe=false; iaTimer=0;
+  iaA1_x=2.2; iaA2_x=-2.2;
+  miiA1.g.position.x=iaA1_x; miiA2.g.position.x=iaA2_x;
   etat.ptsJoueur++;
   afficherFlash('Point ! 🎾','#4FC3F7');
   mettreAJourScore(); // peut écraser le flash si c'est un jeu
@@ -818,8 +829,9 @@ function pointJoueur() {
 
 function pointAdversaire() {
   etat.balle.enVol=false;
-  iaADejaFrappe=false;
-  iaTimer=0;
+  iaADejaFrappe=false; iaTimer=0;
+  iaA1_x=2.2; iaA2_x=-2.2;
+  miiA1.g.position.x=iaA1_x; miiA2.g.position.x=iaA2_x;
   etat.ptsAdv++;
   afficherFlash('Raté ! 😬','#FF7043');
   mettreAJourScore(); // peut écraser le flash si c'est un jeu
