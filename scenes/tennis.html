@@ -17,48 +17,78 @@ canvas { display:block; }
 
 /* ── SCORE BOARD ── */
 #score-board {
-  position:fixed; top:12px; left:50%; transform:translateX(-50%);
+  position:fixed; top:6px; left:50%; transform:translateX(-50%);
   display:flex; gap:0; align-items:stretch;
-  background:rgba(0,0,0,0); pointer-events:none; z-index:20;
+  pointer-events:none; z-index:20;
 }
 .team-score {
-  display:flex; flex-direction:column; align-items:center; gap:2px;
-  background:rgba(0,0,0,0.55); backdrop-filter:blur(12px);
-  padding:8px 18px;
-  border:1.5px solid rgba(255,255,255,0.15);
+  display:flex; flex-direction:column; align-items:center; gap:0px;
+  background:rgba(0,0,0,0.60); backdrop-filter:blur(10px);
+  padding:3px 8px;
+  border:1px solid rgba(255,255,255,0.12);
 }
-.team-score.left  { border-radius:18px 0 0 18px; }
-.team-score.right { border-radius:0 18px 18px 0; }
+.team-score.left  { border-radius:8px 0 0 8px; }
+.team-score.right { border-radius:0 8px 8px 0; }
 .team-name {
-  font-size:11px; color:rgba(255,255,255,0.6);
-  text-transform:uppercase; letter-spacing:1px; font-weight:800;
+  font-size:8px; color:rgba(255,255,255,0.5);
+  text-transform:uppercase; letter-spacing:0.5px; font-weight:800;
 }
 .score-val {
   font-family:'Fredoka One',cursive;
-  font-size:28px; color:#fff; line-height:1;
+  font-size:16px; color:#fff; line-height:1;
   transition:transform 0.2s, color 0.2s;
 }
-.score-val.bump { transform:scale(1.5); color:#FFE500; }
+.score-val.bump { transform:scale(1.4); color:#FFE500; }
 .score-divider {
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  background:rgba(0,0,0,0.7); padding:8px 14px;
-  border-top:1.5px solid rgba(255,255,255,0.15);
-  border-bottom:1.5px solid rgba(255,255,255,0.15);
+  background:rgba(0,0,0,0.75); padding:3px 6px;
+  border-top:1px solid rgba(255,255,255,0.12);
+  border-bottom:1px solid rgba(255,255,255,0.12);
 }
 .score-divider span:first-child {
-  font-family:'Fredoka One',cursive; font-size:12px; color:rgba(255,255,255,0.3);
+  font-family:'Fredoka One',cursive; font-size:8px; color:rgba(255,255,255,0.25);
 }
 .score-divider span:last-child {
-  font-family:'Fredoka One',cursive; font-size:10px; color:rgba(255,255,255,0.2);
-  text-transform:uppercase; letter-spacing:1px;
+  font-family:'Fredoka One',cursive; font-size:7px; color:rgba(255,255,255,0.18);
+  text-transform:uppercase; letter-spacing:0.5px;
 }
 .tennis-pts {
-  font-size:13px; font-weight:800;
-  background:rgba(255,255,255,0.1); border-radius:20px;
-  padding:2px 10px; color:#fff; min-width:36px; text-align:center;
+  font-size:9px; font-weight:800;
+  background:rgba(255,255,255,0.1); border-radius:8px;
+  padding:0px 5px; color:#fff; min-width:22px; text-align:center;
 }
 
-/* ── TILT INDICATOR ── */
+/* ── SERVICE SWIPE ── */
+#swipe-hint {
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+  font-family:'Fredoka One',cursive; font-size:14px; color:rgba(255,255,255,0.75);
+  background:rgba(0,0,0,0.45); backdrop-filter:blur(8px);
+  border-radius:22px; padding:8px 20px;
+  pointer-events:none; z-index:20;
+  border:1px solid rgba(255,255,255,0.15);
+  display:none;
+  animation:pulseHint 1.4s ease-in-out infinite;
+}
+@keyframes pulseHint { 0%,100%{opacity:0.75} 50%{opacity:1} }
+
+/* ── POWER BAR ── */
+#power-bar-wrap {
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+  display:none; flex-direction:column; align-items:center; gap:5px;
+  pointer-events:none; z-index:20;
+}
+#power-bar-bg {
+  width:160px; height:10px;
+  background:rgba(255,255,255,0.15); border-radius:5px; overflow:hidden;
+}
+#power-bar-fill {
+  height:100%; width:0%;
+  background:linear-gradient(90deg,#4FC3F7,#FFE500,#FF5722);
+  border-radius:5px; transition:width 0.05s;
+}
+#power-label {
+  font-family:'Fredoka One',cursive; font-size:11px; color:rgba(255,255,255,0.6);
+}
 #tilt-indicator {
   position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
   display:flex; align-items:center; gap:8px;
@@ -195,6 +225,12 @@ canvas { display:block; }
     <div class="score-val" id="score-adv">0</div>
     <div class="team-name" id="adv-name-hud">🔴 CPU</div>
   </div>
+</div>
+
+<div id="swipe-hint">⬆️ Glisse pour servir !</div>
+<div id="power-bar-wrap">
+  <div id="power-bar-bg"><div id="power-bar-fill"></div></div>
+  <div id="power-label">Puissance</div>
 </div>
 
 <div id="tilt-indicator">
@@ -491,16 +527,13 @@ if (window.DeviceOrientationEvent) {
 
 // Positions de base des joueurs (x)
 const BASE_J1_X = -2.2, BASE_J2_X = 2.2;
-const BASE_A1_X =  2.2, BASE_A2_X = -2.2;
 const TILT_AMPLITUDE = 2.5; // déplacement max en unités 3D
 
 function appliquerTilt() {
-  // Équipe bleue se déplace ensemble selon tilt
+  // Seule l'équipe bleue (joueur) se déplace selon l'inclinaison
   miiJ1.g.position.x = BASE_J1_X + tiltX * TILT_AMPLITUDE;
   miiJ2.g.position.x = BASE_J2_X + tiltX * TILT_AMPLITUDE;
-  // Équipe rouge se déplace en miroir (elles restent face-à-face)
-  miiA1.g.position.x = BASE_A1_X + tiltX * TILT_AMPLITUDE;
-  miiA2.g.position.x = BASE_A2_X + tiltX * TILT_AMPLITUDE;
+  // L'IA (rouge) garde ses positions fixes
 }
 
 // ══════════════════════════════════════════
@@ -536,6 +569,7 @@ function demarrer() {
   etat.jeuxJoueur=0; etat.jeuxAdv=0;
   etat.ptsJoueur=0;  etat.ptsAdv=0;
   mettreAJourScore();
+  attacherSwipeService();
   serviceJoueur();
 
   if (typeof DeviceOrientationEvent?.requestPermission === 'function') {
@@ -547,24 +581,95 @@ function demarrer() {
   }
 }
 
+// ══════════════════════════════════════════
+//  SERVICE PAR GLISSEMENT
+// ══════════════════════════════════════════
+let swipeActif = false;
+let swipeStartY = 0, swipeStartX = 0;
+let swipePower  = 0;
+
 function serviceJoueur() {
   etat.balle = { x:0, y:2, z:6, vx:0, vy:0, vz:0, enVol:false, direction:1 };
   etat.phase = 'service';
   balleMesh.position.set(0,2,6);
-  setTimeout(() => lancerService(), 1100);
+  // Affiche l'indication de service
+  document.getElementById('swipe-hint').style.display = 'block';
+  document.getElementById('power-bar-wrap').style.display = 'none';
+  document.getElementById('power-bar-fill').style.width = '0%';
+  swipeActif = false;
 }
 
-function lancerService() {
-  if (!jeuActif) return;
+function lancerService(power, angleX) {
+  if (!jeuActif || etat.phase !== 'service') return;
+  etat.phase = 'echange';
+  document.getElementById('swipe-hint').style.display = 'none';
+  document.getElementById('power-bar-wrap').style.display = 'none';
+
   const d = DIFF[difficulte];
-  const angle = tiltX * 0.5;
-  etat.balle.vx = angle * d.vitesse * 5;
-  etat.balle.vz = -d.vitesse * 8;
-  etat.balle.vy = 0.038;
+  const vitMin = d.vitesse * 4;
+  const vitMax = d.vitesse * 11;
+  const vz = -(vitMin + power * (vitMax - vitMin));
+
+  etat.balle.vx = angleX * d.vitesse * 4;
+  etat.balle.vz = vz;
+  etat.balle.vy = 0.04 + power * 0.02;
   etat.balle.enVol   = true;
   etat.balle.direction = -1;
-  etat.phase = 'echange';
   animerFrappe(miiJ1.brasG, raqJ1);
+}
+
+// Touch listeners pour le service (ajoutés sur le canvas après demarrer())
+function attacherSwipeService() {
+  const canvas = renderer.domElement;
+
+  canvas.addEventListener('touchstart', e => {
+    if (etat.phase !== 'service' || !jeuActif) return;
+    const t = e.touches[0];
+    swipeStartY = t.clientY;
+    swipeStartX = t.clientX;
+    swipePower  = 0;
+    swipeActif  = true;
+    document.getElementById('swipe-hint').style.display = 'none';
+    document.getElementById('power-bar-wrap').style.display = 'flex';
+  }, { passive:true });
+
+  canvas.addEventListener('touchmove', e => {
+    if (!swipeActif || etat.phase !== 'service') return;
+    const t = e.touches[0];
+    const dy = swipeStartY - t.clientY; // positif = vers le haut
+    swipePower = Math.max(0, Math.min(1, dy / (window.innerHeight * 0.35)));
+    document.getElementById('power-bar-fill').style.width = (swipePower * 100) + '%';
+  }, { passive:true });
+
+  canvas.addEventListener('touchend', e => {
+    if (!swipeActif || etat.phase !== 'service') return;
+    swipeActif = false;
+    const changedTouch = e.changedTouches[0];
+    const dx = changedTouch.clientX - swipeStartX;
+    const angleX = Math.max(-1, Math.min(1, dx / (window.innerWidth * 0.3)));
+    lancerService(swipePower, angleX);
+  }, { passive:true });
+
+  // Souris (desktop)
+  canvas.addEventListener('mousedown', e => {
+    if (etat.phase !== 'service' || !jeuActif) return;
+    swipeStartY = e.clientY; swipeStartX = e.clientX; swipePower = 0; swipeActif = true;
+    document.getElementById('swipe-hint').style.display = 'none';
+    document.getElementById('power-bar-wrap').style.display = 'flex';
+  });
+  canvas.addEventListener('mousemove', e => {
+    if (!swipeActif || etat.phase !== 'service') return;
+    const dy = swipeStartY - e.clientY;
+    swipePower = Math.max(0, Math.min(1, dy / (window.innerHeight * 0.35)));
+    document.getElementById('power-bar-fill').style.width = (swipePower * 100) + '%';
+  });
+  canvas.addEventListener('mouseup', e => {
+    if (!swipeActif || etat.phase !== 'service') return;
+    swipeActif = false;
+    const dx = e.clientX - swipeStartX;
+    const angleX = Math.max(-1, Math.min(1, dx / (window.innerWidth * 0.3)));
+    lancerService(swipePower, angleX);
+  });
 }
 
 // ── Compteur de frames pour le délai IA ──
