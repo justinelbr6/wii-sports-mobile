@@ -5,7 +5,7 @@
 
 // 🔑 Clé ANON publique — safe à exposer côté client
 const SUPABASE_URL = 'https://jkfktjvloclwfzcgudyg.supabase.co';
-const SUPABASE_KEY = 'REMPLACE_PAR_TA_CLE_ANON'; // ← Supabase > Settings > API > anon public
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprZmt0anZsb2Nsd2Z6Y2d1ZHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MjAyNzksImV4cCI6MjA4ODM5NjI3OX0.Lox72iQ5lTfR9hZK3vArz8KPo7MsftciMP9ifwxaP9w'; // ← Supabase > Settings > API > anon public
 
 const { createClient } = supabase;
 const supabaseClient   = createClient(SUPABASE_URL, SUPABASE_KEY);
