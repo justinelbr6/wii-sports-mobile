@@ -290,6 +290,18 @@
       </div>
     </button>
 
+    <button class="sport-btn" id="btn-baseball"
+      onclick="selectionner('baseball','⚾️','Baseball','Sois précis dans le timing !','5 Rounds','Barre de vie')">
+      <div class="bracket-left"></div><div class="bracket-right"></div>
+      <div class="sport-btn-inner">
+        <span class="sport-btn-emoji">⚾️</span>
+        <div class="sport-btn-info">
+          <div class="sport-btn-name">Baseball</div>
+          <div class="sport-btn-detail">3 rounds · Micro + Boutons</div>
+        </div>
+        <span class="sport-btn-arrow">›</span>
+      </div>
+    </button>
   </div>
 
   <button class="play-btn" onclick="lancerJeu()">
@@ -338,6 +350,7 @@
     golf:    { emoji:'⛳', nom:'Golf',    desc:'Mets la balle dans le trou !',  t1:'3 Trous',   t2:'Par / Score',       t3:'📐 Gyroscope' },
     tennis:  { emoji:'🎾', nom:'Tennis',  desc:'Gagne les 3 sets !',            t1:'3 Sets',    t2:'15·30·40·Jeu',      t3:'📐 Gyroscope' },
     boxing:  { emoji:'🥊', nom:'Boxe',    desc:'Crie pour frapper plus fort !', t1:'3 Rounds',  t2:'Barre de vie',      t3:'🎤 Micro'     },
+    baseball: { emoji:'⚾️', nom:'Baseball', desc:'Sois précis dans le timing !', t1:'5 Rounds', t2:'Barre de vie' },
   };
 
   function selectionner(sport, emoji, nom, desc, t1, t2, t3) {
