@@ -208,9 +208,9 @@ canvas { display:block; }
 <div id="game-label">Jeu en cours · Penche pour viser !</div>
 
 <div id="tilt-indicator">
-  <span class="tilt-label">◀</span>
+  <span class="tilt-label">◀️</span>
   <div class="tilt-bar-bg"><div class="tilt-bar-fill" id="tiltFill"></div></div>
-  <span class="tilt-label">▶</span>
+  <span class="tilt-label">▶️</span>
 </div>
 
 <div id="point-flash"></div>
@@ -249,12 +249,15 @@ canvas { display:block; }
 <script src="../js/sensors.js"></script>
 <script>
 // ══════════════════════════════════════════
-//  CONFIG NIVEAUX — vitesses réduites vs original
+//  CONFIG NIVEAUX
+//  delaiIA = nb de frames d'attente APRÈS que la balle
+//  atteint la zone de l'IA avant qu'elle frappe.
+//  Doit être petit (≤ temps de vol dans la zone arrière).
 // ══════════════════════════════════════════
 const DIFF = {
-  facile:    { vitesse:0.07, erreurIA:0.70, delaiIA:65 },
-  moyen:     { vitesse:0.10, erreurIA:0.38, delaiIA:42 },
-  difficile: { vitesse:0.14, erreurIA:0.12, delaiIA:22 },
+  facile:    { vitesse:0.07, erreurIA:0.55, delaiIA:5 },
+  moyen:     { vitesse:0.10, erreurIA:0.28, delaiIA:3 },
+  difficile: { vitesse:0.14, erreurIA:0.08, delaiIA:1 },
 };
 
 // ══════════════════════════════════════════
@@ -321,15 +324,12 @@ function obj(geo, mat, x=0, y=0, z=0, rx=0, ry=0) {
 //  COURT DE TENNIS style Wii
 // ══════════════════════════════════════════
 function creerCourt() {
-  // Herbe verte lumineuse tout autour
   const herbe = obj(new THREE.PlaneGeometry(100,100), phong(0x4CAF50,15,0x1B5E20), 0,0,0,-Math.PI/2);
   herbe.receiveShadow=true; scene.add(herbe);
 
-  // Surface en terre battue orange (style Roland Garros — Wii Tennis)
   const surface = obj(new THREE.PlaneGeometry(10.97,23.77), phong(0xBF6B30,25,0x7A3A10), 0,0.01,0,-Math.PI/2);
   surface.receiveShadow=true; scene.add(surface);
 
-  // Lignes blanches
   function ligne(w,h,x,z) {
     const m=obj(new THREE.PlaneGeometry(w,h), phong(0xFFFFFF,80), x,0.018,z,-Math.PI/2);
     scene.add(m);
@@ -340,38 +340,29 @@ function creerCourt() {
   ligne(0.06,23.77,-4.115,0);  ligne(0.06,23.77,4.115,0);
   ligne(0.06,12.8,0,0);
 
-  // Filet blanc
   const filetMat = new THREE.MeshPhongMaterial({color:0xF5F5F5,transparent:true,opacity:0.85,shininess:60});
   const filet = obj(new THREE.BoxGeometry(10.97,0.91,0.06), filetMat, 0,0.455,0);
   scene.add(filet);
-  // Bande du filet (blanche pleine)
   scene.add(obj(new THREE.BoxGeometry(10.97,0.07,0.07), phong(0xFFFFFF,100), 0,0.89,0));
-  // Poteaux
   [-5.55,5.55].forEach(x => {
     scene.add(obj(new THREE.CylinderGeometry(0.055,0.055,1.15,8), phong(0xCCCCCC,100), x,0.575,0));
   });
 
-  // ── Gradins style Wii — colorés et remplis de Miis ──
-  // Fond (derrière l'adversaire)
   const gradColors = [0xE53935, 0x1E88E5, 0x43A047, 0xFB8C00, 0x8E24AA, 0x00ACC1];
   [-13.8,-14.6,-15.5].forEach((z,i) => {
     scene.add(obj(new THREE.BoxGeometry(30,1.3+i*0.4,0.4), phong(gradColors[i%6],20), 0,0.65+i*0.9,z));
   });
-  // Fond côté joueur
   [14.2,15.0].forEach((z,i) => {
     scene.add(obj(new THREE.BoxGeometry(30,1.0+i*0.3,0.4), phong(gradColors[(i+3)%6],20), 0,0.5+i*0.7,z));
   });
-  // Côtés latéraux
   [-7.2,7.2].forEach((x,si) => {
     [-8,-4,0,4,8].forEach((z,i) => {
       scene.add(obj(new THREE.BoxGeometry(1.5,1.0+i*0.1,0.4), phong(gradColors[(si*5+i)%6],20), x,0.5,z));
     });
   });
 
-  // Sol derrière les gradins (herbe)
   scene.add(obj(new THREE.PlaneGeometry(80,80), phong(0x388E3C,10), 0,-0.05,0,-Math.PI/2));
 
-  // Nuages déco
   for (let i=0;i<6;i++) {
     const c = obj(new THREE.SphereGeometry(3+Math.random()*2,10,7),
       new THREE.MeshPhongMaterial({color:0xFFFFFF,transparent:true,opacity:0.9}),
@@ -389,27 +380,20 @@ function creerMii(coulCorps, coulPeau, x, z, rotY, scale=1) {
   const matCorps = phong(coulCorps, 60);
   const matPeau  = phong(coulPeau, 80, 0x332211);
 
-  // Corps (cylindrique comme Wii)
   g.add(obj(new THREE.CylinderGeometry(0.3,0.24,0.72,10), matCorps, 0,0.56,0));
-  // Tête (ronde)
   g.add(obj(new THREE.SphereGeometry(0.30,16,12), matPeau, 0,1.18,0));
-  // Yeux noirs + reflet blanc
   [-0.1,0.1].forEach(ex => {
     g.add(obj(new THREE.SphereGeometry(0.065,8,8), phong(0x1a1a44,120), ex,1.22,0.25));
     g.add(obj(new THREE.SphereGeometry(0.028,6,6), phong(0xFFFFFF),     ex+0.02,1.24,0.28));
   });
-  // Bouche souriante
   g.add(obj(new THREE.SphereGeometry(0.048,8,8), phong(0xCC4444,60), 0,1.08,0.26));
-  // Joues roses
   [-0.16,0.16].forEach(cx => {
     g.add(obj(new THREE.SphereGeometry(0.065,8,8),
       new THREE.MeshPhongMaterial({color:0xFF9090,transparent:true,opacity:0.5}), cx,1.13,0.26));
   });
-  // Jambes
   [-0.13,0.13].forEach(jx => {
     g.add(obj(new THREE.CylinderGeometry(0.1,0.1,0.52,8), matCorps, jx,0.1,0));
   });
-  // Bras (tendus vers la raquette)
   const brasG = new THREE.Group();
   brasG.position.set(0,0.78,0);
   [-0.42,0.42].forEach((bx,i) => {
@@ -430,22 +414,18 @@ function creerMii(coulCorps, coulPeau, x, z, rotY, scale=1) {
 // ── Raquette ──
 function creerRaquette(couleur) {
   const g = new THREE.Group();
-  // Tête ovale
   g.add(obj(new THREE.TorusGeometry(0.27,0.045,8,22), phong(couleur,100), 0,0.27,0));
-  // Cordage
   const cord = new THREE.Mesh(new THREE.PlaneGeometry(0.48,0.48),
     new THREE.MeshPhongMaterial({color:0xE8E8E8,transparent:true,opacity:0.55,side:THREE.DoubleSide}));
   cord.position.set(0,0.27,0); g.add(cord);
-  // Manche
   g.add(obj(new THREE.CylinderGeometry(0.032,0.04,0.55,8), phong(0x5D4037,80), 0,-0.08,0));
-  // Grip coloré
   g.add(obj(new THREE.CylinderGeometry(0.038,0.038,0.18,8), phong(couleur,60), 0,-0.28,0));
   return g;
 }
 
 // ── Équipe bleue (joueur) — côté Z positif ──
 const miiJ1 = creerMii(0x1565C0, 0xFFCBA4, -2.2, 8.5, 0.1);
-const miiJ2 = creerMii(0x0288D1, 0xFFD1A0,  2.2, 9.2,-0.1);
+const miiJ2 = creerMii(0x0288D1, 0xFFD1A0,  2.2, 5.0,-0.1); // filet côté joueur
 const raqJ1  = creerRaquette(0x1565C0);
 miiJ1.g.add(raqJ1);
 raqJ1.position.set(0.48,0.65,0); raqJ1.rotation.z=-0.35;
@@ -456,7 +436,7 @@ raqJ2.position.set(0.48,0.65,0); raqJ2.rotation.z=-0.35;
 
 // ── Équipe rouge (adversaire) — côté Z négatif ──
 const miiA1 = creerMii(0xC62828, 0xFFCBA4, -2.2,-8.5, Math.PI-0.1);
-const miiA2 = creerMii(0xE53935, 0xFFC090,  2.2,-9.2, Math.PI+0.1);
+const miiA2 = creerMii(0xE53935, 0xFFC090,  2.2,-5.0, Math.PI+0.1); // filet côté IA
 const raqA1  = creerRaquette(0xC62828);
 miiA1.g.add(raqA1);
 raqA1.position.set(0.48,0.65,0); raqA1.rotation.z=-0.35;
@@ -469,7 +449,6 @@ const SPEC_CORPS = [0xFF5722,0x9C27B0,0x009688,0xFF9800,0x4CAF50,0xE91E63,0x00BC
 const SPEC_PEAU  = [0xFFCBA4,0xF4A460,0xFFD1A0,0xC68642];
 const specMiis   = [];
 
-// Gradins du fond (derrière l'adversaire) — 3 rangées × 8
 for (let row=0;row<3;row++) {
   for (let col=0;col<8;col++) {
     const s = creerMii(
@@ -480,7 +459,6 @@ for (let row=0;row<3;row++) {
     specMiis.push(s);
   }
 }
-// Gradins latéraux — 2 × 5
 [-7.5,7.5].forEach((xi,si) => {
   for (let i=0;i<5;i++) {
     const s = creerMii(
@@ -519,7 +497,7 @@ if (window.DeviceOrientationEvent) {
 }
 
 // ══════════════════════════════════════════
-//  LOGIQUE DE JEU (identique à l'original)
+//  LOGIQUE DE JEU
 // ══════════════════════════════════════════
 let difficulte = 'moyen';
 let jeuActif   = false;
@@ -575,15 +553,17 @@ function lancerService() {
   const angle = tiltX * 0.5;
   etat.balle.vx = angle * d.vitesse * 5;
   etat.balle.vz = -d.vitesse * 8;
-  etat.balle.vy = 0.038;       // ↙ réduit vs original (était 0.05)
+  etat.balle.vy = 0.038;
   etat.balle.enVol   = true;
   etat.balle.direction = -1;
   etat.phase = 'echange';
   animerFrappe(miiJ1.brasG, raqJ1);
 }
 
-// Timer IA
+// ── Compteur de frames pour le délai IA ──
 let iaTimer = 0;
+// Flag pour éviter qu'on appelle la logique IA plusieurs fois par échange
+let iaADejaFrappe = false;
 
 function updateBalle() {
   if (!etat.balle.enVol) return;
@@ -608,37 +588,44 @@ function updateBalle() {
     b.x   = Math.sign(b.x) * 5.5;
   }
 
-  // IA retourne la balle
-  if (b.z < -7 && b.direction === -1) {
+  // ── IA retourne la balle ──
+  // Déclenche dès que la balle entre dans la zone arrière de l'IA (z < -5.5)
+  // et se dirige vers elle (direction === -1), sans avoir encore frappé cet échange.
+  if (b.z < -5.5 && b.z > -8.5 && b.direction === -1 && !iaADejaFrappe) {
     iaTimer++;
-    if (iaTimer > d.delaiIA) {
+    if (iaTimer >= d.delaiIA) {
       iaTimer = 0;
+      iaADejaFrappe = true; // l'IA ne frappe qu'une seule fois par échange
+
       if (Math.random() > d.erreurIA) {
-        const cibleX = tiltX * 3 + (Math.random()-0.5)*2.5;
-        b.vx = (cibleX - b.x) * 0.035;
-        b.vz = d.vitesse * 8;
-        b.vy = 0.04;
+        // Retour réussi : vise le côté opposé au tilt du joueur
+        const cibleX = -tiltX * 3 + (Math.random()-0.5)*2.0;
+        b.vx = (cibleX - b.x) * 0.04;
+        b.vz = d.vitesse * 8;   // positive → revient vers le joueur
+        b.vy = 0.045;
         b.direction = 1;
         animerFrappe(miiA1.brasG, raqA1);
-        // Parfois A2 frappe aussi
-        if (Math.random()>0.5) setTimeout(()=>animerFrappe(miiA2.brasG,raqA2),120);
+        if (b.x > 1.0 && Math.random()>0.4) setTimeout(()=>animerFrappe(miiA2.brasG,raqA2),120);
       } else {
-        // Faute IA
-        b.vz = -0.25; b.vx = (Math.random()-0.5)*0.15;
-        b.direction = 0;
+        // Faute IA : balle part dans le filet / hors terrain
+        b.vz = (Math.random() > 0.5) ? 0.05 : -0.8;
+        b.vx = (Math.random()-0.5)*0.2;
+        b.vy = 0.01;
+        b.direction = 0; // neutre → sera capturé par les bornes hors-limites
       }
     }
   }
 
   // Joueur retourne (automatique, guidé par le tilt)
-  if (b.z > 6.2 && b.direction === 1) {
+  if (b.z > 6.2 && b.z < 8.5 && b.direction === 1) {
+    iaADejaFrappe = false; // reset pour le prochain échange
     const angle = tiltX * 0.6;
     b.vx = angle * d.vitesse * 6;
     b.vz = -d.vitesse * 9;
     b.vy = 0.038;
     b.direction = -1;
     animerFrappe(miiJ1.brasG, raqJ1);
-    if (Math.random()>0.5) setTimeout(()=>animerFrappe(miiJ2.brasG,raqJ2),110);
+    if (b.x > 1.0 && Math.random()>0.4) setTimeout(()=>animerFrappe(miiJ2.brasG,raqJ2),110);
   }
 
   // Hors limites
@@ -680,6 +667,8 @@ function afficherFlash(msg, couleur) {
 // ── Points ──
 function pointJoueur() {
   etat.balle.enVol=false;
+  iaADejaFrappe=false;
+  iaTimer=0;
   etat.ptsJoueur++;
   mettreAJourScore();
   afficherFlash('Point ! 🎾','#4FC3F7');
@@ -691,6 +680,8 @@ function pointJoueur() {
 
 function pointAdversaire() {
   etat.balle.enVol=false;
+  iaADejaFrappe=false;
+  iaTimer=0;
   etat.ptsAdv++;
   mettreAJourScore();
   afficherFlash('Raté ! 😬','#FF7043');
@@ -713,7 +704,6 @@ function mettreAJourScore() {
   document.getElementById('pts-joueur').textContent=lj;
   document.getElementById('pts-adv').textContent=la;
 
-  // Jeu gagné ?
   if ((pj>=4&&pj-pa>=2)||(pa>=4&&pa-pj>=2)) {
     if (pj>pa) etat.jeuxJoueur++; else etat.jeuxAdv++;
     etat.ptsJoueur=0; etat.ptsAdv=0;
@@ -723,7 +713,6 @@ function mettreAJourScore() {
     sa.textContent=etat.jeuxAdv;
     sj.classList.add('bump'); sa.classList.add('bump');
     setTimeout(()=>{sj.classList.remove('bump');sa.classList.remove('bump');},450);
-    // Match gagné à 6 jeux
     if (etat.jeuxJoueur>=6||etat.jeuxAdv>=6) { setTimeout(finDeMatch,500); return; }
   } else {
     document.getElementById('score-joueur').textContent=etat.jeuxJoueur;
@@ -801,12 +790,10 @@ function animate(tps) {
 
   if (jeuActif) {
     updateBalle();
-    // Indicateur tilt
     const pct=(tiltX+1)/2*100;
     document.getElementById('tiltFill').style.transform=`translateX(${pct-50}%)`;
   }
 
-  // Spectateurs
   if (etat.animSpec&&Date.now()<etat.animSpec.fin) {
     const phase=tps*0.01;
     specMiis.forEach((s,i)=>{
@@ -820,12 +807,10 @@ function animate(tps) {
     specMiis.forEach(s=>{s.g.position.y=s.g.userData.baseY||0; s.brasG.rotation.z=.15;});
     etat.animSpec=null;
   } else {
-    // Légère respiration au repos
     const t=tps*0.0012;
     specMiis.forEach((s,i)=>s.g.position.y=(s.g.userData.baseY||0)+Math.sin(t+i)*0.025);
   }
 
-  // Caméra suit légèrement la balle en X
   if (jeuActif && etat.balle.enVol) {
     camera.position.x += (etat.balle.x*0.08 - camera.position.x) * 0.04;
   } else {
