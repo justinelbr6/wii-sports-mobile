@@ -204,11 +204,20 @@
 <div class="wii-bg"></div>
 
 <div class="logo-area">
-  <div class="logo-left">Main Menu</div>
-  <div class="logo-right">
-    <div class="logo-wii-line">Wii<em>Sports</em></div>
-    <div class="logo-sports-line">Mobile</div>
-    <div class="logo-badge">✦ Fan Made ✦</div>
+  <div class="logo-left" style="display:flex;flex-direction:column;gap:2px;">
+    <span>Main Menu</span>
+    <span id="user-greeting" style="font-size:0.7rem;color:rgba(255,255,255,0.5);font-weight:700;"></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="logo-right">
+      <div class="logo-wii-line">Wii<em>Sports</em></div>
+      <div class="logo-sports-line">Mobile</div>
+      <div class="logo-badge">✦ Fan Made ✦</div>
+    </div>
+    <button onclick="seDeconnecter()" title="Se déconnecter"
+      style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.3);border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer;flex-shrink:0;">
+      🚪
+    </button>
   </div>
 </div>
 
@@ -297,7 +306,12 @@
   </div>
 </div>
 
+<!-- Supabase CDN — doit être AVANT supabase.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+
 <script>
+  // ── Bulles déco ──
   for (let i = 0; i < 8; i++) {
     const b = document.createElement('div');
     b.className = 'bubble';
@@ -306,6 +320,18 @@
     document.body.appendChild(b);
   }
 
+  // ── Garde auth : redirige si non connecté, affiche le prénom sinon ──
+  (async () => {
+    const session = await checkAuth();
+    if (!session) return; // checkAuth redirige vers login.html tout seul
+    const profil = await getProfilCourant();
+    if (profil) {
+      const prenom = profil.full_name.split(' ')[0];
+      document.getElementById('user-greeting').textContent = `👋 ${prenom}`;
+    }
+  })();
+
+  // ── Menu sports ──
   let sportActuel = 'bowling';
   const infos = {
     bowling: { emoji:'🎳', nom:'Bowling', desc:'Renverse toutes les quilles !', t1:'3 Frames',  t2:'2 lancers / frame', t3:'📐 Gyroscope' },
@@ -331,7 +357,6 @@
       c.style.opacity = '1'; c.style.transform = 'scale(1)';
     }, 140);
     if (navigator.vibrate) navigator.vibrate(20);
-    // Scroll vers le bouton Jouer
     setTimeout(() => document.querySelector('.play-btn').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
   }
 
