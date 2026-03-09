@@ -58,14 +58,6 @@ canvas { display:block; }
   padding:2px 10px; color:#fff; min-width:36px; text-align:center;
 }
 
-/* ── GAME LABEL ── */
-#game-label {
-  position:fixed; top:72px; left:50%; transform:translateX(-50%);
-  font-family:'Fredoka One',cursive; font-size:12px; color:rgba(255,255,255,0.5);
-  background:rgba(0,0,0,0.4); padding:4px 14px; border-radius:20px;
-  pointer-events:none; z-index:20; letter-spacing:.5px;
-}
-
 /* ── TILT INDICATOR ── */
 #tilt-indicator {
   position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
@@ -205,8 +197,6 @@ canvas { display:block; }
   </div>
 </div>
 
-<div id="game-label">Jeu en cours · Penche pour viser !</div>
-
 <div id="tilt-indicator">
   <span class="tilt-label">◀️</span>
   <div class="tilt-bar-bg"><div class="tilt-bar-fill" id="tiltFill"></div></div>
@@ -255,9 +245,9 @@ canvas { display:block; }
 //  Doit être petit (≤ temps de vol dans la zone arrière).
 // ══════════════════════════════════════════
 const DIFF = {
-  facile:    { vitesse:0.042, erreurIA:0.55, delaiIA:5 },
-  moyen:     { vitesse:0.060, erreurIA:0.28, delaiIA:3 },
-  difficile: { vitesse:0.082, erreurIA:0.08, delaiIA:1 },
+  facile:    { vitesse:0.018, erreurIA:0.55, delaiIA:5 },
+  moyen:     { vitesse:0.026, erreurIA:0.28, delaiIA:3 },
+  difficile: { vitesse:0.036, erreurIA:0.08, delaiIA:1 },
 };
 
 // ══════════════════════════════════════════
@@ -349,16 +339,17 @@ function creerCourt() {
   });
 
   const gradColors = [0xE53935, 0x1E88E5, 0x43A047, 0xFB8C00, 0x8E24AA, 0x00ACC1];
+  // Gradins fond (derrière adversaire)
   [-13.8,-14.6,-15.5].forEach((z,i) => {
     scene.add(obj(new THREE.BoxGeometry(30,1.3+i*0.4,0.4), phong(gradColors[i%6],20), 0,0.65+i*0.9,z));
   });
+  // Gradins fond (derrière joueur)
   [14.2,15.0].forEach((z,i) => {
     scene.add(obj(new THREE.BoxGeometry(30,1.0+i*0.3,0.4), phong(gradColors[(i+3)%6],20), 0,0.5+i*0.7,z));
   });
-  [-7.2,7.2].forEach((x,si) => {
-    [-8,-4,0,4,8].forEach((z,i) => {
-      scene.add(obj(new THREE.BoxGeometry(1.5,1.0+i*0.1,0.4), phong(gradColors[(si*5+i)%6],20), x,0.5,z));
-    });
+  // Sols surélevés latéraux (sans murs, juste le plancher pour que les Miis soient visibles)
+  [-7.8,7.8].forEach((x,si) => {
+    scene.add(obj(new THREE.PlaneGeometry(2.2,28), phong(gradColors[(si*2+1)%6],10), x,0.12,0,-Math.PI/2));
   });
 
   scene.add(obj(new THREE.PlaneGeometry(80,80), phong(0x388E3C,10), 0,-0.05,0,-Math.PI/2));
@@ -423,26 +414,27 @@ function creerRaquette(couleur) {
   return g;
 }
 
-// ── Équipe bleue (joueur) — côté Z positif, orientés vers le filet (−Z) ──
-const miiJ1 = creerMii(0x1565C0, 0xFFCBA4, -2.2, 8.5, Math.PI); // face vers z négatif
-const miiJ2 = creerMii(0x0288D1, 0xFFD1A0,  2.2, 3.0, Math.PI); // face vers z négatif
-const raqJ1  = creerRaquette(0x1565C0);
+// ── Équipe bleue (joueur) — côté Z positif, face au filet (−Z)
+// J1 : fond gauche  |  J2 : avant droit (plus proche du filet)
+const miiJ1 = creerMii(0x1565C0, 0xFFCBA4, -2.2, 8.5, Math.PI);
+const miiJ2 = creerMii(0x0288D1, 0xFFD1A0,  2.2, 3.0, Math.PI);
+const raqJ1 = creerRaquette(0x1565C0);
 miiJ1.g.add(raqJ1);
-raqJ1.position.set(0.48,0.65,0); raqJ1.rotation.z=-0.35;
-
+raqJ1.position.set(0.52,0.65,0); raqJ1.rotation.z=-0.35;  // droite locale = +x
 const raqJ2 = creerRaquette(0x0288D1);
 miiJ2.g.add(raqJ2);
-raqJ2.position.set(0.48,0.65,0); raqJ2.rotation.z=-0.35;
+raqJ2.position.set(0.52,0.65,0); raqJ2.rotation.z=-0.35;
 
-// ── Équipe rouge (adversaire) — côté Z négatif, orientés vers le filet (+Z) ──
-const miiA1 = creerMii(0xC62828, 0xFFCBA4, -2.2,-8.5, 0); // face vers z positif
-const miiA2 = creerMii(0xE53935, 0xFFC090,  2.2,-3.0, 0); // face vers z positif
-const raqA1  = creerRaquette(0xC62828);
+// ── Équipe rouge (adversaire) — côté Z négatif, face au filet (+Z)
+// A1 : fond droit (monde) = gauche de l'IA  |  A2 : avant gauche (monde) = avant droit IA
+const miiA1 = creerMii(0xC62828, 0xFFCBA4,  2.2,-8.5, 0);  // fond, droite monde
+const miiA2 = creerMii(0xE53935, 0xFFC090, -2.2,-3.0, 0);  // avant, gauche monde
+const raqA1 = creerRaquette(0xC62828);
 miiA1.g.add(raqA1);
-raqA1.position.set(0.48,0.65,0); raqA1.rotation.z=-0.35;
+raqA1.position.set(0.52,0.65,0); raqA1.rotation.z=-0.35;
 const raqA2 = creerRaquette(0xE53935);
 miiA2.g.add(raqA2);
-raqA2.position.set(0.48,0.65,0); raqA2.rotation.z=-0.35;
+raqA2.position.set(0.52,0.65,0); raqA2.rotation.z=-0.35;
 
 // ── Spectateurs Miis dans les gradins ──
 const SPEC_CORPS = [0xFF5722,0x9C27B0,0x009688,0xFF9800,0x4CAF50,0xE91E63,0x00BCD4,0xCDDC39,0x3F51B5,0x795548];
@@ -459,12 +451,13 @@ for (let row=0;row<3;row++) {
     specMiis.push(s);
   }
 }
-[-7.5,7.5].forEach((xi,si) => {
+[-7.2,7.2].forEach((xi,si) => {
   for (let i=0;i<5;i++) {
     const s = creerMii(
       SPEC_CORPS[(si*5+i+5)%10], SPEC_PEAU[(si+i)%4],
-      xi, -8+i*3.5, si===0 ? Math.PI/2 : -Math.PI/2, 0.6
+      xi, -8+i*3.5, si===0 ? Math.PI/2 : -Math.PI/2, 0.65
     );
+    s.g.position.y = 0.12;
     specMiis.push(s);
   }
 });
@@ -473,13 +466,13 @@ for (let row=0;row<3;row++) {
 //  BALLE
 // ══════════════════════════════════════════
 const balleMat = new THREE.MeshPhongMaterial({color:0xCDDC39, shininess:100, specular:0xAAAA00});
-const balleGeo = new THREE.SphereGeometry(0.068,16,12);
+const balleGeo = new THREE.SphereGeometry(0.16,16,12);
 const balleMesh = new THREE.Mesh(balleGeo,balleMat);
 balleMesh.castShadow=true;
 scene.add(balleMesh);
 
 const ombreMat = new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:0.28});
-const ombreGeo = new THREE.CircleGeometry(0.11,14);
+const ombreGeo = new THREE.CircleGeometry(0.22,14);
 const ombreMesh = new THREE.Mesh(ombreGeo,ombreMat);
 ombreMesh.rotation.x=-Math.PI/2; ombreMesh.position.y=0.02;
 scene.add(ombreMesh);
@@ -494,6 +487,20 @@ if (window.DeviceOrientationEvent) {
       tiltX = Math.max(-1, Math.min(1, (e.gamma||0) / 30));
     });
   }
+}
+
+// Positions de base des joueurs (x)
+const BASE_J1_X = -2.2, BASE_J2_X = 2.2;
+const BASE_A1_X =  2.2, BASE_A2_X = -2.2;
+const TILT_AMPLITUDE = 2.5; // déplacement max en unités 3D
+
+function appliquerTilt() {
+  // Équipe bleue se déplace ensemble selon tilt
+  miiJ1.g.position.x = BASE_J1_X + tiltX * TILT_AMPLITUDE;
+  miiJ2.g.position.x = BASE_J2_X + tiltX * TILT_AMPLITUDE;
+  // Équipe rouge se déplace en miroir (elles restent face-à-face)
+  miiA1.g.position.x = BASE_A1_X + tiltX * TILT_AMPLITUDE;
+  miiA2.g.position.x = BASE_A2_X + tiltX * TILT_AMPLITUDE;
 }
 
 // ══════════════════════════════════════════
@@ -612,8 +619,8 @@ function updateBalle() {
     }
   }
 
-  // Zone filet : miiA2 (droite, avancé) — fenêtre courte et étroite en x
-  if (b.z < -2.2 && b.z > -4.0 && b.x > 0.5 && b.direction === -1 && !iaADejaFrappe) {
+  // Zone filet : miiA2 (gauche monde, avant) — fenêtre courte, côté gauche
+  if (b.z < -2.2 && b.z > -4.0 && b.x < -0.5 && b.direction === -1 && !iaADejaFrappe) {
     iaTimer++;
     if (iaTimer >= d.delaiIA) {
       iaTimer = 0;
@@ -834,6 +841,7 @@ function animate(tps) {
 
   if (jeuActif) {
     updateBalle();
+    appliquerTilt();
     const pct=(tiltX+1)/2*100;
     document.getElementById('tiltFill').style.transform=`translateX(${pct-50}%)`;
   }
