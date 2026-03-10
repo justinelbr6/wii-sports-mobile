@@ -539,22 +539,25 @@ async function validerOnboarding() {
     || targetUser.user_metadata?.full_name
     || targetUser.email.split('@')[0];
 
-  const { error } = await supabaseClient.from('profiles').upsert({
-    id:              targetUser.id,
-    email:           targetUser.email,
-    full_name:       nom,
-    level_tennis:    choix.tennis,
-    level_baseball:  choix.baseball,
-    level_bowling:   choix.bowling,
-    level_boxe:      choix.boxe,
-    level_golf:      choix.golf,
-    onboarding_done: true,
-  });
+  const { error } = await supabaseClient
+    .from('profiles')
+    .upsert({
+      id:              targetUser.id,
+      email:           targetUser.email,
+      full_name:       nom,
+      level_tennis:    choix.tennis,
+      level_baseball:  choix.baseball,
+      level_bowling:   choix.bowling,
+      level_boxe:      choix.boxe,
+      level_golf:      choix.golf,
+      onboarding_done: true,
+    }, { onConflict: 'id' });
 
   if (error) {
+    console.error('Erreur Supabase onboarding:', error);
     showScreen('screen-onboarding');
     document.getElementById('btn-onboarding').disabled = false;
-    affMsg('msg-onboarding', 'Erreur de sauvegarde. Réessaie.', 'error');
+    affMsg('msg-onboarding', `Erreur de sauvegarde: ${error.message}`, 'error');
     return;
   }
 
