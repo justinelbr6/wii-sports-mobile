@@ -288,7 +288,14 @@
         <button class="niv-btn" onclick="choisirNiv('tennis','Confirmé',this)">💀 Confirmé</button>
       </div>
     </div>
-
+    <div class="sport-block">
+        <div class="sport-label">⛳️ Golf</div>
+        <div class="niv-row" id="niv-golf">
+          <button class="niv-btn" onclick="choisirNiv('golf','Débutant',this)">😊 Débutant</button>
+          <button class="niv-btn" onclick="choisirNiv('golf','Intermédiaire',this)">😤 Intermédiaire</button>
+          <button class="niv-btn" onclick="choisirNiv('golf','Confirmé',this)">💀 Confirmé</button>
+        </div>
+      </div>
     <div class="sport-block">
       <div class="sport-label">⚾ Baseball</div>
       <div class="niv-row" id="niv-baseball">
@@ -353,7 +360,7 @@ function estEmailAutorise(email) {
 // ══════════════════════════════════════════════════
 //  ÉTAT
 // ══════════════════════════════════════════════════
-const choix = { tennis:null, baseball:null, bowling:null, boxe:null };
+const choix = { tennis:null, baseball:null, bowling:null, boxe:null, golf:null };
 let userCree = null;
 
 // ══════════════════════════════════════════════════
@@ -537,6 +544,7 @@ async function validerOnboarding() {
     level_baseball:  choix.baseball,
     level_bowling:   choix.bowling,
     level_boxe:      choix.boxe,
+    level_golf:      choix.golf,
     onboarding_done: true,
   });
 
