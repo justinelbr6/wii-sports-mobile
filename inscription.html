@@ -504,15 +504,24 @@ async function sInscrire() {
 // ══════════════════════════════════════════════════
 //  ONBOARDING
 // ══════════════════════════════════════════════════
+
 function choisirNiv(sport, niveau, btn) {
+  // Force la mise à jour du choix AVANT tout
+  choix[sport] = niveau;
+  
+  // Mise à jour visuelle
   document.querySelectorAll(`#niv-${sport} .niv-btn`).forEach(b => b.classList.remove('sel'));
   btn.classList.add('sel');
-  choix[sport] = niveau;
+  
   if (navigator.vibrate) navigator.vibrate(10);
+  
+  // Debug immédiat
+  console.log(`✅ Choix enregistré : ${sport} = ${niveau}`);
+  console.log('État complet choix:', JSON.stringify(choix));
+  
   const ok = Object.values(choix).every(v => v !== null);
   document.getElementById('btn-onboarding').disabled = !ok;
 }
-
 
 async function validerOnboarding() {
   const ok = Object.values(choix).every(v => v !== null);
