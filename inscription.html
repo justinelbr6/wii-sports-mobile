@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-  <title>Wii Sports Mobile — Connexion</title>
+  <title>Inscription — Wii Sports Mobile</title>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
   <style>
-    /* ══ BASE ══ */
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
     body {
@@ -17,7 +16,6 @@
       padding:20px; overflow:hidden; position:relative;
     }
 
-    /* Bulles flottantes — même DA que index.html */
     .bubble {
       position:fixed; border-radius:50%;
       background:rgba(255,255,255,0.18);
@@ -31,7 +29,7 @@
       100% { transform:translateY(-100px) scale(1); opacity:0; }
     }
 
-    /* ══ CARTE PRINCIPALE ══ */
+    /* ══ CARTE ══ */
     .card {
       position:relative; z-index:2;
       background:rgba(255,255,255,0.55);
@@ -39,20 +37,19 @@
       -webkit-backdrop-filter:blur(20px);
       border:2px solid rgba(255,255,255,0.8);
       border-radius:32px;
-      padding:36px 28px 32px;
+      padding:32px 28px 28px;
       width:100%; max-width:360px;
       box-shadow:0 20px 60px rgba(0,100,180,0.18), 0 4px 12px rgba(0,0,0,0.06);
-      display:flex; flex-direction:column; align-items:center;
-      gap:0;
+      display:flex; flex-direction:column; align-items:center; gap:0;
     }
 
-    /* ══ LOGO + TITRE ══ */
+    /* ══ LOGO ══ */
     .logo-wrap {
       display:flex; flex-direction:column; align-items:center; gap:6px;
-      margin-bottom:22px;
+      margin-bottom:20px;
     }
     .logo-emoji {
-      font-size:4.2rem;
+      font-size:3.6rem;
       animation:bounce 1.8s ease-in-out infinite;
       filter:drop-shadow(0 6px 12px rgba(0,100,200,0.25));
     }
@@ -62,24 +59,23 @@
     }
     .logo-title {
       font-family:'Baloo 2', cursive;
-      font-size:2rem; font-weight:800;
+      font-size:1.8rem; font-weight:800;
       color:#0D47A1;
       text-shadow:0 2px 0 rgba(255,255,255,0.8);
       line-height:1;
     }
     .logo-sub {
-      font-size:.78rem; font-weight:700;
+      font-size:.72rem; font-weight:700;
       color:rgba(13,71,161,0.5);
       text-transform:uppercase; letter-spacing:1.5px;
     }
 
     /* ══ SCREENS ══ */
-    .screen { display:none; flex-direction:column; align-items:center; gap:14px; width:100%; }
+    .screen { display:none; flex-direction:column; align-items:center; gap:12px; width:100%; }
     .screen.active { display:flex; }
 
     /* ══ FORMULAIRE ══ */
     .form { display:flex; flex-direction:column; gap:10px; width:100%; }
-
     .field { display:flex; flex-direction:column; gap:4px; }
     .field label {
       font-size:.68rem; font-weight:800;
@@ -102,7 +98,19 @@
     }
     .field input::placeholder { color:rgba(13,71,161,0.3); }
 
-    /* ══ BOUTON PRINCIPAL ══ */
+    /* Indicateur de domaine */
+    .domain-badge {
+      display:inline-flex; align-items:center; gap:5px;
+      background:rgba(25,118,210,0.1); border:1.5px solid rgba(25,118,210,0.2);
+      border-radius:50px; padding:4px 12px; font-size:.72rem; font-weight:800;
+      color:#1565C0; margin-top:2px; align-self:flex-start;
+    }
+
+    /* Force du mot de passe */
+    .pwd-strength { width:100%; height:4px; border-radius:2px; background:rgba(13,71,161,0.1); overflow:hidden; margin-top:4px; }
+    .pwd-strength-bar { height:100%; border-radius:2px; transition:width .3s, background .3s; width:0%; }
+
+    /* ══ BOUTON ══ */
     .btn-play {
       width:100%; margin-top:4px;
       background:linear-gradient(135deg, #1976D2, #0D47A1);
@@ -114,30 +122,27 @@
       transition:transform .1s, box-shadow .1s;
       -webkit-appearance:none;
     }
-    .btn-play:active {
-      transform:translateY(5px);
-      box-shadow:0 1px 0 #0a2d6e, 0 4px 10px rgba(13,71,161,0.2);
-    }
+    .btn-play:active { transform:translateY(5px); box-shadow:0 1px 0 #0a2d6e; }
     .btn-play:disabled { opacity:.5; pointer-events:none; }
 
-    /* ══ MESSAGE ERREUR / SUCCESS ══ */
+    /* ══ LIEN CONNEXION ══ */
+    .link-login {
+      font-size:.78rem; font-weight:700;
+      color:rgba(13,71,161,0.55); text-align:center; margin-top:4px;
+    }
+    .link-login a {
+      color:#1976D2; text-decoration:none; font-weight:800;
+    }
+
+    /* ══ MESSAGES ══ */
     .msg {
       font-size:.8rem; font-weight:700;
       padding:10px 14px; border-radius:14px;
       width:100%; text-align:center; display:none;
     }
-    .msg.error {
-      background:rgba(211,47,47,.12);
-      color:#C62828;
-      border:1.5px solid rgba(211,47,47,.3);
-      display:block;
-    }
-    .msg.success {
-      background:rgba(46,125,50,.12);
-      color:#1B5E20;
-      border:1.5px solid rgba(46,125,50,.3);
-      display:block;
-    }
+    .msg.error   { background:rgba(211,47,47,.12); color:#C62828; border:1.5px solid rgba(211,47,47,.3); display:block; }
+    .msg.success { background:rgba(46,125,50,.12);  color:#1B5E20;  border:1.5px solid rgba(46,125,50,.3);  display:block; }
+    .msg.warning { background:rgba(245,124,0,.12);  color:#E65100;  border:1.5px solid rgba(245,124,0,.3);  display:block; }
 
     /* ══ SPINNER ══ */
     .spinner-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; padding:20px 0; }
@@ -151,29 +156,33 @@
     @keyframes spin { to{ transform:rotate(360deg); } }
     .spinner-label { font-size:.85rem; font-weight:700; color:rgba(13,71,161,0.5); }
 
+    /* ══ SUCCÈS ══ */
+    .success-icon { font-size:4rem; animation:popIn .5s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+    .success-title {
+      font-family:'Baloo 2', cursive; font-size:1.4rem; font-weight:800;
+      color:#0D47A1; text-align:center;
+    }
+    .success-msg {
+      font-size:.82rem; font-weight:700;
+      color:rgba(13,71,161,0.6); text-align:center; line-height:1.5;
+    }
+
     /* ══ ONBOARDING ══ */
     .onb-title {
       font-family:'Baloo 2', cursive; font-size:1.1rem; font-weight:800;
       color:#0D47A1; text-align:center; line-height:1.3;
     }
-    .onb-sub {
-      font-size:.78rem; font-weight:700;
-      color:rgba(13,71,161,0.5); text-align:center;
-    }
+    .onb-sub { font-size:.78rem; font-weight:700; color:rgba(13,71,161,0.5); text-align:center; }
     .sport-block { width:100%; }
-    .sport-label {
-      font-family:'Baloo 2', cursive; font-size:.95rem; font-weight:800;
-      color:#1565C0; margin-bottom:6px; padding-left:2px;
-    }
+    .sport-label { font-family:'Baloo 2', cursive; font-size:.95rem; font-weight:800; color:#1565C0; margin-bottom:6px; padding-left:2px; }
     .niv-row { display:flex; gap:7px; }
     .niv-btn {
-      flex:1;
-      background:rgba(255,255,255,0.7);
-      border:2px solid rgba(13,71,161,0.15);
-      border-radius:14px; padding:9px 4px;
-      font-family:'Baloo 2', cursive; font-size:.82rem; font-weight:700;
-      color:rgba(13,71,161,0.6); cursor:pointer;
-      transition:all .15s; text-align:center;
+      flex:1; background:rgba(255,255,255,0.7);
+      border:2px solid rgba(13,71,161,0.15); border-radius:14px;
+      padding:9px 4px; font-family:'Baloo 2', cursive;
+      font-size:.82rem; font-weight:700; color:rgba(13,71,161,0.6);
+      cursor:pointer; transition:all .15s; text-align:center;
       -webkit-appearance:none;
     }
     .niv-btn:active { transform:scale(0.96); }
@@ -182,20 +191,12 @@
       border-color:#0D47A1; color:white;
       box-shadow:0 3px 10px rgba(13,71,161,0.35);
     }
-
-    /* ══ HINT BAS DE PAGE ══ */
-    .hint {
-      font-size:.72rem; font-weight:700;
-      color:rgba(13,71,161,0.4); text-align:center;
-      margin-top:4px;
-    }
   </style>
 </head>
 <body>
 
-<!-- Bulles décoratives -->
 <script>
-  for (let i=0;i<8;i++){
+  for(let i=0;i<8;i++){
     const b=document.createElement('div'); b.className='bubble';
     const s=20+Math.random()*60;
     b.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;animation-duration:${6+Math.random()*8}s;animation-delay:${Math.random()*6}s;`;
@@ -205,50 +206,79 @@
 
 <div class="card">
 
-  <!-- Logo commun à tous les écrans -->
   <div class="logo-wrap">
     <div class="logo-emoji">🎮</div>
     <div class="logo-title">Wii Sports</div>
     <div class="logo-sub">Albert School</div>
   </div>
 
-  <!-- ── Écran 1 : Connexion ── -->
-  <div class="screen active" id="screen-login">
+  <!-- ── Écran 1 : Inscription ── -->
+  <div class="screen active" id="screen-inscription">
+
     <div class="form">
+      <div class="field">
+        <label>Prénom et nom</label>
+        <input type="text" id="input-nom"
+          placeholder="ex: Justine Libourel"
+          autocomplete="name"
+          oninput="verifierFormulaire()"/>
+      </div>
+
       <div class="field">
         <label>Adresse email</label>
         <input type="email" id="input-email"
           placeholder="prenom@albertschool.com"
           autocomplete="email"
-          onkeydown="if(event.key==='Enter') connecter()"/>
+          oninput="verifierEmail()"/>
+        <div class="domain-badge" id="domain-badge" style="display:none;">
+          ✅ Email Albert School reconnu
+        </div>
       </div>
+
       <div class="field">
         <label>Mot de passe</label>
         <input type="password" id="input-password"
+          placeholder="minimum 6 caractères"
+          autocomplete="new-password"
+          oninput="verifierMotDePasse()"/>
+        <div class="pwd-strength">
+          <div class="pwd-strength-bar" id="pwd-bar"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Confirmer le mot de passe</label>
+        <input type="password" id="input-confirm"
           placeholder="••••••••"
-          autocomplete="current-password"
-          onkeydown="if(event.key==='Enter') connecter()"/>
+          autocomplete="new-password"
+          oninput="verifierFormulaire()"
+          onkeydown="if(event.key==='Enter') sInscrire()"/>
       </div>
     </div>
-    <div class="msg" id="msg-login"></div>
-    <button class="btn-play" id="btn-login" onclick="connecter()">
-      🎮 Se connecter
+
+    <div class="msg" id="msg-inscription"></div>
+
+    <button class="btn-play" id="btn-inscription" onclick="sInscrire()" disabled>
+      🎮 Créer mon compte
     </button>
-    <p class="hint">Pas encore de compte ? <a href="inscription.html" style="color:#1976D2;font-weight:800;text-decoration:none;">S'inscrire →</a></p>
+
+    <p class="link-login">
+      Déjà un compte ? <a href="login.html">Se connecter →</a>
+    </p>
   </div>
 
   <!-- ── Écran 2 : Chargement ── -->
   <div class="screen" id="screen-loading">
     <div class="spinner-wrap">
       <div class="spinner"></div>
-      <div class="spinner-label">Connexion en cours…</div>
+      <div class="spinner-label">Création du compte…</div>
     </div>
   </div>
 
-  <!-- ── Écran 3 : Onboarding (nouveaux joueurs) ── -->
+  <!-- ── Écran 3 : Onboarding ── -->
   <div class="screen" id="screen-onboarding">
-    <div class="onb-title">Bienvenue ! 🎉<br>Choisis ton niveau pour chaque sport</div>
-    <div class="onb-sub">Tu pourras le changer plus tard selon ta progression.</div>
+    <div class="onb-title">Compte créé ! 🎉<br>Choisis ton niveau pour chaque sport</div>
+    <div class="onb-sub">Tu pourras évoluer selon ta progression.</div>
 
     <div class="sport-block">
       <div class="sport-label">🎾 Tennis</div>
@@ -292,19 +322,42 @@
     </button>
   </div>
 
+  <!-- ── Écran 4 : Succès final ── -->
+  <div class="screen" id="screen-succes">
+    <div class="success-icon">🏆</div>
+    <div class="success-title">Tout est prêt !</div>
+    <p class="success-msg">
+      Ton compte Albert School est activé.<br>
+      Bienvenue dans Wii Sports Mobile !
+    </p>
+    <button class="btn-play" onclick="window.location.href='index.html'">
+      🎮 Jouer maintenant !
+    </button>
+  </div>
+
 </div>
 
-<!-- Supabase CDN — doit être chargé AVANT supabase.js -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script>
 // ══════════════════════════════════════════════════
-//  ÉTAT ONBOARDING
+//  DOMAINES AUTORISÉS
 // ══════════════════════════════════════════════════
-const choix = { tennis:null, baseball:null, bowling:null, boxe:null };
+const DOMAINES_AUTORISES = ['albertschool.com', 'albertschool.fr'];
+
+function estEmailAutorise(email) {
+  const domain = email.split('@')[1]?.toLowerCase();
+  return DOMAINES_AUTORISES.includes(domain);
+}
 
 // ══════════════════════════════════════════════════
-//  NAVIGATION ENTRE ÉCRANS
+//  ÉTAT
+// ══════════════════════════════════════════════════
+const choix = { tennis:null, baseball:null, bowling:null, boxe:null };
+let userCree = null;
+
+// ══════════════════════════════════════════════════
+//  NAVIGATION
 // ══════════════════════════════════════════════════
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -316,54 +369,130 @@ function affMsg(elId, texte, type) {
   el.textContent = texte;
   el.className = `msg ${type}`;
 }
-
-// ══════════════════════════════════════════════════
-//  CONNEXION
-// ══════════════════════════════════════════════════
-async function connecter() {
-  const email    = document.getElementById('input-email').value.trim().toLowerCase();
-  const password = document.getElementById('input-password').value;
-
-  if (!email || !password) {
-    affMsg('msg-login', 'Remplis les deux champs.', 'error');
-    return;
-  }
-
-  document.getElementById('btn-login').disabled = true;
-  showScreen('screen-loading');
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    showScreen('screen-login');
-    document.getElementById('btn-login').disabled = false;
-    affMsg('msg-login', traduireErreur(error.message), 'error');
-    return;
-  }
-
-  await routerApresConnexion(data.user);
+function cachMsg(elId) {
+  const el = document.getElementById(elId);
+  el.textContent = '';
+  el.className = 'msg';
 }
 
 // ══════════════════════════════════════════════════
-//  ROUTER : onboarding ou menu ?
+//  VALIDATION EN TEMPS RÉEL
 // ══════════════════════════════════════════════════
-async function routerApresConnexion(user) {
+function verifierEmail() {
+  const email  = document.getElementById('input-email').value.trim().toLowerCase();
+  const badge  = document.getElementById('domain-badge');
+  const input  = document.getElementById('input-email');
+  const autorise = email.includes('@') && estEmailAutorise(email);
+
+  badge.style.display = autorise ? 'inline-flex' : 'none';
+
+  if (email.includes('@') && !autorise) {
+    input.style.borderColor = '#C62828';
+    affMsg('msg-inscription',
+      '❌ Seules les adresses @albertschool.com ou @albertschool.fr sont acceptées.',
+      'error');
+  } else {
+    input.style.borderColor = autorise ? '#2E7D32' : '';
+    cachMsg('msg-inscription');
+  }
+
+  verifierFormulaire();
+}
+
+function verifierMotDePasse() {
+  const pwd  = document.getElementById('input-password').value;
+  const bar  = document.getElementById('pwd-bar');
+  let force  = 0;
+  let couleur = '#EF9A9A';
+
+  if (pwd.length >= 6)  force++;
+  if (pwd.length >= 10) force++;
+  if (/[A-Z]/.test(pwd)) force++;
+  if (/[0-9]/.test(pwd)) force++;
+  if (/[^A-Za-z0-9]/.test(pwd)) force++;
+
+  const pct = Math.min(100, force * 22);
+  if (pct >= 66) couleur = '#A5D6A7';
+  else if (pct >= 33) couleur = '#FFE082';
+
+  bar.style.width   = pct + '%';
+  bar.style.background = couleur;
+
+  verifierFormulaire();
+}
+
+function verifierFormulaire() {
+  const nom      = document.getElementById('input-nom').value.trim();
+  const email    = document.getElementById('input-email').value.trim().toLowerCase();
+  const pwd      = document.getElementById('input-password').value;
+  const confirm  = document.getElementById('input-confirm').value;
+  const btn      = document.getElementById('btn-inscription');
+
+  const ok = nom.length >= 2
+    && email.includes('@')
+    && estEmailAutorise(email)
+    && pwd.length >= 6
+    && pwd === confirm;
+
+  btn.disabled = !ok;
+
+  // Feedback confirm
+  const confirmInput = document.getElementById('input-confirm');
+  if (confirm.length > 0) {
+    confirmInput.style.borderColor = pwd === confirm ? '#2E7D32' : '#C62828';
+  } else {
+    confirmInput.style.borderColor = '';
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  INSCRIPTION
+// ══════════════════════════════════════════════════
+async function sInscrire() {
+  const nom     = document.getElementById('input-nom').value.trim();
+  const email   = document.getElementById('input-email').value.trim().toLowerCase();
+  const pwd     = document.getElementById('input-password').value;
+  const confirm = document.getElementById('input-confirm').value;
+
+  // Vérifications finales
+  if (!nom || nom.length < 2) {
+    affMsg('msg-inscription', '❌ Entre ton prénom et ton nom.', 'error'); return;
+  }
+  if (!estEmailAutorise(email)) {
+    affMsg('msg-inscription', '❌ Adresse email non autorisée.', 'error'); return;
+  }
+  if (pwd.length < 6) {
+    affMsg('msg-inscription', '❌ Mot de passe trop court (6 caractères minimum).', 'error'); return;
+  }
+  if (pwd !== confirm) {
+    affMsg('msg-inscription', '❌ Les mots de passe ne correspondent pas.', 'error'); return;
+  }
+
+  document.getElementById('btn-inscription').disabled = true;
   showScreen('screen-loading');
 
-  const { data: profil, error } = await supabaseClient
-    .from('profiles')
-    .select('onboarding_done, full_name')
-    .eq('id', user.id)
-    .single();
+  // Création du compte Supabase Auth
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password: pwd,
+    options: {
+      data: { full_name: nom },
+      // Pas de redirection email — connexion directe
+      emailRedirectTo: null,
+    }
+  });
 
-  // Si erreur ou profil absent → onboarding
-  if (error || !profil || !profil.onboarding_done) {
-    showScreen('screen-onboarding');
+  if (error) {
+    showScreen('screen-inscription');
+    document.getElementById('btn-inscription').disabled = false;
+    affMsg('msg-inscription', traduireErreur(error.message), 'error');
     return;
   }
 
-  // Profil OK → menu principal
-  window.location.href = 'index.html';
+  // Compte créé — si Supabase renvoie un user sans session c'est qu'il faut confirmer l'email
+  // On passe quand même à l'onboarding (le profil sera créé par le trigger)
+  userCree = data.user;
+  showScreen('screen-onboarding');
 }
 
 // ══════════════════════════════════════════════════
@@ -374,28 +503,36 @@ function choisirNiv(sport, niveau, btn) {
   btn.classList.add('sel');
   choix[sport] = niveau;
   if (navigator.vibrate) navigator.vibrate(10);
-
-  // Activer le bouton seulement quand les 4 sports sont choisis
   const ok = Object.values(choix).every(v => v !== null);
   document.getElementById('btn-onboarding').disabled = !ok;
 }
 
 async function validerOnboarding() {
   const ok = Object.values(choix).every(v => v !== null);
-  if (!ok) {
-    affMsg('msg-onboarding', 'Choisis un niveau pour chaque sport !', 'error');
-    return;
-  }
+  if (!ok) { affMsg('msg-onboarding', 'Choisis un niveau pour chaque sport !', 'error'); return; }
 
   document.getElementById('btn-onboarding').disabled = true;
   showScreen('screen-loading');
 
+  // Récupère la session courante (après signUp, Supabase connecte automatiquement)
   const { data: { user } } = await supabaseClient.auth.getUser();
+  const targetUser = user || userCree;
+
+  if (!targetUser) {
+    // Pas de session active (email non confirmé) → on sauvegarde quand même via upsert
+    // mais on redirige vers login avec message
+    showScreen('screen-succes');
+    return;
+  }
+
+  const nom = document.getElementById('input-nom')?.value?.trim()
+    || targetUser.user_metadata?.full_name
+    || targetUser.email.split('@')[0];
 
   const { error } = await supabaseClient.from('profiles').upsert({
-    id:              user.id,
-    email:           user.email,
-    full_name:       user.user_metadata?.full_name || user.email.split('@')[0],
+    id:              targetUser.id,
+    email:           targetUser.email,
+    full_name:       nom,
     level_tennis:    choix.tennis,
     level_baseball:  choix.baseball,
     level_bowling:   choix.bowling,
@@ -406,32 +543,34 @@ async function validerOnboarding() {
   if (error) {
     showScreen('screen-onboarding');
     document.getElementById('btn-onboarding').disabled = false;
-    affMsg('msg-onboarding', 'Erreur de sauvegarde, réessaie.', 'error');
+    affMsg('msg-onboarding', 'Erreur de sauvegarde. Réessaie.', 'error');
     return;
   }
 
-  window.location.href = 'index.html';
+  showScreen('screen-succes');
 }
 
 // ══════════════════════════════════════════════════
-//  AUTO-LOGIN si session active
+//  AUTO-REDIRECT si déjà connecté
 // ══════════════════════════════════════════════════
 (async () => {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session?.user) {
-    await routerApresConnexion(session.user);
-  }
+  if (session) window.location.replace('index.html');
 })();
 
 // ══════════════════════════════════════════════════
-//  TRADUCTION DES ERREURS SUPABASE
+//  TRADUCTION ERREURS SUPABASE
 // ══════════════════════════════════════════════════
 function traduireErreur(msg) {
-  if (msg.includes('Invalid login credentials')) return '❌ Email ou mot de passe incorrect.';
-  if (msg.includes('Email not confirmed'))        return '📧 Confirme ton email avant de te connecter.';
-  if (msg.includes('Too many requests'))          return '⏳ Trop de tentatives. Attends 1 minute.';
-  if (msg.includes('User not found'))             return '❌ Aucun compte trouvé avec cet email.';
-  return '❌ Erreur de connexion. Réessaie.';
+  if (msg.includes('User already registered') || msg.includes('already been registered'))
+    return '❌ Cet email a déjà un compte. <a href="login.html">Connecte-toi →</a>';
+  if (msg.includes('Password should be'))
+    return '❌ Mot de passe trop court (6 caractères minimum).';
+  if (msg.includes('Unable to validate email'))
+    return '❌ Adresse email invalide.';
+  if (msg.includes('over_email_send_rate_limit'))
+    return '⏳ Trop de tentatives. Attends 1 minute.';
+  return '❌ Erreur lors de la création du compte. Réessaie.';
 }
 </script>
 </body>
