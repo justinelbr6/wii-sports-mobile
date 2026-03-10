@@ -458,38 +458,26 @@ function verifierFormulaire() {
 // ══════════════════════════════════════════════════
 //  INSCRIPTION
 // ══════════════════════════════════════════════════
+
+
 async function sInscrire() {
   const nom     = document.getElementById('input-nom').value.trim();
   const email   = document.getElementById('input-email').value.trim().toLowerCase();
   const pwd     = document.getElementById('input-password').value;
   const confirm = document.getElementById('input-confirm').value;
 
-  // Vérifications finales
-  if (!nom || nom.length < 2) {
-    affMsg('msg-inscription', '❌ Entre ton prénom et ton nom.', 'error'); return;
-  }
-  if (!estEmailAutorise(email)) {
-    affMsg('msg-inscription', '❌ Adresse email non autorisée.', 'error'); return;
-  }
-  if (pwd.length < 6) {
-    affMsg('msg-inscription', '❌ Mot de passe trop court (6 caractères minimum).', 'error'); return;
-  }
-  if (pwd !== confirm) {
-    affMsg('msg-inscription', '❌ Les mots de passe ne correspondent pas.', 'error'); return;
-  }
+  if (!nom || nom.length < 2) { affMsg('msg-inscription','❌ Entre ton prénom et ton nom.','error'); return; }
+  if (!estEmailAutorise(email)) { affMsg('msg-inscription','❌ Adresse email non autorisée.','error'); return; }
+  if (pwd.length < 6) { affMsg('msg-inscription','❌ Mot de passe trop court.','error'); return; }
+  if (pwd !== confirm) { affMsg('msg-inscription','❌ Les mots de passe ne correspondent pas.','error'); return; }
 
   document.getElementById('btn-inscription').disabled = true;
   showScreen('screen-loading');
 
-  // Création du compte Supabase Auth
+  // 1. Créer le compte auth
   const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password: pwd,
-    options: {
-      data: { full_name: nom },
-      // Pas de redirection email — connexion directe
-      emailRedirectTo: null,
-    }
+    email, password: pwd,
+    options: { data: { full_name: nom } }
   });
 
   if (error) {
@@ -499,12 +487,20 @@ async function sInscrire() {
     return;
   }
 
-  // Compte créé — si Supabase renvoie un user sans session c'est qu'il faut confirmer l'email
-  // On passe quand même à l'onboarding (le profil sera créé par le trigger)
   userCree = data.user;
+
+  // 2. Créer le profil manuellement (sans attendre le trigger)
+  if (userCree) {
+    await supabaseClient.from('profiles').upsert({
+      id:              userCree.id,
+      email:           userCree.email,
+      full_name:       nom,
+      onboarding_done: false,
+    }, { onConflict: 'id' });
+  }
+
   showScreen('screen-onboarding');
 }
-
 // ══════════════════════════════════════════════════
 //  ONBOARDING
 // ══════════════════════════════════════════════════
