@@ -458,8 +458,6 @@ function verifierFormulaire() {
 // ══════════════════════════════════════════════════
 //  INSCRIPTION
 // ══════════════════════════════════════════════════
-
-
 async function sInscrire() {
   const nom     = document.getElementById('input-nom').value.trim();
   const email   = document.getElementById('input-email').value.trim().toLowerCase();
@@ -474,7 +472,6 @@ async function sInscrire() {
   document.getElementById('btn-inscription').disabled = true;
   showScreen('screen-loading');
 
-  // 1. Créer le compte auth
   const { data, error } = await supabaseClient.auth.signUp({
     email, password: pwd,
     options: { data: { full_name: nom } }
@@ -488,20 +485,10 @@ async function sInscrire() {
   }
 
   userCree = data.user;
-
-  // 2. Créer le profil manuellement (sans attendre le trigger)
-  if (userCree) {
-    await supabaseClient.from('profiles').upsert({
-      id:              userCree.id,
-      email:           userCree.email,
-      full_name:       nom,
-      onboarding_done: false,
-    }, { onConflict: 'id' });
-  }
-
   showScreen('screen-onboarding');
 }
-// ══════════════════════════════════════════════════
+
+
 //  ONBOARDING
 // ══════════════════════════════════════════════════
 
@@ -527,6 +514,45 @@ async function validerOnboarding() {
   const ok = Object.values(choix).every(v => v !== null);
   if (!ok) { affMsg('msg-onboarding', 'Choisis un niveau pour chaque sport !', 'error'); return; }
 
+  document.getElementById('btn-onboarding').disabled = true;
+  showScreen('screen-loading');
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  const targetUser = user || userCree;
+
+  if (!targetUser) {
+    showScreen('screen-inscription');
+    affMsg('msg-inscription', 'Session perdue, réessaie.', 'error');
+    return;
+  }
+
+  const nom = document.getElementById('input-nom').value.trim()
+    || targetUser.user_metadata?.full_name
+    || targetUser.email.split('@')[0];
+
+  // UN SEUL upsert avec TOUT dedans d'un coup
+  const { error } = await supabaseClient.from('profiles').upsert({
+    id:              targetUser.id,
+    email:           targetUser.email,
+    full_name:       nom,
+    level_tennis:    choix.tennis,
+    level_baseball:  choix.baseball,
+    level_bowling:   choix.bowling,
+    level_boxe:      choix.boxe,
+    level_golf:      choix.golf,
+    onboarding_done: true,
+  }, { onConflict: 'id' });
+
+  if (error) {
+    console.error('Erreur upsert:', error);
+    showScreen('screen-onboarding');
+    document.getElementById('btn-onboarding').disabled = false;
+    affMsg('msg-onboarding', `Erreur: ${error.message}`, 'error');
+    return;
+  }
+
+  showScreen('screen-succes');
+}
   // DEBUG — vérifie ce qui est envoyé
   console.log('choix au moment de valider:', JSON.stringify(choix));
 
