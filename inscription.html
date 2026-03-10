@@ -513,29 +513,30 @@ function choisirNiv(sport, niveau, btn) {
   document.getElementById('btn-onboarding').disabled = !ok;
 }
 
+
 async function validerOnboarding() {
   const ok = Object.values(choix).every(v => v !== null);
   if (!ok) { affMsg('msg-onboarding', 'Choisis un niveau pour chaque sport !', 'error'); return; }
 
+  // DEBUG — vérifie ce qui est envoyé
+  console.log('choix au moment de valider:', JSON.stringify(choix));
+
   document.getElementById('btn-onboarding').disabled = true;
   showScreen('screen-loading');
 
-  // Récupère la session courante (après signUp, Supabase connecte automatiquement)
   const { data: { user } } = await supabaseClient.auth.getUser();
   const targetUser = user || userCree;
 
-  if (!targetUser) {
-    // Pas de session active (email non confirmé) → on sauvegarde quand même via upsert
-    // mais on redirige vers login avec message
-    showScreen('screen-succes');
-    return;
-  }
+  if (!targetUser) { showScreen('screen-succes'); return; }
 
-  const nom = document.getElementById('input-nom')?.value?.trim()
-    || targetUser.user_metadata?.full_name
+  // Récupère le nom depuis les metadata (plus fiable que l'input caché)
+  const nom = targetUser.user_metadata?.full_name
     || targetUser.email.split('@')[0];
 
-  const { error } = await supabaseClient.from('profiles').update({
+  console.log('targetUser.id:', targetUser.id);
+  console.log('nom:', nom);
+
+  const { data, error } = await supabaseClient.from('profiles').update({
     full_name:       nom,
     level_tennis:    choix.tennis,
     level_baseball:  choix.baseball,
@@ -543,19 +544,19 @@ async function validerOnboarding() {
     level_boxe:      choix.boxe,
     level_golf:      choix.golf,
     onboarding_done: true,
-    }).eq('id', targetUser.id);
+  }).eq('id', targetUser.id).select();
+
+  console.log('résultat update:', data, error);
 
   if (error) {
-    console.error('Erreur Supabase onboarding:', error);
     showScreen('screen-onboarding');
     document.getElementById('btn-onboarding').disabled = false;
-    affMsg('msg-onboarding', `Erreur de sauvegarde: ${error.message}`, 'error');
+    affMsg('msg-onboarding', `Erreur: ${error.message}`, 'error');
     return;
   }
 
   showScreen('screen-succes');
 }
-
 // ══════════════════════════════════════════════════
 //  AUTO-REDIRECT si déjà connecté
 // ══════════════════════════════════════════════════
