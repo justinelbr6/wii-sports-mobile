@@ -539,19 +539,15 @@ async function validerOnboarding() {
     || targetUser.user_metadata?.full_name
     || targetUser.email.split('@')[0];
 
-  const { error } = await supabaseClient
-    .from('profiles')
-    .upsert({
-      id:              targetUser.id,
-      email:           targetUser.email,
-      full_name:       nom,
-      level_tennis:    choix.tennis,
-      level_baseball:  choix.baseball,
-      level_bowling:   choix.bowling,
-      level_boxe:      choix.boxe,
-      level_golf:      choix.golf,
-      onboarding_done: true,
-    }, { onConflict: 'id' });
+  const { error } = await supabaseClient.from('profiles').update({
+    full_name:       nom,
+    level_tennis:    choix.tennis,
+    level_baseball:  choix.baseball,
+    level_bowling:   choix.bowling,
+    level_boxe:      choix.boxe,
+    level_golf:      choix.golf,
+    onboarding_done: true,
+    }).eq('id', targetUser.id);
 
   if (error) {
     console.error('Erreur Supabase onboarding:', error);
