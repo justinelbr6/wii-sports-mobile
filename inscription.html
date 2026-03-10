@@ -4,200 +4,84 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
   <title>Inscription — Wii Sports Mobile</title>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
     body {
-      font-family:'Baloo 2', cursive;
-      min-height:100vh;
+      font-family:'Baloo 2', cursive; min-height:100vh;
       background:linear-gradient(160deg, #a8e4f7 0%, #6ec6f0 35%, #b8ecff 100%);
       display:flex; align-items:center; justify-content:center;
-      padding:20px; 
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      position:relative;
+      padding:20px; overflow-y:auto; -webkit-overflow-scrolling:touch;
     }
-
-    .bubble {
-      position:fixed; border-radius:50%;
-      background:rgba(255,255,255,0.18);
-      animation:floatUp linear infinite;
-      pointer-events:none; z-index:0;
-    }
-    @keyframes floatUp {
-      0%   { transform:translateY(100vh) scale(0); opacity:0; }
-      10%  { opacity:1; }
-      90%  { opacity:0.5; }
-      100% { transform:translateY(-100px) scale(1); opacity:0; }
-    }
-
-    /* ══ CARTE ══ */
+    .bubble { position:fixed; border-radius:50%; background:rgba(255,255,255,0.18); animation:floatUp linear infinite; pointer-events:none; z-index:0; }
+    @keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:1} 90%{opacity:0.5} 100%{transform:translateY(-100px) scale(1);opacity:0} }
     .card {
-      position:relative; z-index:2;
-      background:rgba(255,255,255,0.55);
-      backdrop-filter:blur(20px);
-      -webkit-backdrop-filter:blur(20px);
-      border:2px solid rgba(255,255,255,0.8);
-      border-radius:32px;
-      padding:32px 28px 28px;
-      width:100%; max-width:360px;
-      box-shadow:0 20px 60px rgba(0,100,180,0.18), 0 4px 12px rgba(0,0,0,0.06);
-      display:flex; flex-direction:column; align-items:center; gap:0;
+      position:relative; z-index:2; background:rgba(255,255,255,0.55); backdrop-filter:blur(20px);
+      border:2px solid rgba(255,255,255,0.8); border-radius:32px; padding:32px 28px 28px;
+      width:100%; max-width:360px; box-shadow:0 20px 60px rgba(0,100,180,0.18);
+      display:flex; flex-direction:column; align-items:center;
     }
-
-    /* ══ LOGO ══ */
-    .logo-wrap {
-      display:flex; flex-direction:column; align-items:center; gap:6px;
-      margin-bottom:20px;
-    }
-    .logo-emoji {
-      font-size:3.6rem;
-      animation:bounce 1.8s ease-in-out infinite;
-      filter:drop-shadow(0 6px 12px rgba(0,100,200,0.25));
-    }
-    @keyframes bounce {
-      0%,100%{ transform:translateY(0) rotate(-3deg); }
-      50%    { transform:translateY(-10px) rotate(3deg); }
-    }
-    .logo-title {
-      font-family:'Baloo 2', cursive;
-      font-size:1.8rem; font-weight:800;
-      color:#0D47A1;
-      text-shadow:0 2px 0 rgba(255,255,255,0.8);
-      line-height:1;
-    }
-    .logo-sub {
-      font-size:.72rem; font-weight:700;
-      color:rgba(13,71,161,0.5);
-      text-transform:uppercase; letter-spacing:1.5px;
-    }
-
-    /* ══ SCREENS ══ */
+    .logo-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:20px; }
+    .logo-emoji { font-size:3.6rem; animation:bounce 1.8s ease-in-out infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-10px) rotate(3deg)} }
+    .logo-title { font-size:1.8rem; font-weight:800; color:#0D47A1; line-height:1; }
+    .logo-sub { font-size:.72rem; font-weight:700; color:rgba(13,71,161,0.5); text-transform:uppercase; letter-spacing:1.5px; }
     .screen { display:none; flex-direction:column; align-items:center; gap:12px; width:100%; }
     .screen.active { display:flex; }
-
-    /* ══ FORMULAIRE ══ */
     .form { display:flex; flex-direction:column; gap:10px; width:100%; }
     .field { display:flex; flex-direction:column; gap:4px; }
-    .field label {
-      font-size:.68rem; font-weight:800;
-      color:rgba(13,71,161,0.55);
-      text-transform:uppercase; letter-spacing:1.2px;
-      padding-left:4px;
-    }
+    .field label { font-size:.68rem; font-weight:800; color:rgba(13,71,161,0.55); text-transform:uppercase; letter-spacing:1.2px; padding-left:4px; }
     .field input {
-      background:rgba(255,255,255,0.7);
-      border:2px solid rgba(13,71,161,0.15);
-      border-radius:16px; padding:13px 16px;
-      font-family:'Baloo 2', cursive; font-size:.95rem;
-      color:#0D47A1; outline:none;
-      transition:border-color .2s, box-shadow .2s;
-      -webkit-appearance:none;
+      background:rgba(255,255,255,0.7); border:2px solid rgba(13,71,161,0.15);
+      border-radius:16px; padding:13px 16px; font-family:'Baloo 2',cursive;
+      font-size:.95rem; color:#0D47A1; outline:none; -webkit-appearance:none; transition:border-color .2s;
     }
-    .field input:focus {
-      border-color:#1976D2;
-      box-shadow:0 0 0 3px rgba(25,118,210,0.15);
-    }
+    .field input:focus { border-color:#1976D2; box-shadow:0 0 0 3px rgba(25,118,210,0.15); }
     .field input::placeholder { color:rgba(13,71,161,0.3); }
-
-    /* Indicateur de domaine */
     .domain-badge {
-      display:inline-flex; align-items:center; gap:5px;
+      display:none; align-items:center; gap:5px;
       background:rgba(25,118,210,0.1); border:1.5px solid rgba(25,118,210,0.2);
-      border-radius:50px; padding:4px 12px; font-size:.72rem; font-weight:800;
-      color:#1565C0; margin-top:2px; align-self:flex-start;
+      border-radius:50px; padding:4px 12px; font-size:.72rem; font-weight:800; color:#1565C0; margin-top:2px;
     }
-
-    /* Force du mot de passe */
     .pwd-strength { width:100%; height:4px; border-radius:2px; background:rgba(13,71,161,0.1); overflow:hidden; margin-top:4px; }
-    .pwd-strength-bar { height:100%; border-radius:2px; transition:width .3s, background .3s; width:0%; }
-
-    /* ══ BOUTON ══ */
+    .pwd-strength-bar { height:100%; border-radius:2px; transition:width .3s,background .3s; width:0%; }
     .btn-play {
-      width:100%; margin-top:4px;
-      background:linear-gradient(135deg, #1976D2, #0D47A1);
-      color:white; font-family:'Baloo 2', cursive;
-      font-size:1.15rem; font-weight:800;
-      border:none; border-radius:50px; padding:14px;
-      cursor:pointer;
-      box-shadow:0 6px 0 #0a2d6e, 0 8px 20px rgba(13,71,161,0.3);
-      transition:transform .1s, box-shadow .1s;
-      -webkit-appearance:none;
+      width:100%; margin-top:4px; background:linear-gradient(135deg, #1976D2, #0D47A1); color:white;
+      font-family:'Baloo 2',cursive; font-size:1.15rem; font-weight:800;
+      border:none; border-radius:50px; padding:14px; cursor:pointer;
+      box-shadow:0 6px 0 #0a2d6e; transition:transform .1s,box-shadow .1s; -webkit-appearance:none;
     }
     .btn-play:active { transform:translateY(5px); box-shadow:0 1px 0 #0a2d6e; }
     .btn-play:disabled { opacity:.5; pointer-events:none; }
-
-    /* ══ LIEN CONNEXION ══ */
-    .link-login {
-      font-size:.78rem; font-weight:700;
-      color:rgba(13,71,161,0.55); text-align:center; margin-top:4px;
-    }
-    .link-login a {
-      color:#1976D2; text-decoration:none; font-weight:800;
-    }
-
-    /* ══ MESSAGES ══ */
-    .msg {
-      font-size:.8rem; font-weight:700;
-      padding:10px 14px; border-radius:14px;
-      width:100%; text-align:center; display:none;
-    }
+    .link-login { font-size:.78rem; font-weight:700; color:rgba(13,71,161,0.55); text-align:center; margin-top:4px; }
+    .link-login a { color:#1976D2; text-decoration:none; font-weight:800; }
+    .msg { font-size:.8rem; font-weight:700; padding:10px 14px; border-radius:14px; width:100%; text-align:center; display:none; }
     .msg.error   { background:rgba(211,47,47,.12); color:#C62828; border:1.5px solid rgba(211,47,47,.3); display:block; }
-    .msg.success { background:rgba(46,125,50,.12);  color:#1B5E20;  border:1.5px solid rgba(46,125,50,.3);  display:block; }
-    .msg.warning { background:rgba(245,124,0,.12);  color:#E65100;  border:1.5px solid rgba(245,124,0,.3);  display:block; }
-
-    /* ══ SPINNER ══ */
+    .msg.success { background:rgba(46,125,50,.12); color:#1B5E20; border:1.5px solid rgba(46,125,50,.3); display:block; }
     .spinner-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; padding:20px 0; }
-    .spinner {
-      width:36px; height:36px;
-      border:4px solid rgba(13,71,161,0.15);
-      border-top-color:#1976D2;
-      border-radius:50%;
-      animation:spin .7s linear infinite;
-    }
-    @keyframes spin { to{ transform:rotate(360deg); } }
+    .spinner { width:36px; height:36px; border:4px solid rgba(13,71,161,0.15); border-top-color:#1976D2; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to{transform:rotate(360deg)} }
     .spinner-label { font-size:.85rem; font-weight:700; color:rgba(13,71,161,0.5); }
-
-    /* ══ SUCCÈS ══ */
     .success-icon { font-size:4rem; animation:popIn .5s cubic-bezier(0.34,1.56,0.64,1); }
     @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
-    .success-title {
-      font-family:'Baloo 2', cursive; font-size:1.4rem; font-weight:800;
-      color:#0D47A1; text-align:center;
-    }
-    .success-msg {
-      font-size:.82rem; font-weight:700;
-      color:rgba(13,71,161,0.6); text-align:center; line-height:1.5;
-    }
-
-    /* ══ ONBOARDING ══ */
-    .onb-title {
-      font-family:'Baloo 2', cursive; font-size:1.1rem; font-weight:800;
-      color:#0D47A1; text-align:center; line-height:1.3;
-    }
+    .success-title { font-size:1.4rem; font-weight:800; color:#0D47A1; text-align:center; }
+    .success-msg { font-size:.82rem; font-weight:700; color:rgba(13,71,161,0.6); text-align:center; line-height:1.5; }
+    .onb-title { font-size:1.1rem; font-weight:800; color:#0D47A1; text-align:center; line-height:1.3; }
     .onb-sub { font-size:.78rem; font-weight:700; color:rgba(13,71,161,0.5); text-align:center; }
     .sport-block { width:100%; }
-    .sport-label { font-family:'Baloo 2', cursive; font-size:.95rem; font-weight:800; color:#1565C0; margin-bottom:6px; padding-left:2px; }
+    .sport-label { font-size:.95rem; font-weight:800; color:#1565C0; margin-bottom:6px; padding-left:2px; }
     .niv-row { display:flex; gap:7px; }
     .niv-btn {
-      flex:1; background:rgba(255,255,255,0.7);
-      border:2px solid rgba(13,71,161,0.15); border-radius:14px;
-      padding:9px 4px; font-family:'Baloo 2', cursive;
+      flex:1; background:rgba(255,255,255,0.7); border:2px solid rgba(13,71,161,0.15);
+      border-radius:14px; padding:9px 4px; font-family:'Baloo 2',cursive;
       font-size:.82rem; font-weight:700; color:rgba(13,71,161,0.6);
-      cursor:pointer; transition:all .15s; text-align:center;
-      -webkit-appearance:none;
+      cursor:pointer; transition:all .15s; text-align:center; -webkit-appearance:none;
     }
     .niv-btn:active { transform:scale(0.96); }
-    .niv-btn.sel {
-      background:linear-gradient(135deg, #1976D2, #0D47A1);
-      border-color:#0D47A1; color:white;
-      box-shadow:0 3px 10px rgba(13,71,161,0.35);
-    }
+    .niv-btn.sel { background:linear-gradient(135deg, #1976D2, #0D47A1); border-color:#0D47A1; color:white; box-shadow:0 3px 10px rgba(13,71,161,0.35); }
   </style>
 </head>
 <body>
-
 <script>
   for(let i=0;i<8;i++){
     const b=document.createElement('div'); b.className='bubble';
@@ -208,81 +92,51 @@
 </script>
 
 <div class="card">
-
   <div class="logo-wrap">
     <div class="logo-emoji">🎮</div>
     <div class="logo-title">Wii Sports</div>
     <div class="logo-sub">Albert School</div>
   </div>
 
-  <!-- ── Écran 1 : Inscription ── -->
+  <!-- Écran 1 : Formulaire -->
   <div class="screen active" id="screen-inscription">
-
     <div class="form">
       <div class="field">
         <label>Prénom et nom</label>
-        <input type="text" id="input-nom"
-          placeholder="ex: Arthur Laffont"
-          autocomplete="name"
-          oninput="verifierFormulaire()"/>
+        <input type="text" id="input-nom" placeholder="ex: Arthur Laffont" autocomplete="name" oninput="verifierFormulaire()"/>
       </div>
-
       <div class="field">
         <label>Adresse email</label>
-        <input type="email" id="input-email"
-          placeholder="pnom@albertschool.com"
-          autocomplete="email"
-          oninput="verifierEmail()"/>
-        <div class="domain-badge" id="domain-badge" style="display:none;">
-          ✅ Email Albert School reconnu
-        </div>
+        <input type="email" id="input-email" placeholder="pnom@albertschool.com" autocomplete="email" oninput="verifierEmail()"/>
+        <div class="domain-badge" id="domain-badge">✅ Email Albert School reconnu</div>
       </div>
-
       <div class="field">
         <label>Mot de passe</label>
-        <input type="password" id="input-password"
-          placeholder="minimum 6 caractères"
-          autocomplete="new-password"
-          oninput="verifierMotDePasse()"/>
-        <div class="pwd-strength">
-          <div class="pwd-strength-bar" id="pwd-bar"></div>
-        </div>
+        <input type="password" id="input-password" placeholder="minimum 6 caractères" autocomplete="new-password" oninput="verifierMotDePasse()"/>
+        <div class="pwd-strength"><div class="pwd-strength-bar" id="pwd-bar"></div></div>
       </div>
-
       <div class="field">
         <label>Confirmer le mot de passe</label>
-        <input type="password" id="input-confirm"
-          placeholder="••••••••"
-          autocomplete="new-password"
-          oninput="verifierFormulaire()"
-          onkeydown="if(event.key==='Enter') sInscrire()"/>
+        <input type="password" id="input-confirm" placeholder="••••••••" autocomplete="new-password" oninput="verifierFormulaire()" onkeydown="if(event.key==='Enter') sInscrire()"/>
       </div>
     </div>
-
     <div class="msg" id="msg-inscription"></div>
-
-    <button class="btn-play" id="btn-inscription" onclick="sInscrire()" disabled>
-      🎮 Créer mon compte
-    </button>
-
-    <p class="link-login">
-      Déjà un compte ? <a href="login.html">Se connecter →</a>
-    </p>
+    <button class="btn-play" id="btn-inscription" onclick="sInscrire()" disabled>🎮 Créer mon compte</button>
+    <p class="link-login">Déjà un compte ? <a href="login.html">Se connecter →</a></p>
   </div>
 
-  <!-- ── Écran 2 : Chargement ── -->
+  <!-- Écran 2 : Chargement -->
   <div class="screen" id="screen-loading">
     <div class="spinner-wrap">
       <div class="spinner"></div>
-      <div class="spinner-label">Création du compte…</div>
+      <div class="spinner-label" id="loading-label">Création du compte…</div>
     </div>
   </div>
 
-  <!-- ── Écran 3 : Onboarding ── -->
+  <!-- Écran 3 : Onboarding -->
   <div class="screen" id="screen-onboarding">
     <div class="onb-title">Compte créé ! 🎉<br>Choisis ton niveau pour chaque sport</div>
     <div class="onb-sub">Tu pourras évoluer selon ta progression.</div>
-
     <div class="sport-block">
       <div class="sport-label">🎾 Tennis</div>
       <div class="niv-row" id="niv-tennis">
@@ -292,13 +146,13 @@
       </div>
     </div>
     <div class="sport-block">
-        <div class="sport-label">⛳️ Golf</div>
-        <div class="niv-row" id="niv-golf">
-          <button class="niv-btn" onclick="choisirNiv('golf','Débutant',this)">😊 Débutant</button>
-          <button class="niv-btn" onclick="choisirNiv('golf','Intermédiaire',this)">😤 Intermédiaire</button>
-          <button class="niv-btn" onclick="choisirNiv('golf','Confirmé',this)">💀 Confirmé</button>
-        </div>
+      <div class="sport-label">⛳️ Golf</div>
+      <div class="niv-row" id="niv-golf">
+        <button class="niv-btn" onclick="choisirNiv('golf','Débutant',this)">😊 Débutant</button>
+        <button class="niv-btn" onclick="choisirNiv('golf','Intermédiaire',this)">😤 Intermédiaire</button>
+        <button class="niv-btn" onclick="choisirNiv('golf','Confirmé',this)">💀 Confirmé</button>
       </div>
+    </div>
     <div class="sport-block">
       <div class="sport-label">⚾ Baseball</div>
       <div class="niv-row" id="niv-baseball">
@@ -307,7 +161,6 @@
         <button class="niv-btn" onclick="choisirNiv('baseball','Confirmé',this)">💀 Confirmé</button>
       </div>
     </div>
-
     <div class="sport-block">
       <div class="sport-label">🎳 Bowling</div>
       <div class="niv-row" id="niv-bowling">
@@ -316,7 +169,6 @@
         <button class="niv-btn" onclick="choisirNiv('bowling','Confirmé',this)">💀 Confirmé</button>
       </div>
     </div>
-
     <div class="sport-block">
       <div class="sport-label">🥊 Boxe</div>
       <div class="niv-row" id="niv-boxe">
@@ -325,151 +177,84 @@
         <button class="niv-btn" onclick="choisirNiv('boxe','Confirmé',this)">💀 Confirmé</button>
       </div>
     </div>
-
     <div class="msg" id="msg-onboarding"></div>
-    <button class="btn-play" id="btn-onboarding" onclick="validerOnboarding()" disabled>
-      🚀 C'est parti !
-    </button>
+    <button class="btn-play" id="btn-onboarding" onclick="validerOnboarding()" disabled>🚀 C'est parti !</button>
   </div>
 
-  <!-- ── Écran 4 : Succès final ── -->
+  <!-- Écran 4 : Succès -->
   <div class="screen" id="screen-succes">
     <div class="success-icon">🏆</div>
     <div class="success-title">Tout est prêt !</div>
-    <p class="success-msg">
-      Ton compte Albert School est activé.<br>
-      Bienvenue dans Wii Sports Mobile !
-    </p>
-    <button class="btn-play" onclick="window.location.href='index.html'">
-      🎮 Jouer maintenant !
-    </button>
+    <p class="success-msg">Ton compte Albert School est activé.<br>Bienvenue dans Wii Sports Mobile !</p>
+    <button class="btn-play" onclick="window.location.href='index.html'">🎮 Jouer maintenant !</button>
   </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script>
-// ══════════════════════════════════════════════════
-//  DOMAINES AUTORISÉS
-// ══════════════════════════════════════════════════
-const DOMAINES_AUTORISES = ['albertschool.com', 'albertschool.fr'];
+const DOMAINES = ['albertschool.com', 'albertschool.fr'];
+function estEmailAutorise(e) { return DOMAINES.includes(e.split('@')[1]?.toLowerCase()); }
 
-function estEmailAutorise(email) {
-  const domain = email.split('@')[1]?.toLowerCase();
-  return DOMAINES_AUTORISES.includes(domain);
-}
-
-// ══════════════════════════════════════════════════
-//  ÉTAT
-// ══════════════════════════════════════════════════
-const choix = { tennis:null, baseball:null, bowling:null, boxe:null, golf:null };
+const choix = { tennis:null, golf:null, baseball:null, bowling:null, boxe:null };
+let nomUser = '';
 let userCree = null;
 
-// ══════════════════════════════════════════════════
-//  NAVIGATION
-// ══════════════════════════════════════════════════
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
+function affMsg(id, txt, type) { const el=document.getElementById(id); el.textContent=txt; el.className=`msg ${type}`; }
+function cachMsg(id) { const el=document.getElementById(id); el.textContent=''; el.className='msg'; }
 
-function affMsg(elId, texte, type) {
-  const el = document.getElementById(elId);
-  el.textContent = texte;
-  el.className = `msg ${type}`;
-}
-function cachMsg(elId) {
-  const el = document.getElementById(elId);
-  el.textContent = '';
-  el.className = 'msg';
-}
-
-// ══════════════════════════════════════════════════
-//  VALIDATION EN TEMPS RÉEL
-// ══════════════════════════════════════════════════
 function verifierEmail() {
-  const email  = document.getElementById('input-email').value.trim().toLowerCase();
-  const badge  = document.getElementById('domain-badge');
-  const input  = document.getElementById('input-email');
-  const autorise = email.includes('@') && estEmailAutorise(email);
-
-  badge.style.display = autorise ? 'inline-flex' : 'none';
-
-  if (email.includes('@') && !autorise) {
-    input.style.borderColor = '#C62828';
-    affMsg('msg-inscription',
-      '❌ Seules les adresses @albertschool.com ou @albertschool.fr sont acceptées.',
-      'error');
-  } else {
-    input.style.borderColor = autorise ? '#2E7D32' : '';
-    cachMsg('msg-inscription');
-  }
-
+  const email = document.getElementById('input-email').value.trim().toLowerCase();
+  const badge = document.getElementById('domain-badge');
+  const input = document.getElementById('input-email');
+  const ok = email.includes('@') && estEmailAutorise(email);
+  badge.style.display = ok ? 'flex' : 'none';
+  input.style.borderColor = email.includes('@') ? (ok ? '#2E7D32' : '#C62828') : '';
+  if (email.includes('@') && !ok) affMsg('msg-inscription','❌ Seules les adresses @albertschool.com ou @albertschool.fr sont acceptées.','error');
+  else cachMsg('msg-inscription');
   verifierFormulaire();
 }
 
 function verifierMotDePasse() {
-  const pwd  = document.getElementById('input-password').value;
-  const bar  = document.getElementById('pwd-bar');
-  let force  = 0;
-  let couleur = '#EF9A9A';
-
-  if (pwd.length >= 6)  force++;
-  if (pwd.length >= 10) force++;
-  if (/[A-Z]/.test(pwd)) force++;
-  if (/[0-9]/.test(pwd)) force++;
-  if (/[^A-Za-z0-9]/.test(pwd)) force++;
-
-  const pct = Math.min(100, force * 22);
-  if (pct >= 66) couleur = '#A5D6A7';
-  else if (pct >= 33) couleur = '#FFE082';
-
-  bar.style.width   = pct + '%';
-  bar.style.background = couleur;
-
+  const pwd = document.getElementById('input-password').value;
+  const bar = document.getElementById('pwd-bar');
+  let f = 0;
+  if (pwd.length>=6) f++; if (pwd.length>=10) f++;
+  if (/[A-Z]/.test(pwd)) f++; if (/[0-9]/.test(pwd)) f++; if (/[^A-Za-z0-9]/.test(pwd)) f++;
+  const pct = Math.min(100, f*22);
+  bar.style.width=pct+'%'; bar.style.background=pct>=66?'#A5D6A7':pct>=33?'#FFE082':'#EF9A9A';
   verifierFormulaire();
 }
 
 function verifierFormulaire() {
-  const nom      = document.getElementById('input-nom').value.trim();
-  const email    = document.getElementById('input-email').value.trim().toLowerCase();
-  const pwd      = document.getElementById('input-password').value;
-  const confirm  = document.getElementById('input-confirm').value;
-  const btn      = document.getElementById('btn-inscription');
-
-  const ok = nom.length >= 2
-    && email.includes('@')
-    && estEmailAutorise(email)
-    && pwd.length >= 6
-    && pwd === confirm;
-
-  btn.disabled = !ok;
-
-  // Feedback confirm
-  const confirmInput = document.getElementById('input-confirm');
-  if (confirm.length > 0) {
-    confirmInput.style.borderColor = pwd === confirm ? '#2E7D32' : '#C62828';
-  } else {
-    confirmInput.style.borderColor = '';
-  }
+  const nom=document.getElementById('input-nom').value.trim();
+  const email=document.getElementById('input-email').value.trim().toLowerCase();
+  const pwd=document.getElementById('input-password').value;
+  const confirm=document.getElementById('input-confirm').value;
+  const ok=nom.length>=2&&email.includes('@')&&estEmailAutorise(email)&&pwd.length>=6&&pwd===confirm;
+  document.getElementById('btn-inscription').disabled=!ok;
+  const ci=document.getElementById('input-confirm');
+  ci.style.borderColor=confirm.length>0?(pwd===confirm?'#2E7D32':'#C62828'):'';
 }
 
-// ══════════════════════════════════════════════════
-//  INSCRIPTION
-// ══════════════════════════════════════════════════
 async function sInscrire() {
-  const nom     = document.getElementById('input-nom').value.trim();
-  const email   = document.getElementById('input-email').value.trim().toLowerCase();
-  const pwd     = document.getElementById('input-password').value;
-  const confirm = document.getElementById('input-confirm').value;
+  const nom=document.getElementById('input-nom').value.trim();
+  const email=document.getElementById('input-email').value.trim().toLowerCase();
+  const pwd=document.getElementById('input-password').value;
+  const confirm=document.getElementById('input-confirm').value;
 
-  if (!nom || nom.length < 2) { affMsg('msg-inscription','❌ Entre ton prénom et ton nom.','error'); return; }
+  if (!nom||nom.length<2)   { affMsg('msg-inscription','❌ Entre ton prénom et ton nom.','error'); return; }
   if (!estEmailAutorise(email)) { affMsg('msg-inscription','❌ Adresse email non autorisée.','error'); return; }
-  if (pwd.length < 6) { affMsg('msg-inscription','❌ Mot de passe trop court.','error'); return; }
-  if (pwd !== confirm) { affMsg('msg-inscription','❌ Les mots de passe ne correspondent pas.','error'); return; }
+  if (pwd.length<6)         { affMsg('msg-inscription','❌ Mot de passe trop court.','error'); return; }
+  if (pwd!==confirm)        { affMsg('msg-inscription','❌ Les mots de passe ne correspondent pas.','error'); return; }
 
-  document.getElementById('btn-inscription').disabled = true;
+  nomUser = nom;
+  document.getElementById('btn-inscription').disabled=true;
+  document.getElementById('loading-label').textContent='Création du compte…';
   showScreen('screen-loading');
 
   const { data, error } = await supabaseClient.auth.signUp({
@@ -479,7 +264,7 @@ async function sInscrire() {
 
   if (error) {
     showScreen('screen-inscription');
-    document.getElementById('btn-inscription').disabled = false;
+    document.getElementById('btn-inscription').disabled=false;
     affMsg('msg-inscription', traduireErreur(error.message), 'error');
     return;
   }
@@ -488,130 +273,62 @@ async function sInscrire() {
   showScreen('screen-onboarding');
 }
 
-
-//  ONBOARDING
-// ══════════════════════════════════════════════════
-
 function choisirNiv(sport, niveau, btn) {
-  // Force la mise à jour du choix AVANT tout
   choix[sport] = niveau;
-  
-  // Mise à jour visuelle
   document.querySelectorAll(`#niv-${sport} .niv-btn`).forEach(b => b.classList.remove('sel'));
   btn.classList.add('sel');
-  
   if (navigator.vibrate) navigator.vibrate(10);
-  
-  // Debug immédiat
-  console.log(`✅ Choix enregistré : ${sport} = ${niveau}`);
-  console.log('État complet choix:', JSON.stringify(choix));
-  
-  const ok = Object.values(choix).every(v => v !== null);
-  document.getElementById('btn-onboarding').disabled = !ok;
+  document.getElementById('btn-onboarding').disabled = !Object.values(choix).every(v => v !== null);
 }
 
 async function validerOnboarding() {
-  const ok = Object.values(choix).every(v => v !== null);
-  if (!ok) { affMsg('msg-onboarding', 'Choisis un niveau pour chaque sport !', 'error'); return; }
-
-  document.getElementById('btn-onboarding').disabled = true;
-  showScreen('screen-loading');
-
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  const targetUser = user || userCree;
-
-  if (!targetUser) {
-    showScreen('screen-inscription');
-    affMsg('msg-inscription', 'Session perdue, réessaie.', 'error');
-    return;
+  if (!Object.values(choix).every(v => v !== null)) {
+    affMsg('msg-onboarding','❌ Choisis un niveau pour chaque sport !','error'); return;
   }
 
-  const nom = document.getElementById('input-nom').value.trim()
-    || targetUser.user_metadata?.full_name
-    || targetUser.email.split('@')[0];
+  document.getElementById('btn-onboarding').disabled=true;
+  document.getElementById('loading-label').textContent='Sauvegarde…';
+  showScreen('screen-loading');
 
-  // UN SEUL upsert avec TOUT dedans d'un coup
+  const { data:{ user } } = await supabaseClient.auth.getUser();
+  const u = user || userCree;
+
+  if (!u) {
+    showScreen('screen-inscription');
+    affMsg('msg-inscription','❌ Session perdue, réessaie.','error'); return;
+  }
+
   const { error } = await supabaseClient.from('profiles').upsert({
-    id:              targetUser.id,
-    email:           targetUser.email,
-    full_name:       nom,
+    id:              u.id,
+    email:           u.email,
+    full_name:       nomUser || u.user_metadata?.full_name || u.email.split('@')[0],
     level_tennis:    choix.tennis,
+    level_golf:      choix.golf,
     level_baseball:  choix.baseball,
     level_bowling:   choix.bowling,
     level_boxe:      choix.boxe,
-    level_golf:      choix.golf,
     onboarding_done: true,
   }, { onConflict: 'id' });
 
   if (error) {
     console.error('Erreur upsert:', error);
     showScreen('screen-onboarding');
-    document.getElementById('btn-onboarding').disabled = false;
-    affMsg('msg-onboarding', `Erreur: ${error.message}`, 'error');
-    return;
+    document.getElementById('btn-onboarding').disabled=false;
+    affMsg('msg-onboarding',`❌ Erreur: ${error.message}`,'error'); return;
   }
 
   showScreen('screen-succes');
 }
-  // DEBUG — vérifie ce qui est envoyé
-  console.log('choix au moment de valider:', JSON.stringify(choix));
 
-  document.getElementById('btn-onboarding').disabled = true;
-  showScreen('screen-loading');
-
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  const targetUser = user || userCree;
-
-  if (!targetUser) { showScreen('screen-succes'); return; }
-
-  // Récupère le nom depuis les metadata (plus fiable que l'input caché)
-  const nom = targetUser.user_metadata?.full_name
-    || targetUser.email.split('@')[0];
-
-  console.log('targetUser.id:', targetUser.id);
-  console.log('nom:', nom);
-
-  const { data, error } = await supabaseClient.from('profiles').update({
-    full_name:       nom,
-    level_tennis:    choix.tennis,
-    level_baseball:  choix.baseball,
-    level_bowling:   choix.bowling,
-    level_boxe:      choix.boxe,
-    level_golf:      choix.golf,
-    onboarding_done: true,
-  }).eq('id', targetUser.id).select();
-
-  console.log('résultat update:', data, error);
-
-  if (error) {
-    showScreen('screen-onboarding');
-    document.getElementById('btn-onboarding').disabled = false;
-    affMsg('msg-onboarding', `Erreur: ${error.message}`, 'error');
-    return;
-  }
-
-  showScreen('screen-succes');
-
-// ══════════════════════════════════════════════════
-//  AUTO-REDIRECT si déjà connecté
-// ══════════════════════════════════════════════════
 (async () => {
-  const { data: { session } } = await supabaseClient.auth.getSession();
+  const { data:{ session } } = await supabaseClient.auth.getSession();
   if (session) window.location.replace('index.html');
 })();
 
-// ══════════════════════════════════════════════════
-//  TRADUCTION ERREURS SUPABASE
-// ══════════════════════════════════════════════════
 function traduireErreur(msg) {
-  if (msg.includes('User already registered') || msg.includes('already been registered'))
-    return '❌ Cet email a déjà un compte. <a href="login.html">Connecte-toi →</a>';
-  if (msg.includes('Password should be'))
-    return '❌ Mot de passe trop court (6 caractères minimum).';
-  if (msg.includes('Unable to validate email'))
-    return '❌ Adresse email invalide.';
-  if (msg.includes('over_email_send_rate_limit'))
-    return '⏳ Trop de tentatives. Attends 1 minute.';
+  if (msg.includes('User already registered')||msg.includes('already been registered')) return '❌ Cet email a déjà un compte. <a href="login.html">Connecte-toi →</a>';
+  if (msg.includes('Password should be'))   return '❌ Mot de passe trop court (6 caractères minimum).';
+  if (msg.includes('rate limit')||msg.includes('over_email')) return '⏳ Trop de tentatives. Utilise une adresse +test ou attends 1h.';
   return '❌ Erreur lors de la création du compte. Réessaie.';
 }
 </script>
