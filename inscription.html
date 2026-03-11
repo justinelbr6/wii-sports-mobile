@@ -466,39 +466,46 @@ function creerScene(canvasId, W, H){
   return {scene,cam,rend};
 }
 
-// Charger un .glb avec le shader FFL
+// Charger un .glb avec requête POST (API FFL require POST)
 function chargerGLB(scene, url, cb){
-  new THREE.GLTFLoader().load(url, gltf=>{
-    const model=gltf.scene;
-    model.traverse(node=>{
-      if(!node.isMesh) return;
-      const ud=node.geometry.userData;
-      const mt=ud.modulateType;
-      const mp=(mt!==undefined&&mt<9)?MAT[mt]:MAT[0];
-      const mm=ud.modulateMode===undefined?0:ud.modulateMode;
-      const mc=ud.modulateColor?new THREE.Vector4(...ud.modulateColor,1):new THREE.Vector4(1,0,0,1);
-      const le=mt>5?false:true;
-      const ori=node.material;
-      if(ori.map) ori.map.colorSpace=THREE.LinearSRGBColorSpace;
-      let side=ori.side;
-      if(ud.cullMode!==undefined) side=ud.cullMode===0?THREE.DoubleSide:ud.cullMode===1?THREE.FrontSide:THREE.BackSide;
-      node.material=new THREE.ShaderMaterial({
-        vertexShader:document.getElementById('vertexShader').textContent,
-        fragmentShader:document.getElementById('fragmentShader').textContent,
-        uniforms:{
-          u_const1:{value:mc},u_light_ambient:{value:LAMB},u_light_diffuse:{value:LDIF},
-          u_light_specular:{value:LSPE},u_light_dir:{value:LDIR},u_light_enable:{value:le},
-          u_material_ambient:{value:mp.a},u_material_diffuse:{value:mp.d},u_material_specular:{value:mp.s},
-          u_material_specular_mode:{value:mp.sm},u_material_specular_power:{value:mp.sp},
-          u_mode:{value:mm},u_rim_color:{value:RIMC},u_rim_power:{value:RIMP},s_texture:{value:ori.map},
-        },
-        side, blending:THREE.CustomBlending, blendDstAlpha:THREE.OneFactor,
-        transparent:ori.transparent, alphaTest:ori.alphaTest,
+  fetch(url, {method:'POST'}).then(r=>{
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.blob();
+  }).then(blob=>{
+    const blobUrl=URL.createObjectURL(blob);
+    new THREE.GLTFLoader().load(blobUrl, gltf=>{
+      URL.revokeObjectURL(blobUrl);
+      const model=gltf.scene;
+      model.traverse(node=>{
+        if(!node.isMesh) return;
+        const ud=node.geometry.userData;
+        const mt=ud.modulateType;
+        const mp=(mt!==undefined&&mt<9)?MAT[mt]:MAT[0];
+        const mm=ud.modulateMode===undefined?0:ud.modulateMode;
+        const mc=ud.modulateColor?new THREE.Vector4(...ud.modulateColor,1):new THREE.Vector4(1,0,0,1);
+        const le=mt>5?false:true;
+        const ori=node.material;
+        if(ori.map) ori.map.colorSpace=THREE.LinearSRGBColorSpace;
+        let side=ori.side;
+        if(ud.cullMode!==undefined) side=ud.cullMode===0?THREE.DoubleSide:ud.cullMode===1?THREE.FrontSide:THREE.BackSide;
+        node.material=new THREE.ShaderMaterial({
+          vertexShader:document.getElementById('vertexShader').textContent,
+          fragmentShader:document.getElementById('fragmentShader').textContent,
+          uniforms:{
+            u_const1:{value:mc},u_light_ambient:{value:LAMB},u_light_diffuse:{value:LDIF},
+            u_light_specular:{value:LSPE},u_light_dir:{value:LDIR},u_light_enable:{value:le},
+            u_material_ambient:{value:mp.a},u_material_diffuse:{value:mp.d},u_material_specular:{value:mp.s},
+            u_material_specular_mode:{value:mp.sm},u_material_specular_power:{value:mp.sp},
+            u_mode:{value:mm},u_rim_color:{value:RIMC},u_rim_power:{value:RIMP},s_texture:{value:ori.map},
+          },
+          side, blending:THREE.CustomBlending, blendDstAlpha:THREE.OneFactor,
+          transparent:ori.transparent, alphaTest:ori.alphaTest,
+        });
       });
-    });
-    scene.add(model);
-    cb&&cb(model);
-  },undefined,err=>{console.warn('GLB err:',err);cb&&cb(null);});
+      scene.add(model);
+      cb&&cb(model);
+    },undefined,err=>{console.warn('GLB err:',err);cb&&cb(null);});
+  }).catch(err=>{console.warn('Fetch err:',err);cb&&cb(null);});
 }
 
 // Construire l'URL API Mii
