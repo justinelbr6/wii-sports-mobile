@@ -126,6 +126,16 @@
     .hair-card span { font-size:.68rem; font-weight:700; color:rgba(13,71,161,0.6); }
     .hair-card.sel span { color:#1565C0; }
 
+    /* ✅ Boutons de genre */
+    .mii-gender-btn {
+      flex:1; padding:10px 16px; border:2.5px solid rgba(13,71,161,0.2);
+      border-radius:14px; background:rgba(255,255,255,0.7);
+      font-size:.85rem; font-weight:700; color:#0D47A1;
+      cursor:pointer; transition:all .15s; -webkit-appearance:none;
+    }
+    .mii-gender-btn:active { transform:scale(0.95); }
+    .mii-gender-btn.sel { border-color:#1976D2; background:rgba(25,118,210,0.15); box-shadow:0 3px 12px rgba(13,71,161,0.25); }
+
     #succes-mii-wrap {
       width:170px; height:190px; border-radius:18px; overflow:hidden;
       background:linear-gradient(160deg,#dff0ff,#c2e0ff);
@@ -311,6 +321,15 @@
   <div class="screen" id="screen-mii">
     <div class="mii-title">Crée ton Mii ! 🧍</div>
     <div class="mii-sub">Il t'accompagnera dans tous tes sports</div>
+
+    <!-- ✅ SÉLECTION DE GENRE -->
+    <div class="mii-option-group">
+      <div class="mii-option-label">👥 Ton genre</div>
+      <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;">
+        <button class="mii-gender-btn sel" onclick="choisirGenre('man',this)" data-gender="man">👨 Homme</button>
+        <button class="mii-gender-btn" onclick="choisirGenre('woman',this)" data-gender="woman">👩 Femme</button>
+      </div>
+    </div>
 
     <!-- Canvas 3D preview -->
     <div class="mii-3d-wrap" id="mii3dWrap">
@@ -501,6 +520,15 @@ let mii3dReady=false;
 function initMiiScreen(){
   if(mii3dReady) return;
   mii3dReady=true;
+
+  // ✅ Restaurer le genre sauvegardé
+  const savedGenre = localStorage.getItem('mii_genre');
+  if (savedGenre) {
+    miiGenre = savedGenre;
+    const genreBtn = document.querySelector(`.mii-gender-btn[data-gender="${savedGenre}"]`);
+    if (genreBtn) genreBtn.classList.add('sel');
+  }
+
   const wrap=document.getElementById('mii3dWrap');
   const W=wrap.clientWidth||330, H=wrap.clientHeight||230;
   mainCtx=creerScene('mii3dCanvas',W,H);
@@ -526,6 +554,17 @@ function rechargerMii(){
 /* ═══════════════════════════════════════════════════
    SÉLECTION MII
 ═══════════════════════════════════════════════════ */
+// ✅ Genre (man/woman)
+let miiGenre = 'man';
+function choisirGenre(genre, el) {
+  miiGenre = genre;
+  document.querySelectorAll('.mii-gender-btn').forEach(d => d.classList.remove('sel'));
+  el.classList.add('sel');
+  localStorage.setItem('mii_genre', genre);
+  if (navigator.vibrate) navigator.vibrate(8);
+  // Pas besoin de rechargerMii() pour le genre - c'est just le sprite PNG
+}
+
 function choisirCouleurBody(color,el){
   mii.bodyColor=color;
   document.querySelectorAll('#color-body-row .color-dot').forEach(d=>d.classList.remove('sel'));
@@ -646,6 +685,7 @@ async function validerMiiEtSauvegarder(){
     mii_color: mii.bodyColor,
     mii_hair: String(mii.hairType),
     mii_hair_color: mii.hairColor,
+    gender: miiGenre,  // ✅ Ajouter le genre du Mii
     onboarding_done: true,
   };
   localStorage.setItem('wii_profil_pending', JSON.stringify(profil_pending));

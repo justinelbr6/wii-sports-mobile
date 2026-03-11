@@ -303,6 +303,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js?v=3"></script>
+<script src="../js/mii-renderer.js?v=1"></script>
 <script src="../js/sensors.js?v=3"></script>
 
 <script>
@@ -698,6 +699,23 @@ function animate(){
 }
 
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+
+// ✅ Charger et afficher le Mii de l'adversaire (MVP)
+(async ()=>{
+  // Pour le MVP, créer un adversaire générique avec Mii
+  const defaultOpponent = {
+    mii_color: '#2962FF',     // Bleu
+    mii_hair_color: '#3D1C02', // Brun
+    gender: 'man'
+  };
+
+  // Créer le sprite Mii
+  const miiSprite = await MII_RENDERER.createMiiSprite(scene, defaultOpponent, 'man', 2);
+  if (miiSprite) {
+    miiSprite.position.set(8, 2, 10); // Position à droite du terrain
+  }
+})();
+
 animate();
 </script>
 </body>

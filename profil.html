@@ -184,7 +184,7 @@
   
   <!-- Info Joueur -->
   <div class="profil-card">
-    <div class="profil-avatar">👤</div>
+    <div class="profil-avatar" id="profileAvatarContainer">👤</div>
     <div class="profil-details">
       <div class="profil-name" id="userName">Chargement...</div>
     </div>
@@ -248,6 +248,7 @@
 <!-- Supabase CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=4"></script>
+<script src="js/mii-renderer.js?v=1"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
@@ -259,6 +260,22 @@
     const profil = await getProfilCourant();
     if (profil) {
       document.getElementById('userName').textContent = profil.full_name || 'Joueur Inconnu';
+
+      // ✅ Afficher le Mii personnalisé
+      const gender = profil.gender || 'man';
+      if (profil.mii_color && profil.mii_hair_color) {
+        const miiCanvas = await MII_RENDERER.createMiiCanvas(profil, gender, 120);
+        if (miiCanvas) {
+          const container = document.getElementById('profileAvatarContainer');
+          container.innerHTML = ''; // Remplacer l'emoji
+          container.style.display = 'flex';
+          container.style.alignItems = 'center';
+          container.style.justifyContent = 'center';
+          miiCanvas.style.width = '100%';
+          miiCanvas.style.height = 'auto';
+          container.appendChild(miiCanvas);
+        }
+      }
     }
 
     // 3. Récupérer les meilleurs scores
