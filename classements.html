@@ -4,129 +4,136 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
   <title>Classements — Wii Sports Mobile</title>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
     body {
-      font-family:'Baloo 2', cursive;
-      background: linear-gradient(160deg, #a8e4f7 0%, #5bbde8 40%, #a0d8f0 100%);
-      min-height:100vh; overflow-x:hidden; overflow-y:auto;
-      -webkit-overflow-scrolling:touch;
+      font-family:'Nunito',sans-serif;
+      background:linear-gradient(160deg,#a8e4f7 0%,#5bbde8 40%,#a0d8f0 100%);
+      min-height:100vh; overflow-x:hidden; overflow-y:auto; -webkit-overflow-scrolling:touch;
     }
-
     .wii-bg {
       position:fixed; inset:0;
-      background: radial-gradient(ellipse at 20% 50%, rgba(255,255,255,0.25) 0%, transparent 60%),
-                  radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.2) 0%, transparent 50%),
-                  linear-gradient(160deg, #a8e4f7 0%, #5bbde8 40%, #a0d8f0 100%);
+      background:radial-gradient(ellipse at 20% 50%,rgba(255,255,255,0.25) 0%,transparent 60%),
+                 radial-gradient(ellipse at 80% 20%,rgba(255,255,255,0.2) 0%,transparent 50%),
+                 linear-gradient(160deg,#a8e4f7 0%,#5bbde8 40%,#a0d8f0 100%);
       z-index:0; pointer-events:none;
     }
     .bubble { position:fixed; border-radius:50%; background:rgba(255,255,255,0.15); animation:floatUp linear infinite; pointer-events:none; z-index:0; }
     @keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:1} 90%{opacity:0.4} 100%{transform:translateY(-100px) scale(1);opacity:0} }
 
-    /* ── Header ── */
-    .header {
-      position:relative; z-index:2;
-      display:flex; align-items:center; gap:10px;
-      padding:12px 16px 0;
-    }
+    /* Header */
+    .header { position:relative; z-index:2; display:flex; align-items:center; gap:12px; padding:14px 16px 0; }
     .back-btn {
-      width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;
-      background:rgba(255,255,255,0.3); backdrop-filter:blur(8px);
-      border:1.5px solid rgba(255,255,255,0.5);
-      font-size:1.1rem; display:flex; align-items:center; justify-content:center;
-      box-shadow:0 2px 8px rgba(0,60,140,0.12); transition:transform .1s;
-      flex-shrink:0;
+      width:38px; height:38px; border-radius:50%; cursor:pointer;
+      background:rgba(255,255,255,0.4); backdrop-filter:blur(8px);
+      border:1.5px solid rgba(255,255,255,0.6); font-size:1.2rem;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 2px 8px rgba(0,60,140,0.12); transition:transform .1s; flex-shrink:0;
+      font-family:'Fredoka One',cursive; color:#1a4a80;
     }
     .back-btn:active { transform:scale(0.9); }
-    .header-title { font-size:1.5rem; font-weight:800; color:#1a4a80; line-height:1; }
-    .header-sub { font-size:.72rem; font-weight:700; color:rgba(26,74,128,0.55); }
+    .header-title { font-family:'Fredoka One',cursive; font-size:1.7rem; color:#1a4a80; line-height:1; }
+    .header-sub   { font-size:.72rem; font-weight:700; color:rgba(26,74,128,0.55); }
 
-    /* ── Layout principal ── */
-    .main { position:relative; z-index:2; padding:12px 12px 32px; display:flex; flex-direction:column; gap:12px; }
+    /* Layout */
+    .main { position:relative; z-index:2; padding:12px 12px 40px; display:flex; flex-direction:column; gap:12px; }
 
-    /* ── Tabs sports ── */
-    .sport-tabs {
-      display:flex; gap:6px; overflow-x:auto; padding-bottom:2px;
-      scrollbar-width:none; -webkit-overflow-scrolling:touch;
-    }
+    /* Tabs sports */
+    .sport-tabs { display:flex; gap:7px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
     .sport-tabs::-webkit-scrollbar { display:none; }
     .sport-tab {
       flex-shrink:0; background:rgba(255,255,255,0.45); border:2px solid rgba(255,255,255,0.7);
-      border-radius:50px; padding:7px 14px; font-family:'Baloo 2',cursive;
-      font-size:.82rem; font-weight:700; color:#1a5fa0; cursor:pointer;
-      transition:all .15s; white-space:nowrap; -webkit-appearance:none;
+      border-radius:50px; padding:8px 16px; font-family:'Fredoka One',cursive;
+      font-size:.85rem; color:#1a5fa0; cursor:pointer; transition:all .15s; white-space:nowrap;
       box-shadow:0 2px 8px rgba(0,60,140,0.08);
     }
     .sport-tab.active {
       background:linear-gradient(135deg,#2a82c4,#1a5fa0); color:white;
-      border-color:#1a5fa0; box-shadow:0 4px 0 #0e3a70, 0 6px 16px rgba(26,95,160,0.3);
+      border-color:#1a5fa0; box-shadow:0 4px 0 #0e3a70,0 6px 16px rgba(26,95,160,0.3);
     }
     .sport-tab:active { transform:translateY(2px); }
 
-    /* ── Filtre niveau — supprimé ── */
+    /* Carte "mon rang" */
+    .my-best-card {
+      background:linear-gradient(135deg,rgba(42,130,196,0.18),rgba(26,95,160,0.12));
+      border:2px solid rgba(42,130,196,0.4); border-radius:18px; padding:14px 16px;
+      display:none; align-items:center; gap:14px;
+      box-shadow:0 4px 16px rgba(26,95,160,0.12);
+    }
+    .my-best-card.show { display:flex; }
+    .my-best-emoji { font-size:2.2rem; flex-shrink:0; }
+    .my-best-info  { flex:1; }
+    .my-best-label { font-size:.65rem; font-weight:800; color:rgba(26,74,128,0.55); text-transform:uppercase; letter-spacing:1px; }
+    .my-best-rank  { font-family:'Fredoka One',cursive; font-size:1.4rem; color:#1a4a80; line-height:1.1; }
+    .my-best-sub   { font-size:.7rem; font-weight:700; color:rgba(26,95,160,0.6); }
+    .my-best-score { text-align:right; flex-shrink:0; }
+    .my-best-val   { font-family:'Fredoka One',cursive; font-size:1.9rem; color:#2a82c4; line-height:1; }
+    .my-best-unit  { font-size:.6rem; font-weight:700; color:rgba(26,95,160,0.55); }
 
-    /* ── Carte classement ── */
+    /* Carte classement */
     .classement-card {
-      background:rgba(255,255,255,0.5); backdrop-filter:blur(16px);
-      border:2px solid rgba(255,255,255,0.8); border-radius:20px;
-      box-shadow:0 4px 20px rgba(0,60,140,0.1);
-      overflow:hidden;
+      background:rgba(255,255,255,0.52); backdrop-filter:blur(16px);
+      border:2px solid rgba(255,255,255,0.82); border-radius:22px;
+      box-shadow:0 4px 20px rgba(0,60,140,0.1); overflow:hidden;
+    }
+    .section-title {
+      font-family:'Fredoka One',cursive; font-size:.95rem; color:rgba(26,74,128,0.6);
+      text-transform:uppercase; letter-spacing:1.5px; padding:0 4px;
     }
 
-    /* ── Podium top 3 ── */
+    /* Podium */
     .podium-wrap {
       display:flex; align-items:flex-end; justify-content:center;
-      gap:8px; padding:20px 16px 0; background:linear-gradient(180deg,rgba(255,255,255,0.2),transparent);
+      gap:10px; padding:22px 12px 0;
+      background:linear-gradient(180deg,rgba(255,255,255,0.25),transparent);
     }
-    .podium-item { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; max-width:110px; }
-    .podium-item.first { order:2; }
-    .podium-item.second { order:1; }
-    .podium-item.third { order:3; }
-
+    .podium-item { display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; max-width:112px; }
+    .podium-item.p1 { order:2; }
+    .podium-item.p2 { order:1; }
+    .podium-item.p3 { order:3; }
     .podium-avatar {
-      width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-      font-size:1.6rem; border:3px solid white; box-shadow:0 4px 12px rgba(0,0,0,0.15);
-      position:relative; flex-shrink:0;
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-size:1.5rem; border:3px solid white; box-shadow:0 4px 12px rgba(0,0,0,0.15);
+      position:relative; flex-shrink:0; width:54px; height:54px;
+      background:linear-gradient(135deg,#E8E8E8,#BDBDBD);
     }
-    .podium-item.first  .podium-avatar { width:68px; height:68px; font-size:2rem; }
-    .podium-avatar-crown { position:absolute; top:-14px; font-size:1.1rem; }
-    .podium-item.first  .podium-avatar { background:linear-gradient(135deg,#FFE066,#FFB800); }
-    .podium-item.second .podium-avatar { background:linear-gradient(135deg,#E8E8E8,#BDBDBD); }
-    .podium-item.third  .podium-avatar { background:linear-gradient(135deg,#FFCC99,#CD853F); }
-
-    .podium-name { font-size:.7rem; font-weight:800; color:#1a4a80; text-align:center; line-height:1.2; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .podium-score-val { font-size:.95rem; font-weight:800; color:#1a5fa0; }
-    .podium-score-label { font-size:.6rem; font-weight:700; color:rgba(26,95,160,0.55); text-align:center; }
-
+    .podium-item.p1 .podium-avatar { width:68px; height:68px; font-size:2rem; background:linear-gradient(135deg,#FFE066,#FFB800); }
+    .podium-item.p3 .podium-avatar { background:linear-gradient(135deg,#FFCC99,#CD853F); }
+    .podium-crown  { position:absolute; top:-15px; font-size:1.1rem; }
+    .podium-name   { font-family:'Fredoka One',cursive; font-size:.75rem; color:#1a4a80; text-align:center; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .podium-name.moi { color:#2a82c4; }
+    .podium-score-val  { font-family:'Fredoka One',cursive; font-size:1rem; color:#1a5fa0; }
+    .podium-score-unit { font-size:.58rem; font-weight:700; color:rgba(26,95,160,0.5); text-align:center; }
     .podium-block {
       border-radius:12px 12px 0 0; width:100%; display:flex; align-items:center; justify-content:center;
-      font-size:1.3rem; font-weight:800; color:white; text-shadow:0 1px 4px rgba(0,0,0,0.2);
+      font-family:'Fredoka One',cursive; font-size:1.4rem; color:white; text-shadow:0 1px 4px rgba(0,0,0,0.2);
     }
-    .podium-item.first  .podium-block { height:70px; background:linear-gradient(180deg,#FFD700,#FFA500); box-shadow:0 -2px 0 #CC8400; }
-    .podium-item.second .podium-block { height:52px; background:linear-gradient(180deg,#C0C0C0,#9E9E9E); box-shadow:0 -2px 0 #757575; }
-    .podium-item.third  .podium-block { height:38px; background:linear-gradient(180deg,#CD853F,#A0522D); box-shadow:0 -2px 0 #7A3B1E; }
+    .podium-item.p1 .podium-block { height:72px; background:linear-gradient(180deg,#FFD700,#FFA500); box-shadow:0 -2px 0 #CC8400; }
+    .podium-item.p2 .podium-block { height:54px; background:linear-gradient(180deg,#C0C0C0,#9E9E9E); box-shadow:0 -2px 0 #757575; }
+    .podium-item.p3 .podium-block { height:40px; background:linear-gradient(180deg,#CD853F,#A0522D); box-shadow:0 -2px 0 #7A3B1E; }
 
-    /* ── Liste classement (4+) ── */
-    .classement-list { padding:0 12px 12px; display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+    /* Séparateur */
+    .list-divider { display:flex; align-items:center; gap:10px; padding:14px 14px 4px; }
+    .list-divider-line { flex:1; height:1px; background:rgba(26,74,128,0.12); }
+    .list-divider-text { font-size:.62rem; font-weight:800; color:rgba(26,74,128,0.4); text-transform:uppercase; letter-spacing:1.5px; white-space:nowrap; }
 
+    /* Liste 4+ */
+    .classement-list { padding:0 10px 12px; display:flex; flex-direction:column; gap:7px; }
     .classement-row {
       display:flex; align-items:center; gap:10px;
       background:rgba(255,255,255,0.55); border:1.5px solid rgba(255,255,255,0.8);
-      border-radius:14px; padding:10px 12px;
-      transition:transform .1s;
+      border-radius:14px; padding:10px 12px; transition:transform .1s;
     }
     .classement-row.moi {
-      background:rgba(42,130,196,0.12); border-color:rgba(42,130,196,0.4);
-      box-shadow:0 0 0 2px rgba(42,130,196,0.2);
+      background:rgba(42,130,196,0.13); border-color:rgba(42,130,196,0.45);
+      box-shadow:0 0 0 2px rgba(42,130,196,0.22);
     }
     .classement-row:active { transform:scale(0.98); }
-
     .rank-badge {
       width:28px; height:28px; border-radius:50%; background:rgba(26,74,128,0.1);
-      display:flex; align-items:center; justify-content:center;
-      font-size:.8rem; font-weight:800; color:#1a4a80; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      font-family:'Fredoka One',cursive; font-size:.85rem; color:#1a4a80;
     }
     .row-avatar {
       width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#a8e4f7,#2a82c4);
@@ -134,59 +141,27 @@
       border:2px solid rgba(255,255,255,0.8);
     }
     .row-info { flex:1; min-width:0; }
-    .row-name { font-size:.88rem; font-weight:800; color:#1a4a80; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .row-detail { font-size:.65rem; font-weight:700; color:rgba(26,74,128,0.5); }
-    .moi-badge { font-size:.6rem; background:#2a82c4; color:white; border-radius:20px; padding:1px 7px; font-weight:800; margin-left:4px; }
-    .row-score { font-size:.95rem; font-weight:800; color:#1a5fa0; flex-shrink:0; }
-    .row-score span { font-size:.6rem; color:rgba(26,95,160,0.55); font-weight:700; }
+    .row-name { font-family:'Fredoka One',cursive; font-size:.9rem; color:#1a4a80; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .row-name.moi { color:#2a82c4; }
+    .moi-badge { font-size:.58rem; background:#2a82c4; color:white; border-radius:20px; padding:1px 7px; font-weight:800; margin-left:5px; vertical-align:middle; }
+    .row-detail { font-size:.65rem; font-weight:700; color:rgba(26,74,128,0.5); margin-top:1px; }
+    .row-score { font-family:'Fredoka One',cursive; font-size:1rem; color:#1a5fa0; flex-shrink:0; text-align:right; }
+    .row-score span { display:block; font-family:'Nunito',sans-serif; font-size:.6rem; color:rgba(26,95,160,0.55); font-weight:700; }
 
-    /* ── Mon rang flottant ── */
-    .mon-rang-card {
-      background:linear-gradient(135deg,rgba(42,130,196,0.15),rgba(26,95,160,0.1));
-      border:2px solid rgba(42,130,196,0.35); border-radius:16px; padding:12px 16px;
-      display:flex; align-items:center; gap:12px;
-      box-shadow:0 4px 16px rgba(26,95,160,0.12);
-    }
-    .mon-rang-emoji { font-size:2.2rem; flex-shrink:0; }
-    .mon-rang-info { flex:1; }
-    .mon-rang-label { font-size:.65rem; font-weight:800; color:rgba(26,74,128,0.55); text-transform:uppercase; letter-spacing:1px; }
-    .mon-rang-val { font-size:1.3rem; font-weight:800; color:#1a4a80; line-height:1.1; }
-    .mon-rang-sub { font-size:.7rem; font-weight:700; color:rgba(26,95,160,0.6); }
-    .mon-rang-score { text-align:right; flex-shrink:0; }
-    .mon-rang-score-val { font-size:1.5rem; font-weight:800; color:#2a82c4; line-height:1; }
-    .mon-rang-score-label { font-size:.6rem; font-weight:700; color:rgba(26,95,160,0.55); }
-
-    /* ── États vides / loading ── */
-    .empty-state { text-align:center; padding:32px 16px; display:flex; flex-direction:column; align-items:center; gap:8px; }
-    .empty-state .icon { font-size:3rem; }
-    .empty-state p { font-size:.82rem; font-weight:700; color:rgba(26,74,128,0.55); }
-    .spinner-wrap { display:flex; justify-content:center; padding:32px; }
-    .spinner { width:32px; height:32px; border:3px solid rgba(26,74,128,0.15); border-top-color:#2a82c4; border-radius:50%; animation:spin .7s linear infinite; }
+    /* États */
+    .empty-state { text-align:center; padding:36px 16px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+    .empty-state .icon { font-size:3.2rem; }
+    .empty-state p { font-size:.82rem; font-weight:700; color:rgba(26,74,128,0.55); line-height:1.6; }
+    .spinner-wrap { display:flex; justify-content:center; padding:36px; }
+    .spinner { width:34px; height:34px; border:3px solid rgba(26,74,128,0.15); border-top-color:#2a82c4; border-radius:50%; animation:spin .7s linear infinite; }
     @keyframes spin { to{transform:rotate(360deg)} }
-
-    /* ── Section titre ── */
-    .section-title {
-      font-size:.68rem; font-weight:800; color:rgba(26,74,128,0.55);
-      text-transform:uppercase; letter-spacing:1.5px; padding:0 4px;
-    }
-
-    /* ── Stat perso ── */
-    .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .stat-card {
-      background:rgba(255,255,255,0.5); border:2px solid rgba(255,255,255,0.8);
-      border-radius:16px; padding:12px; text-align:center;
-      box-shadow:0 2px 8px rgba(0,60,140,0.06);
-    }
-    .stat-card .icon { font-size:1.4rem; }
-    .stat-card .val { font-size:1.5rem; font-weight:800; color:#1a4a80; line-height:1.1; }
-    .stat-card .lbl { font-size:.65rem; font-weight:700; color:rgba(26,95,160,0.55); }
+    @keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    .slide-up { animation:slideUp .3s ease both; }
   </style>
 </head>
 <body>
 
 <div class="wii-bg"></div>
-
-<!-- Bulles -->
 <script>
 for(let i=0;i<6;i++){
   const b=document.createElement('div'); b.className='bubble';
@@ -201,7 +176,7 @@ for(let i=0;i<6;i++){
   <button class="back-btn" onclick="window.location.href='index.html'">‹</button>
   <div>
     <div class="header-title">🏆 Classements</div>
-    <div class="header-sub">Qui est le meilleur ?</div>
+    <div class="header-sub">Meilleurs scores par sport</div>
   </div>
 </div>
 
@@ -209,58 +184,31 @@ for(let i=0;i<6;i++){
 
   <!-- Tabs sports -->
   <div class="sport-tabs" id="sportTabs">
-    <button class="sport-tab active" data-sport="global" onclick="changerSport('global',this)">🌍 Global</button>
-    <button class="sport-tab" data-sport="bowling" onclick="changerSport('bowling',this)">🎳 Bowling</button>
-    <button class="sport-tab" data-sport="golf" onclick="changerSport('golf',this)">⛳ Golf</button>
-    <button class="sport-tab" data-sport="tennis" onclick="changerSport('tennis',this)">🎾 Tennis</button>
-    <button class="sport-tab" data-sport="boxe" onclick="changerSport('boxe',this)">🥊 Boxe</button>
-    <button class="sport-tab" data-sport="baseball" onclick="changerSport('baseball',this)">⚾ Baseball</button>
+    <button class="sport-tab active" data-sport="bowling"  onclick="changerSport('bowling',this)">🎳 Bowling</button>
+    <button class="sport-tab"        data-sport="golf"     onclick="changerSport('golf',this)">⛳ Golf</button>
+    <button class="sport-tab"        data-sport="tennis"   onclick="changerSport('tennis',this)">🎾 Tennis</button>
+    <button class="sport-tab"        data-sport="boxe"     onclick="changerSport('boxe',this)">🥊 Boxe</button>
+    <button class="sport-tab"        data-sport="baseball" onclick="changerSport('baseball',this)">⚾ Baseball</button>
   </div>
 
-  <!-- Filtre niveau supprimé — classement par meilleurs scores réels -->
-
-  <!-- Mon rang -->
-  <div class="mon-rang-card" id="monRangCard" style="display:none">
-    <div class="mon-rang-emoji" id="monRangEmoji">🎮</div>
-    <div class="mon-rang-info">
-      <div class="mon-rang-label">Ma position</div>
-      <div class="mon-rang-val" id="monRangVal">—</div>
-      <div class="mon-rang-sub" id="monRangSub">—</div>
+  <!-- Mon rang / meilleur score -->
+  <div class="my-best-card" id="myBestCard">
+    <div class="my-best-emoji" id="myBestEmoji">🎮</div>
+    <div class="my-best-info">
+      <div class="my-best-label">Ma position</div>
+      <div class="my-best-rank" id="myBestRank">—</div>
+      <div class="my-best-sub"  id="myBestSub">Mon meilleur score</div>
     </div>
-    <div class="mon-rang-score">
-      <div class="mon-rang-score-val" id="monRangScore">—</div>
-      <div class="mon-rang-score-label" id="monRangScoreLabel">victoires</div>
+    <div class="my-best-score">
+      <div class="my-best-val"  id="myBestVal">—</div>
+      <div class="my-best-unit" id="myBestUnit">pts</div>
     </div>
   </div>
 
-  <!-- Mes stats perso -->
-  <div class="stats-grid" id="statsGrid" style="display:none">
-    <div class="stat-card">
-      <div class="icon">🏅</div>
-      <div class="val" id="statVictoires">—</div>
-      <div class="lbl">Victoires</div>
-    </div>
-    <div class="stat-card">
-      <div class="icon">🎮</div>
-      <div class="val" id="statParties">—</div>
-      <div class="lbl">Parties</div>
-    </div>
-    <div class="stat-card">
-      <div class="icon">🔥</div>
-      <div class="val" id="statStreak">—</div>
-      <div class="lbl">Série win</div>
-    </div>
-    <div class="stat-card">
-      <div class="icon">⭐</div>
-      <div class="val" id="statXP">—</div>
-      <div class="lbl">XP Total</div>
-    </div>
-  </div>
-
-  <!-- Classement principal -->
+  <!-- Classement -->
   <div>
-    <div class="section-title" id="classementTitle">Classement Global</div>
-    <div style="height:6px"></div>
+    <div class="section-title" id="classementTitle">🎳 Classement Bowling</div>
+    <div style="height:7px"></div>
     <div class="classement-card" id="classementCard">
       <div class="spinner-wrap"><div class="spinner"></div></div>
     </div>
@@ -271,41 +219,32 @@ for(let i=0;i<6;i++){
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script>
-/* ════════════════════════════════════════
+/* ══════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════ */
+const SPORT_EMOJI = { bowling:'🎳', golf:'⛳', tennis:'🎾', boxe:'🥊', baseball:'⚾' };
+const SPORT_LABEL = { bowling:'Bowling', golf:'Golf', tennis:'Tennis', boxe:'Boxe', baseball:'Baseball' };
+const SCORE_UNIT  = { bowling:'pts', golf:'coups', tennis:'retours', boxe:'pts', baseball:'pts' };
+
+/* ══════════════════════════════════════════
    ÉTAT
-════════════════════════════════════════ */
-let sportActuel = 'global';
-let monProfil   = null;
+══════════════════════════════════════════ */
+let sportActuel = 'bowling';
 let monUserId   = null;
 
-const SPORT_EMOJI = { global:'🎮', bowling:'🎳', golf:'⛳', tennis:'🎾', boxe:'🥊', baseball:'⚾' };
-const SPORT_LABEL = { global:'Global', bowling:'Bowling', golf:'Golf', tennis:'Tennis', boxe:'Boxe', baseball:'Baseball' };
-
-// Unité d'affichage et sens du tri par sport
-const SPORT_META = {
-  global:   { unite:'victoires', asc: false, label: j => `${j.stats_wins ?? 0} victoires` },
-  bowling:  { unite:'pts',       asc: false },
-  golf:     { unite:'coups',     asc: true  }, // Golf : MOINS = mieux
-  tennis:   { unite:'balles',    asc: false },
-  boxe:     { unite:'pts',       asc: false },
-  baseball: { unite:'pts',       asc: false },
-};
-
-/* ════════════════════════════════════════
+/* ══════════════════════════════════════════
    INIT
-════════════════════════════════════════ */
+══════════════════════════════════════════ */
 (async () => {
   const session = await checkAuth();
   if (!session) return;
   monUserId = session.user.id;
-  monProfil = await getProfilCourant();
-  afficherStatsPerso();
   chargerClassement();
 })();
 
-/* ════════════════════════════════════════
+/* ══════════════════════════════════════════
    NAVIGATION
-════════════════════════════════════════ */
+══════════════════════════════════════════ */
 function changerSport(sport, btn) {
   sportActuel = sport;
   document.querySelectorAll('.sport-tab').forEach(b => b.classList.remove('active'));
@@ -313,206 +252,140 @@ function changerSport(sport, btn) {
   chargerClassement();
 }
 
-/* ════════════════════════════════════════
-   STATS PERSO
-════════════════════════════════════════ */
-function afficherStatsPerso() {
-  if (!monProfil) return;
-  document.getElementById('statsGrid').style.display = 'grid';
-  document.getElementById('statVictoires').textContent = monProfil.stats_wins ?? 0;
-  const parties = (monProfil.stats_wins ?? 0) + (monProfil.stats_losses ?? 0);
-  document.getElementById('statParties').textContent = parties;
-  document.getElementById('statStreak').textContent  = monProfil.win_streak ?? 0;
-  document.getElementById('statXP').textContent      = monProfil.xp_points ?? 0;
-}
-
-/* ════════════════════════════════════════
-   CHARGEMENT CLASSEMENT
-════════════════════════════════════════ */
+/* ══════════════════════════════════════════
+   CHARGEMENT
+══════════════════════════════════════════ */
 async function chargerClassement() {
   const card = document.getElementById('classementCard');
   card.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div></div>';
-  document.getElementById('monRangCard').style.display = 'none';
+  document.getElementById('myBestCard').classList.remove('show');
+  document.getElementById('classementTitle').textContent =
+    `${SPORT_EMOJI[sportActuel]} Classement ${SPORT_LABEL[sportActuel]}`;
 
   try {
-    let joueurs = [];
-
-    if (sportActuel === 'global') {
-      // ── Mode global : classement par victoires depuis profiles ──
-      const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('id, full_name, stats_wins, stats_losses, xp_points, win_streak')
-        .order('stats_wins', { ascending: false })
-        .order('xp_points',  { ascending: false })
-        .limit(50);
-      if (error) throw error;
-
-      joueurs = (data || []).map(j => ({
-        userId:    j.id,
-        nom:       j.full_name || 'Joueur',
-        score:     j.stats_wins ?? 0,
-        xp:        j.xp_points ?? 0,
-        wins:      j.stats_wins ?? 0,
-        losses:    j.stats_losses ?? 0,
-        streak:    j.win_streak ?? 0,
-        gagne:     true,
-        joue_le:   null,
-      }));
-
-    } else {
-      // ── Mode sport : meilleur score par joueur depuis table classement ──
-      const meta = SPORT_META[sportActuel];
-
-      // On récupère toutes les entrées du sport avec le profil du joueur
-      const { data, error } = await supabaseClient
-        .from('classement')
-        .select('user_id, score, gagne, joue_le, profiles(full_name)')
-        .eq('sport', sportActuel)
-        .order('score', { ascending: meta.asc })
-        .limit(500); // on prend large pour dédupliquer côté client
-
-      if (error) throw error;
-
-      // Garder seulement le MEILLEUR score par joueur
-      const parJoueur = {};
-      for (const row of (data || [])) {
-        const uid = row.user_id;
-        const existant = parJoueur[uid];
-        const mieux = !existant ||
-          (meta.asc  ? row.score < existant.score
-                     : row.score > existant.score);
-        if (mieux) parJoueur[uid] = row;
-      }
-
-      // Convertir en tableau trié
-      joueurs = Object.values(parJoueur)
-        .sort((a, b) => meta.asc ? a.score - b.score : b.score - a.score)
-        .slice(0, 50)
-        .map(row => ({
-          userId:  row.user_id,
-          nom:     row.profiles?.full_name || 'Joueur',
-          score:   row.score,
-          gagne:   row.gagne,
-          joue_le: row.joue_le,
-        }));
-    }
-
+    const joueurs = await getClassementSport(sportActuel, 50);
     afficherClassement(joueurs);
-
   } catch(err) {
     console.error('Erreur classement:', err);
     card.innerHTML = `<div class="empty-state"><div class="icon">😵</div><p>Erreur de chargement.<br>Vérifie ta connexion.</p></div>`;
   }
 }
 
-/* ════════════════════════════════════════
+/* ══════════════════════════════════════════
    AFFICHAGE
-════════════════════════════════════════ */
+══════════════════════════════════════════ */
 function afficherClassement(joueurs) {
-  const card  = document.getElementById('classementCard');
-  const title = document.getElementById('classementTitle');
-  const meta  = SPORT_META[sportActuel];
-
-  title.textContent = `Classement ${SPORT_LABEL[sportActuel]}`;
+  const card = document.getElementById('classementCard');
+  const unit = SCORE_UNIT[sportActuel];
 
   if (joueurs.length === 0) {
-    card.innerHTML = `<div class="empty-state"><div class="icon">🏜️</div><p>Aucune partie enregistrée.<br>Joue le premier !</p></div>`;
+    card.innerHTML = `<div class="empty-state">
+      <div class="icon">${SPORT_EMOJI[sportActuel]}</div>
+      <p>Personne n'a encore joué ce sport.<br>Sois le premier à établir un record !</p>
+    </div>`;
     return;
   }
 
-  // Trouver mon rang
-  const monRang = joueurs.findIndex(j => j.userId === monUserId);
-  afficherMonRang(joueurs, monRang, meta);
+  // Trouver ma position
+  const monRang = joueurs.findIndex(j => j.user_id === monUserId);
+  afficherMonRang(joueurs, monRang, unit);
 
-  const top3 = joueurs.slice(0, 3);
+  const top3  = joueurs.slice(0, 3);
   const reste = joueurs.slice(3);
   let html = '';
 
-  // ── Podium top 3 ──
+  // ─────────────── PODIUM ───────────────
   html += `<div class="podium-wrap">`;
-  const ordres = [
-    { idx: 1, classe: 'second', rank: '🥈', num: 2 },
-    { idx: 0, classe: 'first',  rank: '🥇', num: 1 },
-    { idx: 2, classe: 'third',  rank: '🥉', num: 3 },
-  ];
-  ordres.forEach(({ idx, classe, rank, num }) => {
+  [
+    { idx:1, classe:'p2', rank:'🥈', num:2 },
+    { idx:0, classe:'p1', rank:'🥇', num:1 },
+    { idx:2, classe:'p3', rank:'🥉', num:3 },
+  ].forEach(({ idx, classe, rank, num }) => {
     if (!top3[idx]) return;
-    const j = top3[idx];
-    const estMoi = j.userId === monUserId;
-    const prenom = (j.nom || 'Joueur').split(' ')[0];
-    const { valStr, unite } = formatScore(j.score, meta);
+    const j      = top3[idx];
+    const estMoi = j.user_id === monUserId;
+    const nom    = getNom(j);
 
     html += `
-      <div class="podium-item ${classe}">
+      <div class="podium-item ${classe} slide-up" style="animation-delay:${idx * 0.08}s">
         <div class="podium-avatar">
-          ${num === 1 ? '<span class="podium-avatar-crown">👑</span>' : ''}
+          ${num === 1 ? '<span class="podium-crown">👑</span>' : ''}
           ${SPORT_EMOJI[sportActuel]}
         </div>
-        <div class="podium-name">${prenom}${estMoi ? ' (Moi)' : ''}</div>
-        <div class="podium-score-val">${valStr}</div>
-        <div class="podium-score-label">${unite}</div>
+        <div class="podium-name${estMoi ? ' moi' : ''}">${nom}${estMoi ? ' 👈' : ''}</div>
+        <div class="podium-score-val">${j.score ?? '—'}</div>
+        <div class="podium-score-unit">${unit}</div>
         <div class="podium-block">${rank}</div>
       </div>`;
   });
   html += `</div>`;
 
-  // ── Liste 4+ ──
+  // ─────────────── LISTE 4+ ───────────────
   if (reste.length > 0) {
-    html += `<div class="classement-list">`;
+    html += `
+      <div class="list-divider">
+        <div class="list-divider-line"></div>
+        <div class="list-divider-text">Suite du classement</div>
+        <div class="list-divider-line"></div>
+      </div>
+      <div class="classement-list">`;
+
     reste.forEach((j, i) => {
-      const rang    = i + 4;
-      const estMoi  = j.userId === monUserId;
-      const prenom  = (j.nom || 'Joueur').split(' ')[0];
-      const { valStr, unite } = formatScore(j.score, meta);
-      const dateStr = j.joue_le ? new Date(j.joue_le).toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) : '';
+      const rang   = i + 4;
+      const estMoi = j.user_id === monUserId;
+      const nom    = getNom(j);
+      const date   = j.joue_le
+        ? new Date(j.joue_le).toLocaleDateString('fr-FR', { day:'numeric', month:'short' })
+        : '';
 
       html += `
-        <div class="classement-row ${estMoi ? 'moi' : ''}">
+        <div class="classement-row${estMoi ? ' moi' : ''} slide-up" style="animation-delay:${Math.min(i*0.04,0.4)}s">
           <div class="rank-badge">${rang}</div>
           <div class="row-avatar">${SPORT_EMOJI[sportActuel]}</div>
           <div class="row-info">
-            <div class="row-name">${prenom}${estMoi ? '<span class="moi-badge">MOI</span>' : ''}</div>
-            <div class="row-detail">${dateStr}</div>
+            <div class="row-name${estMoi ? ' moi' : ''}">${nom}${estMoi ? '<span class="moi-badge">MOI</span>' : ''}</div>
+            <div class="row-detail">${date ? `Record du ${date}` : 'Joueur'}</div>
           </div>
-          <div class="row-score">${valStr} <span>${unite}</span></div>
+          <div class="row-score">${j.score ?? '—'} <span>${unit}</span></div>
         </div>`;
     });
+
     html += `</div>`;
   }
 
   card.innerHTML = html;
 }
 
-function afficherMonRang(joueurs, rang, meta) {
-  const card = document.getElementById('monRangCard');
-  if (rang === -1 || !monProfil) { card.style.display = 'none'; return; }
+/* ══════════════════════════════════════════
+   MON RANG
+══════════════════════════════════════════ */
+function afficherMonRang(joueurs, rang, unit) {
+  const myCard = document.getElementById('myBestCard');
+  if (rang === -1) { myCard.classList.remove('show'); return; }
 
-  card.style.display = 'flex';
-  const j = joueurs[rang];
-  const { valStr, unite } = formatScore(j.score, meta);
-
-  document.getElementById('monRangVal').textContent        = `#${rang + 1} sur ${joueurs.length}`;
-  document.getElementById('monRangSub').textContent        = SPORT_LABEL[sportActuel];
-  document.getElementById('monRangScore').textContent      = valStr;
-  document.getElementById('monRangScoreLabel').textContent = unite;
+  const j     = joueurs[rang];
+  const total = joueurs.length;
 
   let emoji = '🎮';
-  if (rang === 0) emoji = '👑';
+  if (rang === 0)      emoji = '👑';
   else if (rang === 1) emoji = '🥈';
   else if (rang === 2) emoji = '🥉';
-  else if (rang < 10) emoji = '🌟';
-  document.getElementById('monRangEmoji').textContent = emoji;
+  else if (rang < 10)  emoji = '⭐';
+
+  document.getElementById('myBestEmoji').textContent = emoji;
+  document.getElementById('myBestRank').textContent  = `#${rang + 1} sur ${total} joueurs`;
+  document.getElementById('myBestSub').textContent   = `${SPORT_LABEL[sportActuel]} · Mon meilleur`;
+  document.getElementById('myBestVal').textContent   = j.score ?? '—';
+  document.getElementById('myBestUnit').textContent  = unit;
+
+  myCard.classList.add('show');
 }
 
-/* ════════════════════════════════════════
+/* ══════════════════════════════════════════
    HELPERS
-════════════════════════════════════════ */
-function formatScore(score, meta) {
-  // Golf : affichage spécial "X coups"
-  if (sportActuel === 'golf') {
-    return { valStr: score, unite: 'coups (min)' };
-  }
-  return { valStr: score, unite: meta.unite };
+══════════════════════════════════════════ */
+function getNom(joueur) {
+  return joueur.profiles?.full_name || 'Joueur';
 }
 </script>
 </body>
