@@ -436,11 +436,7 @@ canvas { display:block; }
 //  atteint la zone de l'IA avant qu'elle frappe.
 //  Doit être petit (≤ temps de vol dans la zone arrière).
 // ══════════════════════════════════════════
-const DIFF = {
-  facile:    { vitesse:0.030, erreurIA:0.45, delaiIA:3 },
-  moyen:     { vitesse:0.042, erreurIA:0.20, delaiIA:2 },
-  difficile: { vitesse:0.058, erreurIA:0.04, delaiIA:0 },
-};
+
 
 // ══════════════════════════════════════════
 //  ÉTAT
@@ -1118,8 +1114,8 @@ function mettreAJourScore() {
       // Mettre à jour l'affichage des sets
       document.getElementById('sets-display').textContent = `Sets ${etat.setsJoueur}–${etat.setsAdv}`;
 
-      // Match gagné ? (2 sets sur 3)
-      if (etat.setsJoueur >= 2 || etat.setsAdv >= 2) {
+      // Match gagné ? (1 seul set pour gagner le match)
+      if (etat.setsJoueur >= 1 || etat.setsAdv >= 1) {
         setTimeout(finDeMatch, 1200); return;
       }
 
@@ -1155,7 +1151,8 @@ async function finDeMatch() {
   else { if(navigator.vibrate) navigator.vibrate([20,10,20,10,20]); }
 
   // ── Sauvegarde Supabase ──
-  const scoreTotal = etat.setsJoueur * 100 + etat.jeuxJoueur * 10;
+  // Au tennis, on ne compte pas de points, juste victoire (1) ou défaite (0)
+  const scoreTotal = victoire ? 1 : 0;
   const result = await sauvegarderFinPartie('tennis', { score: scoreTotal, gagne: victoire });
   if (result?.xp_gagne) {
     const xpEl = document.createElement('div');
