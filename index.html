@@ -229,7 +229,7 @@
       <div class="preview-title" id="prevTitle">Bowling</div>
       <div class="preview-desc"  id="prevDesc">Renverse toutes les quilles !</div>
       <div class="preview-tags">
-        <span class="tag" id="prevTag1">3 Frames</span>
+        <span class="tag" id="prevTag1">10 Frames</span>
         <span class="tag" id="prevTag2">2 lancers / frame</span>
         <span class="tag" id="prevTag3">📐 Gyroscope</span>
       </div>
@@ -271,7 +271,7 @@
         <span class="sport-btn-emoji">🎾</span>
         <div class="sport-btn-info">
           <div class="sport-btn-name">Tennis</div>
-          <div class="sport-btn-detail">3 sets · 2 vs 2</div>
+          <div class="sport-btn-detail">1 set · 2 vs 2</div>
         </div>
         <span class="sport-btn-arrow">›</span>
       </div>
@@ -284,7 +284,7 @@
         <span class="sport-btn-emoji">🥊</span>
         <div class="sport-btn-info">
           <div class="sport-btn-name">Boxe</div>
-          <div class="sport-btn-detail">3 rounds · Micro + Boutons</div>
+          <div class="sport-btn-detail">3 rounds · Swipe </div>
         </div>
         <span class="sport-btn-arrow">›</span>
       </div>
@@ -297,7 +297,7 @@
         <span class="sport-btn-emoji">⚾️</span>
         <div class="sport-btn-info">
           <div class="sport-btn-name">Baseball</div>
-          <div class="sport-btn-detail">3 rounds · Micro + Boutons</div>
+          <div class="sport-btn-detail">3 rounds · Reflexe </div>
         </div>
         <span class="sport-btn-arrow">›</span>
       </div>
@@ -340,7 +340,7 @@
 
 <!-- Supabase CDN — doit être AVANT supabase.js -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=2"></script>
+<script src="js/supabase.js?v=3"></script>
 
 <script>
   // ── Bulles déco ──
@@ -366,10 +366,10 @@
   // ── Menu sports ──
   let sportActuel = 'bowling';
   const infos = {
-    bowling: { emoji:'🎳', nom:'Bowling', desc:'Renverse toutes les quilles !', t1:'3 Frames',  t2:'2 lancers / frame', t3:'📐 Gyroscope' },
+    bowling: { emoji:'🎳', nom:'Bowling', desc:'Renverse toutes les quilles !', t1:'10 Frames',  t2:'2 lancers / frame', t3:'📐 Gyroscope' },
     golf:    { emoji:'⛳', nom:'Golf',    desc:'Mets la balle dans le trou !',  t1:'3 Trous',   t2:'Par / Score',       t3:'📐 Gyroscope' },
-    tennis:  { emoji:'🎾', nom:'Tennis',  desc:'Gagne les 3 sets !',            t1:'3 Sets',    t2:'15·30·40·Jeu',      t3:'📐 Gyroscope' },
-    boxe:    { emoji:'🥊', nom:'Boxe',    desc:'Crie pour frapper plus fort !', t1:'3 Rounds',  t2:'Barre de vie',      t3:'🎤 Micro'     },
+    tennis:  { emoji:'🎾', nom:'Tennis',  desc:'Gagne le sets !',            t1:'1 Set',    t2:'15·30·40·Jeu',      t3:'📐 Gyroscope' },
+    boxe:    { emoji:'🥊', nom:'Boxe',    desc:'Entraine tes reflexes !', t1:'3 Rounds',  t2:'Barre de vie'     },
     baseball: { emoji:'⚾️', nom:'Baseball', desc:'Sois précis dans le timing !', t1:'5 Rounds', t2:'Barre de vie' },
   };
 
