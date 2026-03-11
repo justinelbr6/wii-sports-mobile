@@ -1,219 +1,168 @@
 // ============================================================
-//  js/supabase.js — Wii Sports Mobile
-//  Chargé en premier sur TOUTES les pages du projet
+//  supabase.js — Wii Sports Mobile
 // ============================================================
 
-// 🔑 Clé ANON publique — safe à exposer côté client
 const SUPABASE_URL = 'https://jkfktjvloclwfzcgudyg.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprZmt0anZsb2Nsd2Z6Y2d1ZHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MjAyNzksImV4cCI6MjA4ODM5NjI3OX0.Lox72iQ5lTfR9hZK3vArz8KPo7MsftciMP9ifwxaP9w'; // ← Supabase > Settings > API > anon public
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprZmt0anZsb2Nsd2Z6Y2d1ZHlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MjAyNzksImV4cCI6MjA4ODM5NjI3OX0.Lox72iQ5lTfR9hZK3vArz8KPo7MsftciMP9ifwxaP9w';
 
 const { createClient } = supabase;
 const supabaseClient   = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-
-// ============================================================
-//  AUTH — GARDE : redirige vers login.html si non connecté
-//  Appelle checkAuth() en haut de chaque page jeu/menu
-//
-//  Exemple dans index.html :
-//    <script src="js/supabase.js"></script>
-//    <script> checkAuth(); </script>
-// ============================================================
+// ── AUTH ──────────────────────────────────────────────────────
 async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session) {
-    window.location.replace('login.html');
-  }
+  if (!session) window.location.replace('login.html');
   return session;
 }
 
-
-// ============================================================
-//  AUTH — PROFIL COURANT
-//  Retourne le profil Supabase de l'utilisateur connecté
-// ============================================================
 async function getProfilCourant() {
   const { data: { user } } = await supabaseClient.auth.getUser();
   if (!user) return null;
-
   const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
+    .from('profiles').select('*').eq('id', user.id).single();
   if (error) { console.error('getProfilCourant:', error.message); return null; }
   return data;
 }
 
-
-// ============================================================
-//  AUTH — DÉCONNEXION
-//  À appeler depuis un bouton "Se déconnecter"
-// ============================================================
 async function seDeconnecter() {
   await supabaseClient.auth.signOut();
   window.location.replace('login.html');
 }
 
-
-// ============================================================
-//  ADVERSAIRES — Récupère un joueur aléatoire
-//  Utilisation : const adv = await getAdversaire('bowling', 'Débutant');
-// ============================================================
+// ── ADVERSAIRES ───────────────────────────────────────────────
 async function getAdversaire(sport, niveau = null) {
   try {
-    // Mapping nom de sport → colonne profiles
     const colonne = {
-      tennis:   'level_tennis',
-      baseball: 'level_baseball',
-      bowling:  'level_bowling',
-      boxe:     'level_boxe',
+      tennis:'level_tennis', baseball:'level_baseball',
+      bowling:'level_bowling', boxe:'level_boxe', golf:'level_golf',
     }[sport];
 
     let query = supabaseClient.from('profiles').select('id, full_name, email');
 
     if (niveau && colonne) {
-      // Convertit 'facile/moyen/difficile' → valeurs ENUM si besoin
       const niveauEnum = {
-        'facile':     'Débutant',
-        'moyen':      'Intermédiaire',
-        'difficile':  'Confirmé',
-        'Débutant':   'Débutant',
-        'Intermédiaire':'Intermédiaire',
-        'Confirmé':   'Confirmé',
+        'facile':'Débutant','moyen':'Intermédiaire','difficile':'Confirmé',
+        'Débutant':'Débutant','Intermédiaire':'Intermédiaire','Confirmé':'Confirmé',
       }[niveau] || niveau;
-
       query = query.eq(colonne, niveauEnum);
     }
 
-    // Exclure le joueur connecté
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (user) query = query.neq('id', user.id);
 
     const { data, error } = await query;
-
     if (error) { console.error('getAdversaire:', error.message); return null; }
     if (!data || data.length === 0) return { nom: 'CPU', avatar: '🤖' };
 
     const adv = data[Math.floor(Math.random() * data.length)];
-    return {
-      nom:    adv.full_name,
-      avatar: '🎮',
-      email:  adv.email,
-      id:     adv.id,
-    };
-
+    return { nom: adv.full_name, avatar: '🎮', email: adv.email, id: adv.id };
   } catch (err) {
-    console.error('getAdversaire inattendu:', err);
+    console.error('getAdversaire:', err);
     return { nom: 'CPU', avatar: '🤖' };
   }
 }
 
-
-// ============================================================
-//  ADVERSAIRES — Liste par niveau pour un sport
-// ============================================================
 async function getJoueursParNiveau(sport, niveau) {
   const colonne = {
     tennis:'level_tennis', baseball:'level_baseball',
-    bowling:'level_bowling', boxe:'level_boxe',
+    bowling:'level_bowling', boxe:'level_boxe', golf:'level_golf',
   }[sport];
-
   if (!colonne) return [];
-
   const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('id, full_name, email')
-    .eq(colonne, niveau)
-    .order('full_name', { ascending: true });
-
-  if (error) { console.error('getJoueursParNiveau:', error.message); return []; }
+    .from('profiles').select('id, full_name, email')
+    .eq(colonne, niveau).order('full_name', { ascending: true });
+  if (error) return [];
   return data || [];
 }
 
+// ── MEILLEUR SCORE PERSO ──────────────────────────────────────
+async function getMeilleurScore(sport) {
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await supabaseClient
+      .from('classement')
+      .select('score, gagne, joue_le')
+      .eq('user_id', user.id)
+      .eq('sport', sport)
+      .order('score', { ascending: sport === 'golf' })
+      .limit(1)
+      .maybeSingle();
+    if (error) return null;
+    return data;
+  } catch(err) { return null; }
+}
 
-// ============================================================
-//  SCORES — Sauvegarde fin de partie + mise à jour stats profil
+// ── SAUVEGARDE FIN DE PARTIE ──────────────────────────────────
+//  Règles :
+//    bowling  → MAX quilles (0-300)
+//    golf     → MIN coups (moins = mieux)
+//    tennis   → MAX balles renvoyées
+//    boxe     → MAX points
+//    baseball → MAX points
 //
-//  Règles de score par sport :
-//    Bowling  → score = nb MAX de quilles tombées (0-300)
-//    Golf     → score = nb MINIMUM de coups joués (plus petit = meilleur)
-//    Tennis   → score = nb MAX de balles renvoyées
-//    Boxe     → score = nb MAX de points
-//    Baseball → score = nb MAX de points
-//
-//  Utilisation :
-//    await sauvegarderFinPartie('bowling', { score: 145, gagne: true });
-//
-//  XP attribuée automatiquement :
-//    Victoire  : 50 XP + bonus sport-spécifique
-//    Défaite   : 10 XP (consolation)
-// ============================================================
+//  N'insère dans classement QUE si nouveau record perso.
+//  Les stats profil (wins/XP) sont TOUJOURS mises à jour.
+// ─────────────────────────────────────────────────────────────
 async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
   try {
     const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
+    if (!user) { console.warn('sauvegarderFinPartie: utilisateur non connecté'); return; }
 
-    // ── Calcul XP selon la logique propre à chaque sport ──
-    let xp_gagne = 10; // défaut défaite
+    // ── Nouveau record ? ──
+    const meilleur = await getMeilleurScore(sport);
+    const estRecord = !meilleur ||
+      (sport === 'golf' ? score < meilleur.score : score > meilleur.score);
+
+    // ── Calcul XP ──
+    let xp_gagne = 10;
     if (gagne) {
       switch (sport) {
-        case 'bowling':
-          // Max 300 pts → XP entre 50 et 110
-          xp_gagne = 50 + Math.floor(score / 5);
-          break;
-        case 'golf':
-          // Moins de coups = mieux. On inverse : XP = 50 + max(0, 30 - score)
-          // score = nb de coups (ex: 9 coups sur 3 trous → XP élevée)
-          xp_gagne = 50 + Math.max(0, 30 - score);
-          break;
-        case 'tennis':
-          // score = nb de balles renvoyées
-          xp_gagne = 50 + Math.floor(score / 2);
-          break;
+        case 'bowling':  xp_gagne = Math.min(150, 50 + Math.floor(score / 5));      break;
+        case 'golf':     xp_gagne = Math.min(150, 50 + Math.max(0, 30 - score));    break;
+        case 'tennis':   xp_gagne = Math.min(150, 50 + Math.floor(score / 2));      break;
         case 'boxe':
-        case 'baseball':
-          // score = nb de points
-          xp_gagne = 50 + Math.floor(score / 20);
-          break;
-        default:
-          xp_gagne = 50 + Math.floor(score / 10);
+        case 'baseball': xp_gagne = Math.min(150, 50 + Math.floor(score / 20));     break;
+        default:         xp_gagne = Math.min(150, 50 + Math.floor(score / 10));
       }
-      // Plafond à 150 XP par partie
-      xp_gagne = Math.min(150, xp_gagne);
     }
 
-    // 1. Insérer dans la table classement
-    const { error: errScore } = await supabaseClient.from('classement').insert([{
-      user_id:  user.id,
-      sport,
-      score,
-      gagne,
-      xp_gagne,
-      joue_le:  new Date().toISOString(),
-    }]);
-    if (errScore) console.error('sauvegarderFinPartie/classement:', errScore.message);
+    // ── 1. Classement : seulement si record ──
+    if (estRecord) {
+      const { error: errScore } = await supabaseClient.from('classement').insert([{
+        user_id: user.id,
+        sport,
+        score,
+        gagne,
+        xp_gagne,
+        joue_le: new Date().toISOString(),
+      }]);
+      if (errScore) {
+        console.error('❌ classement insert error:', errScore.message);
+      } else {
+        console.log(`🏆 Nouveau record ${sport} : ${score}`);
+      }
+    } else {
+      console.log(`ℹ️ Pas un record (${sport}: ${score} — record actuel: ${meilleur.score})`);
+    }
 
-    // 2. Mettre à jour les stats du profil (RPC ou fallback manuel)
-    const { error: errStats } = await supabaseClient.rpc('mettre_a_jour_stats', {
-      p_user_id: user.id,
-      p_gagne:   gagne,
-      p_xp:      xp_gagne,
+    // ── 2. Stats profil : toujours ──
+    const { error: errRpc } = await supabaseClient.rpc('mettre_a_jour_stats', {
+      p_user_id: user.id, p_gagne: gagne, p_xp: xp_gagne,
     });
-    if (errStats) {
-      // Fallback manuel si la fonction RPC n'existe pas encore
-      console.warn('RPC non dispo, fallback manuel:', errStats.message);
+
+    if (errRpc) {
+      console.warn('RPC non dispo, fallback manuel:', errRpc.message);
       const { data: profil } = await supabaseClient
         .from('profiles').select('stats_wins,stats_losses,win_streak,loss_streak,xp_points')
         .eq('id', user.id).single();
       if (profil) {
         await supabaseClient.from('profiles').update(gagne ? {
-          stats_wins:  (profil.stats_wins  || 0) + 1,
-          win_streak:  (profil.win_streak  || 0) + 1,
-          loss_streak: 0,
-          xp_points:   (profil.xp_points   || 0) + xp_gagne,
-          updated_at:  new Date().toISOString(),
+          stats_wins:   (profil.stats_wins   || 0) + 1,
+          win_streak:   (profil.win_streak   || 0) + 1,
+          loss_streak:  0,
+          xp_points:    (profil.xp_points    || 0) + xp_gagne,
+          updated_at:   new Date().toISOString(),
         } : {
           stats_losses: (profil.stats_losses || 0) + 1,
           loss_streak:  (profil.loss_streak  || 0) + 1,
@@ -224,72 +173,43 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
       }
     }
 
-    console.log(`✅ Fin de partie sauvegardée — ${sport} | score:${score} | gagne:${gagne} | xp:+${xp_gagne}`);
-    return { xp_gagne };
+    console.log(`✅ ${sport} | score:${score} | gagne:${gagne} | xp:+${xp_gagne} | record:${estRecord}`);
+    return { xp_gagne, estRecord };
 
   } catch(err) {
     console.error('sauvegarderFinPartie inattendu:', err);
   }
 }
 
-// ============================================================
-//  SCORES — Meilleur score d'un joueur pour un sport
-//  Utilisation : const best = await getMeilleurScore('bowling');
-// ============================================================
-async function getMeilleurScore(sport) {
+// ── CLASSEMENT PAR SPORT ──────────────────────────────────────
+async function getClassementSport(sport, limit = 20) {
   try {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return null;
-
-    let query = supabaseClient
+    const { data, error } = await supabaseClient
       .from('classement')
-      .select('score, gagne, joue_le')
-      .eq('user_id', user.id)
-      .eq('sport', sport);
+      .select('score, gagne, joue_le, user_id, profiles(id, full_name)')
+      .eq('sport', sport)
+      .order('score', { ascending: sport === 'golf' })
+      .limit(200);
 
-    // Golf : meilleur = MINIMUM de coups
-    if (sport === 'golf') {
-      query = query.order('score', { ascending: true });
-    } else {
-      query = query.order('score', { ascending: false });
+    if (error) { console.error('getClassementSport:', error.message); return []; }
+
+    // Garder seulement le meilleur score par joueur
+    const vus = new Set();
+    const meilleurs = [];
+    for (const row of (data || [])) {
+      if (vus.has(row.user_id)) continue;
+      vus.add(row.user_id);
+      meilleurs.push(row);
+      if (meilleurs.length >= limit) break;
     }
-
-    const { data, error } = await query.limit(1).single();
-    if (error) return null;
-    return data;
-  } catch(err) {
-    console.error('getMeilleurScore:', err);
-    return null;
-  }
-}
-
-// ============================================================
-//  SCORES — Classement global pour un sport
-//  Utilisation : const top = await getClassement('bowling', 10);
-// ============================================================
-async function getClassement(sport, limit = 10) {
-  try {
-    let query = supabaseClient
-      .from('classement')
-      .select('score, gagne, joue_le, user_id, profiles(full_name)')
-      .eq('sport', sport);
-
-    if (sport === 'golf') {
-      query = query.order('score', { ascending: true });
-    } else {
-      query = query.order('score', { ascending: false });
-    }
-
-    const { data, error } = await query.limit(limit);
-    if (error) { console.error('getClassement:', error.message); return []; }
-    return data || [];
-  } catch(err) {
-    console.error('getClassement inattendu:', err);
-    return [];
-  }
+    return meilleurs;
+  } catch(err) { return []; }
 }
 
 // Alias legacy
 async function sauvegarderScore(sport, score) {
   return sauvegarderFinPartie(sport, { score, gagne: false });
+}
+async function getAdversaireParNiveau(sport, niveau) {
+  return getAdversaire(sport, niveau);
 }
