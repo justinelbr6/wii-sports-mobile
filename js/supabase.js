@@ -129,17 +129,25 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
 
     // ── 1. Classement : seulement si record ──
     if (estRecord) {
+      // On retire xp_gagne au cas où la colonne n'existe pas dans la table classement
       const { error: errScore } = await supabaseClient.from('classement').insert([{
         user_id: user.id,
-        sport,
-        score,
-        gagne,
-        joue_le: new Date().toISOString(),
+        sport: sport,
+        score: score,
+        gagne: gagne
       }]);
+      
       if (errScore) {
         console.error('❌ classement insert error:', errScore.message);
+        alert('Erreur Supabase (Classement) : ' + errScore.message);
       } else {
         console.log(`🏆 Nouveau record ${sport} : ${score}`);
+        // Petit feedback visuel pour être sûr que ça a marché
+        const toast = document.createElement('div');
+        toast.textContent = '☁️ Score sauvegardé en ligne !';
+        toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#2a82c4;color:white;padding:10px 20px;border-radius:20px;z-index:9999;font-family:sans-serif;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.2);animation:popIn 0.3s ease;';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
       }
     } else {
       console.log(`ℹ️ Pas un record (${sport}: ${score} — record actuel: ${meilleur.score})`);
