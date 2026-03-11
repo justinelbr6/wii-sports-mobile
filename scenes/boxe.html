@@ -1614,6 +1614,12 @@ function afficherGameOver(){
     try{ localStorage.setItem('boxe_best',''+G.score); }catch(e){}
   }
 
+  // ── Sauvegarde Supabase ──
+  const gagne = G.score >= 200; // victoire si score ≥ 200
+  if (typeof sauvegarderFinPartie === 'function') {
+    sauvegarderFinPartie('boxe', { score: G.score, gagne });
+  }
+
   document.getElementById('go-title').textContent=
     G.score>=1000?'👑 LÉGENDE !':
     G.score>=500?'🏆 Champion !':

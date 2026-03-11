@@ -136,11 +136,18 @@ async function getJoueursParNiveau(sport, niveau) {
 // ============================================================
 //  SCORES — Sauvegarde fin de partie + mise à jour stats profil
 //
+//  Règles de score par sport :
+//    Bowling  → score = nb MAX de quilles tombées (0-300)
+//    Golf     → score = nb MINIMUM de coups joués (plus petit = meilleur)
+//    Tennis   → score = nb MAX de balles renvoyées
+//    Boxe     → score = nb MAX de points
+//    Baseball → score = nb MAX de points
+//
 //  Utilisation :
 //    await sauvegarderFinPartie('bowling', { score: 145, gagne: true });
 //
 //  XP attribuée automatiquement :
-//    Victoire  : 50 XP + bonus selon score
+//    Victoire  : 50 XP + bonus sport-spécifique
 //    Défaite   : 10 XP (consolation)
 // ============================================================
 async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
@@ -148,11 +155,37 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
 
-    // Calcul XP
-    const xp_gagne = gagne ? 50 + Math.floor(score / 10) : 10;
+    // ── Calcul XP selon la logique propre à chaque sport ──
+    let xp_gagne = 10; // défaut défaite
+    if (gagne) {
+      switch (sport) {
+        case 'bowling':
+          // Max 300 pts → XP entre 50 et 110
+          xp_gagne = 50 + Math.floor(score / 5);
+          break;
+        case 'golf':
+          // Moins de coups = mieux. On inverse : XP = 50 + max(0, 30 - score)
+          // score = nb de coups (ex: 9 coups sur 3 trous → XP élevée)
+          xp_gagne = 50 + Math.max(0, 30 - score);
+          break;
+        case 'tennis':
+          // score = nb de balles renvoyées
+          xp_gagne = 50 + Math.floor(score / 2);
+          break;
+        case 'boxe':
+        case 'baseball':
+          // score = nb de points
+          xp_gagne = 50 + Math.floor(score / 20);
+          break;
+        default:
+          xp_gagne = 50 + Math.floor(score / 10);
+      }
+      // Plafond à 150 XP par partie
+      xp_gagne = Math.min(150, xp_gagne);
+    }
 
-    // 1. Insérer dans la table scores
-    const { error: errScore } = await supabaseClient.from('scores').insert([{
+    // 1. Insérer dans la table classement
+    const { error: errScore } = await supabaseClient.from('classement').insert([{
       user_id:  user.id,
       sport,
       score,
@@ -160,9 +193,9 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
       xp_gagne,
       joue_le:  new Date().toISOString(),
     }]);
-    if (errScore) console.error('sauvegarderFinPartie/scores:', errScore.message);
+    if (errScore) console.error('sauvegarderFinPartie/classement:', errScore.message);
 
-    // 2. Appeler la fonction SQL qui met à jour profiles
+    // 2. Mettre à jour les stats du profil (RPC ou fallback manuel)
     const { error: errStats } = await supabaseClient.rpc('mettre_a_jour_stats', {
       p_user_id: user.id,
       p_gagne:   gagne,
@@ -180,11 +213,13 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
           win_streak:  (profil.win_streak  || 0) + 1,
           loss_streak: 0,
           xp_points:   (profil.xp_points   || 0) + xp_gagne,
+          updated_at:  new Date().toISOString(),
         } : {
           stats_losses: (profil.stats_losses || 0) + 1,
           loss_streak:  (profil.loss_streak  || 0) + 1,
           win_streak:   0,
           xp_points:    (profil.xp_points    || 0) + xp_gagne,
+          updated_at:   new Date().toISOString(),
         }).eq('id', user.id);
       }
     }
@@ -194,6 +229,63 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
 
   } catch(err) {
     console.error('sauvegarderFinPartie inattendu:', err);
+  }
+}
+
+// ============================================================
+//  SCORES — Meilleur score d'un joueur pour un sport
+//  Utilisation : const best = await getMeilleurScore('bowling');
+// ============================================================
+async function getMeilleurScore(sport) {
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return null;
+
+    let query = supabaseClient
+      .from('classement')
+      .select('score, gagne, joue_le')
+      .eq('user_id', user.id)
+      .eq('sport', sport);
+
+    // Golf : meilleur = MINIMUM de coups
+    if (sport === 'golf') {
+      query = query.order('score', { ascending: true });
+    } else {
+      query = query.order('score', { ascending: false });
+    }
+
+    const { data, error } = await query.limit(1).single();
+    if (error) return null;
+    return data;
+  } catch(err) {
+    console.error('getMeilleurScore:', err);
+    return null;
+  }
+}
+
+// ============================================================
+//  SCORES — Classement global pour un sport
+//  Utilisation : const top = await getClassement('bowling', 10);
+// ============================================================
+async function getClassement(sport, limit = 10) {
+  try {
+    let query = supabaseClient
+      .from('classement')
+      .select('score, gagne, joue_le, user_id, profiles(full_name)')
+      .eq('sport', sport);
+
+    if (sport === 'golf') {
+      query = query.order('score', { ascending: true });
+    } else {
+      query = query.order('score', { ascending: false });
+    }
+
+    const { data, error } = await query.limit(limit);
+    if (error) { console.error('getClassement:', error.message); return []; }
+    return data || [];
+  } catch(err) {
+    console.error('getClassement inattendu:', err);
+    return [];
   }
 }
 

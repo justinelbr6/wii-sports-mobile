@@ -669,7 +669,7 @@ function afficherGameOver(){
 
   // ── Sauvegarde Supabase ──
   if (typeof sauvegarderFinPartie === 'function') {
-    sauvegarderFinPartie('baseball', { score: G.score, gagne: G.score > 0 });
+    sauvegarderFinPartie('baseball', { score: G.score, gagne: G.score >= 200 });
   }
 
   document.getElementById('gameover-overlay').classList.add('show');
