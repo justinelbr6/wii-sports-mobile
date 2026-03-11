@@ -210,7 +210,7 @@
       <div class="stat-emoji">🎾</div>
       <div class="stat-name">Tennis</div>
       <div class="stat-score" id="score-tennis">-</div>
-      <div class="stat-unit">retours</div>
+      <div class="stat-unit">victoires</div>
     </div>
     <div class="stat-card">
       <div class="stat-emoji">🥊</div>
@@ -247,7 +247,7 @@
 
 <!-- Supabase CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js?v=2"></script>
+<script src="js/supabase.js?v=3"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
@@ -259,7 +259,6 @@
     const profil = await getProfilCourant();
     if (profil) {
       document.getElementById('userName').textContent = profil.full_name || 'Joueur Inconnu';
-      document.getElementById('userLevel').textContent = `XP Total : ${profil.xp_points || 0}`;
     }
 
     // 3. Récupérer les meilleurs scores

@@ -81,7 +81,7 @@ async function getMeilleurScore(sport) {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return null;
     const { data, error } = await supabaseClient
-      .from('classement')
+      .from('scores')
       .select('score, gagne, joue_le')
       .eq('user_id', user.id)
       .eq('sport', sport)
@@ -129,8 +129,8 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
 
     // ── 1. Classement : seulement si record ──
     if (estRecord) {
-      // On retire xp_gagne au cas où la colonne n'existe pas dans la table classement
-      const { error: errScore } = await supabaseClient.from('classement').insert([{
+      // On retire xp_gagne au cas où la colonne n'existe pas dans la table scores
+      const { error: errScore } = await supabaseClient.from('scores').insert([{
         user_id: user.id,
         sport: sport,
         score: score,
@@ -191,8 +191,14 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
 // ── CLASSEMENT PAR SPORT ──────────────────────────────────────
 async function getClassementSport(sport, limit = 20) {
   try {
+    // ── Tennis : comptage des victoires ──
+    if (sport === 'tennis') {
+      return getClassementTennis(limit);
+    }
+
+    // ── Autres sports : meilleur score ──
     const { data, error } = await supabaseClient
-      .from('classement')
+      .from('scores')
       .select('score, gagne, joue_le, user_id, profiles(id, full_name)')
       .eq('sport', sport)
       .order('score', { ascending: sport === 'golf' })
@@ -213,23 +219,63 @@ async function getClassementSport(sport, limit = 20) {
   } catch(err) { return []; }
 }
 
+// ── CLASSEMENT TENNIS (compter victoires) ──────────────────────
+async function getClassementTennis(limit = 20) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('scores')
+      .select('user_id, profiles(id, full_name), gagne, joue_le')
+      .eq('sport', 'tennis')
+      .eq('gagne', true)
+      .limit(500);
+
+    if (error) { console.error('getClassementTennis:', error.message); return []; }
+
+    // Compter les victoires par joueur
+    const victoires = {};
+    const joueurs = {};
+
+    for (const row of (data || [])) {
+      if (!victoires[row.user_id]) {
+        victoires[row.user_id] = 0;
+        joueurs[row.user_id] = row;
+      }
+      victoires[row.user_id]++;
+    }
+
+    // Trier par nombre de victoires décroissant
+    const resultat = Object.keys(victoires)
+      .sort((a, b) => victoires[b] - victoires[a])
+      .slice(0, limit)
+      .map(user_id => ({
+        user_id,
+        score: victoires[user_id],
+        profiles: joueurs[user_id].profiles,
+        joue_le: joueurs[user_id].joue_le,
+        gagne: true
+      }));
+
+    return resultat;
+  } catch(err) { console.error('getClassementTennis:', err); return []; }
+}
+
 // ── STATS PROFIL ──────────────────────────────────────────────
 async function getStatsProfil() {
   try {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return null;
 
-    // Récupérer tous les records de l'utilisateur dans la table classement
+    // Récupérer tous les scores de l'utilisateur
     const { data, error } = await supabaseClient
-      .from('classement')
-      .select('sport, score')
+      .from('scores')
+      .select('sport, score, gagne')
       .eq('user_id', user.id);
 
     if (error) { console.error('Erreur getStatsProfil:', error.message); return null; }
 
     const stats = {
       bowling: 0,
-      golf: 0, // Pour le golf, le meilleur score est le plus bas
+      golf: 0,
       tennis: 0,
       boxe: 0,
       baseball: 0,
@@ -238,24 +284,31 @@ async function getStatsProfil() {
 
     if (!data || data.length === 0) return stats;
 
-    let totalScore = 0;
-    let count = 0;
+    // Compter victoires tennis séparément
+    const victoires_tennis = data.filter(row => row.sport === 'tennis' && row.gagne).length;
+    if (victoires_tennis > 0) stats.tennis = victoires_tennis;
 
-    // On extrait le meilleur score par sport
+    // Extraire le meilleur score pour les autres sports
     data.forEach(row => {
-       if (row.sport === 'golf') {
-           if (stats.golf === 0 || row.score < stats.golf) stats.golf = row.score;
-       } else {
-           if (row.score > stats[row.sport]) stats[row.sport] = row.score;
-       }
+      if (row.sport === 'tennis') return; // Déjà traité
+
+      if (row.sport === 'golf') {
+        // Golf : plus bas = mieux
+        if (stats.golf === 0 || row.score < stats.golf) stats.golf = row.score;
+      } else {
+        // Bowling, Boxe, Baseball : plus haut = mieux
+        if (row.score > stats[row.sport]) stats[row.sport] = row.score;
+      }
     });
 
-    // Calcul de la moyenne globale des scores
+    // Calcul de la moyenne globale
+    let totalScore = 0;
+    let count = 0;
     for (const key in stats) {
-       if (key !== 'moyenne' && stats[key] !== 0) {
-           totalScore += stats[key];
-           count++;
-       }
+      if (key !== 'moyenne' && stats[key] > 0) {
+        totalScore += stats[key];
+        count++;
+      }
     }
     stats.moyenne = count > 0 ? Math.round(totalScore / count) : 0;
 
