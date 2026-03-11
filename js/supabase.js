@@ -134,7 +134,6 @@ async function sauvegarderFinPartie(sport, { score = 0, gagne = false } = {}) {
         sport,
         score,
         gagne,
-        xp_gagne,
         joue_le: new Date().toISOString(),
       }]);
       if (errScore) {
