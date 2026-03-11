@@ -153,38 +153,96 @@
     }
     .f-btn.blue { background:#2A5FBF; box-shadow:0 6px 0 #1a3f8f; }
 
-    /* Écran démarrage */
+    /* ── Écran démarrage (style tuto bowling) ── */
     #start-screen {
       position:fixed; inset:0; z-index:25; display:flex; flex-direction:column;
-      align-items:center; justify-content:center; gap:18px;
-      background:linear-gradient(180deg,#1a2e1a 0%,#0d1f0d 100%);
-      padding: 24px 20px;
-      text-align: center;
+      align-items:center; gap:14px;
+      background:linear-gradient(160deg,#0d1f0d 0%,#1a3a1a 60%,#0d1f0d 100%);
+      overflow-y:auto; padding-bottom:20px;
     }
-    .start-emoji  { font-size:5rem; animation:bounce 1.5s ease-in-out infinite; display:block; text-align:center; }
-    .start-title  { font-family:'Fredoka One',cursive; font-size:2.8rem; color:white; text-align:center; width:100%; }
-    .niveau-btn {
-      display:flex; align-items:center; gap:10px;
-      background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.2);
-      border-radius:16px; padding:12px 18px; color:white;
-      font-family:'Fredoka One',cursive; font-size:1.1rem; cursor:pointer;
-      transition:all .15s; width:100%; max-width:300px;
+    .tuto-card {
+      display:flex; align-items:center; gap:14px;
+      background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12);
+      border-radius:18px; padding:14px 16px; width:100%;
+      backdrop-filter:blur(8px); transition:border-color .2s;
     }
-    .niveau-btn:active { transform:scale(0.97); }
-    .niveau-btn.selected { background:rgba(76,175,80,0.3); border-color:var(--green-l); box-shadow:0 0 0 3px rgba(76,175,80,0.2); }
-    .niveau-btn span:nth-child(2) { flex:1; text-align:left; }
-    .adv-card-start { background:rgba(255,255,255,0.1); border-radius:18px; padding:14px 24px; text-align:center; border:2px solid rgba(255,255,255,0.18); }
-    .adv-lbl  { font-size:0.72rem; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:2px; font-weight:700; }
-    .adv-nom  { font-family:'Fredoka One',cursive; font-size:1.7rem; color:var(--orange); }
+    .tuto-card:hover { border-color:rgba(76,175,80,0.35); }
+    .tuto-icon-wrap { flex-shrink:0; width:86px; height:66px; display:flex; align-items:center; justify-content:center; }
+    .tuto-text { flex:1; }
+    .tuto-title { font-family:'Fredoka One',cursive; font-size:1.05rem; color:var(--green-l); line-height:1.1; }
+    .tuto-desc { font-size:0.78rem; color:rgba(255,255,255,0.65); font-weight:700; line-height:1.4; margin-top:3px; }
+    .tuto-desc strong { color:white; }
+    .adversaire-card {
+      background:rgba(255,255,255,0.08); border-radius:20px; padding:14px 18px;
+      border:1.5px solid rgba(255,255,255,0.15); width:100%; backdrop-filter:blur(8px);
+    }
+    .adversaire-label { font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:2px; font-weight:700; }
+    .adversaire-name  { font-family:'Fredoka One',cursive; font-size:1.5rem; color:var(--orange); }
+    .adversaire-niveau{ font-size:0.75rem; color:rgba(255,255,255,0.45); font-weight:700; margin-top:2px; }
     .start-btn {
       background:var(--green); color:white; font-family:'Fredoka One',cursive;
       font-size:1.4rem; border:none; border-radius:50px; padding:16px 48px;
-      box-shadow:0 8px 0 var(--green-dark); cursor:pointer; transition:transform .1s;
+      box-shadow:0 8px 0 var(--green-dark); cursor:pointer; transition:transform .1s; width:100%;
     }
     .start-btn:active { transform:translateY(4px); box-shadow:0 4px 0 var(--green-dark); }
-    .gyro-info { font-size:0.78rem; color:rgba(255,255,255,0.4); text-align:center; max-width:260px; line-height:1.5; font-weight:700; }
 
+    /* Animations tuto golf */
+    @keyframes tiltPhoneGyro {
+      0%,100% { transform:rotate(0deg); }
+      30%     { transform:rotate(-18deg); }
+      70%     { transform:rotate(18deg); }
+    }
+    @keyframes golfSwing {
+      0%,15%  { transform:translateY(0) rotate(0deg); opacity:1; }
+      55%     { transform:translateY(-36px) rotate(-30deg); opacity:0.3; }
+      56%     { transform:translateY(0) rotate(0deg); opacity:0; }
+      68%     { opacity:1; }
+      100%    { opacity:1; }
+    }
+    @keyframes ballFly {
+      0%,10%  { transform:translate(0,0); opacity:1; }
+      60%     { transform:translate(30px,-28px); opacity:0.2; }
+      61%     { transform:translate(0,0); opacity:0; }
+      75%     { opacity:1; }
+      100%    { opacity:1; }
+    }
+    @keyframes powerFill {
+      0%,10%  { height:0%; }
+      50%     { height:100%; }
+      80%,100%{ height:0%; }
+    }
+    @keyframes scorePopGolf {
+      0%,80%,100% { transform:scale(1); }
+      85%         { transform:scale(1.15); filter:brightness(1.4); }
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
     @keyframes popIn { from{opacity:0;transform:scale(0.5)} to{opacity:1;transform:scale(1)} }
+    @keyframes arrowLeft {
+      0%,100% { opacity:0.15; transform:translateX(0); }
+      30%     { opacity:1;    transform:translateX(-5px); }
+      50%,70% { opacity:0.15; }
+    }
+    @keyframes arrowRight {
+      0%,50%  { opacity:0.15; transform:translateX(0); }
+      70%     { opacity:1;    transform:translateX(5px); }
+      100%    { opacity:0.15; }
+    }
+    @keyframes trailAnim {
+      0%,15%  { opacity:0; }
+      35%,60% { opacity:0.75; }
+      75%     { opacity:0; }
+      100%    { opacity:0; }
+    }
+    @keyframes fingerSwipe {
+      0%,15%  { transform:translateY(0); opacity:1; }
+      55%     { transform:translateY(-18px); opacity:0.4; }
+      56%     { transform:translateY(0); opacity:0; }
+      65%     { opacity:1; }
+      100%    { opacity:1; }
+    }
   </style>
 </head>
 <body>
@@ -283,26 +341,180 @@
   <button class="f-btn blue" onclick="location.reload()">🔄 Rejouer</button>
 </div>
 
-<!-- Écran démarrage -->
+<!-- Écran Comment jouer -->
 <div id="start-screen">
-  <span class="start-emoji">⛳</span>
-  <div class="start-title">Golf</div>
 
-  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;">
-    <div style="font-family:'Fredoka One',cursive;color:rgba(255,255,255,0.6);font-size:0.82rem;text-align:center;letter-spacing:2px;text-transform:uppercase;">Choisir ton niveau</div>
-    <button class="niveau-btn" id="btn-facile"    onclick="choisirNiveau('facile')"><span>😊</span><span>Facile</span><span style="font-size:.7rem;opacity:.6">Adversaires débutants</span></button>
-    <button class="niveau-btn" id="btn-moyen"     onclick="choisirNiveau('moyen')"><span>😤</span><span>Moyen</span><span style="font-size:.7rem;opacity:.6">Adversaires expérimentés</span></button>
-    <button class="niveau-btn" id="btn-difficile" onclick="choisirNiveau('difficile')"><span>💀</span><span>Difficile</span><span style="font-size:.7rem;opacity:.6">Adversaires redoutables</span></button>
+  <!-- Background décoratif -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;">
+    <div style="position:absolute;top:-60px;left:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(76,175,80,0.12) 0%,transparent 70%);"></div>
+    <div style="position:absolute;bottom:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(245,166,35,0.15) 0%,transparent 70%);"></div>
   </div>
 
-  <div class="adv-card-start" id="adv-card-start" style="display:none;">
-    <div class="adv-lbl">Ton adversaire</div>
-    <div class="adv-nom" id="adv-nom-start">Chargement...</div>
-    <div style="font-size:.78rem;color:rgba(255,255,255,.45);font-weight:700;margin-top:2px;" id="adv-niv-start"></div>
+  <!-- En-tête -->
+  <div style="position:relative;z-index:1;text-align:center;padding-top:22px;padding-bottom:4px;">
+    <div style="font-size:3.2rem;line-height:1;animation:bounce 1.6s ease-in-out infinite;">⛳</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:2.4rem;color:white;margin-top:6px;text-shadow:0 2px 12px rgba(76,175,80,0.4);">Golf</div>
+    <div style="display:inline-block;background:rgba(76,175,80,0.15);border:1px solid rgba(76,175,80,0.35);border-radius:20px;padding:3px 14px;margin-top:6px;">
+      <span style="font-family:'Fredoka One',cursive;font-size:0.72rem;color:rgba(76,175,80,0.9);letter-spacing:3px;text-transform:uppercase;">Comment jouer</span>
+    </div>
   </div>
 
-  <button class="start-btn" id="start-btn" style="display:none;" onclick="demarrerJeu()">⛳ C'est parti !</button>
-  <p class="gyro-info">📐 Incline ton téléphone pour viser<br>👆 Swipe vers le haut pour frapper</p>
+  <!-- Cartes tutoriel -->
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:11px;width:100%;max-width:340px;padding:0 16px;">
+
+    <!-- Carte 1 : Viser avec le gyroscope -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.1s both;">
+      <div class="tuto-icon-wrap">
+        <svg viewBox="0 0 86 66" width="86" height="66" style="overflow:visible;">
+          <g style="transform-origin:43px 33px;animation:tiltPhoneGyro 2.4s ease-in-out infinite;">
+            <rect x="30" y="9" width="26" height="44" rx="5" fill="#1a3a1a" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+            <rect x="33" y="14" width="20" height="32" rx="2" fill="#2E7D32" opacity="0.7"/>
+            <!-- terrain de golf miniature -->
+            <ellipse cx="43" cy="38" rx="7" ry="4" fill="#4CAF50" opacity="0.8"/>
+            <circle cx="43" cy="38" r="1.5" fill="white" opacity="0.6"/>
+            <!-- drapeau -->
+            <line x1="43" y1="38" x2="43" y2="22" stroke="rgba(255,255,255,0.7)" stroke-width="0.8"/>
+            <polygon points="43,22 48,24 43,26" fill="#F5A623" opacity="0.9"/>
+            <!-- balle -->
+            <circle cx="43" cy="40" r="2.5" fill="white" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/>
+            <circle cx="43" cy="48" r="2.5" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
+          </g>
+          <g style="animation:arrowLeft 2.4s ease-in-out infinite;">
+            <text x="4" y="36" font-size="16" fill="#4CAF50" opacity="0.9">←</text>
+          </g>
+          <g style="animation:arrowRight 2.4s ease-in-out infinite;">
+            <text x="64" y="36" font-size="16" fill="#4CAF50" opacity="0.9">→</text>
+          </g>
+        </svg>
+      </div>
+      <div class="tuto-text">
+        <div class="tuto-title">📐 Viser</div>
+        <div class="tuto-desc">Incline ton téléphone <strong>gauche / droite</strong> pour orienter la trajectoire de ta balle vers le trou</div>
+      </div>
+    </div>
+
+    <!-- Carte 2 : Frapper -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.2s both;">
+      <div class="tuto-icon-wrap">
+        <svg viewBox="0 0 86 66" width="86" height="66" style="overflow:visible;">
+          <!-- Fairway -->
+          <rect x="32" y="4" width="22" height="56" rx="4" fill="rgba(76,175,80,0.15)" stroke="rgba(76,175,80,0.35)" stroke-width="1.2"/>
+          <!-- Trou -->
+          <ellipse cx="43" cy="14" rx="4" ry="2.5" fill="rgba(0,0,0,0.5)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
+          <!-- Drapeau -->
+          <line x1="43" y1="12" x2="43" y2="5" stroke="rgba(255,255,255,0.8)" stroke-width="0.8"/>
+          <polygon points="43,5 48,7 43,9" fill="#F5A623"/>
+          <!-- Balle animée -->
+          <g style="animation:ballFly 2.2s ease-in-out infinite;">
+            <circle cx="43" cy="52" r="5" fill="white" stroke="rgba(0,0,0,0.15)" stroke-width="0.8"/>
+            <!-- Fossettes balle golf -->
+            <circle cx="41" cy="50" r="0.8" fill="rgba(0,0,0,0.12)"/>
+            <circle cx="44" cy="51" r="0.8" fill="rgba(0,0,0,0.12)"/>
+            <circle cx="43" cy="48" r="0.8" fill="rgba(0,0,0,0.12)"/>
+          </g>
+          <!-- Sillage -->
+          <line x1="43" y1="46" x2="43" y2="28" stroke="#F5A623" stroke-width="1.5" stroke-dasharray="3,4" opacity="0.6" style="animation:trailAnim 2.2s ease-in-out infinite;"/>
+          <!-- Doigt swipe -->
+          <g style="animation:fingerSwipe 2.2s ease-in-out infinite;">
+            <ellipse cx="43" cy="60" rx="5.5" ry="6" fill="#FFCCA0" stroke="#D4965C" stroke-width="1"/>
+            <rect x="39.5" y="50" width="7" height="13" rx="3.5" fill="#FFCCA0" stroke="#D4965C" stroke-width="1"/>
+          </g>
+        </svg>
+      </div>
+      <div class="tuto-text">
+        <div class="tuto-title">🏌️ Frapper</div>
+        <div class="tuto-desc"><strong>Swipe vers le haut</strong> pour frapper — plus tu es rapide, plus la balle part loin !</div>
+      </div>
+    </div>
+
+    <!-- Carte 3 : Puissance -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.25s both;">
+      <div class="tuto-icon-wrap">
+        <svg viewBox="0 0 86 66" width="86" height="66">
+          <!-- Barre de puissance -->
+          <rect x="36" y="8" width="14" height="50" rx="7" fill="rgba(0,0,0,0.35)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <!-- Remplissage animé -->
+          <clipPath id="powerClip">
+            <rect x="37" y="9" width="12" height="48" rx="6"/>
+          </clipPath>
+          <g clip-path="url(#powerClip)">
+            <rect x="37" y="9" width="12" height="48" rx="6" fill="url(#powerGrad)" style="transform-origin:43px 57px;animation:powerFill 2s ease-in-out infinite;"/>
+          </g>
+          <defs>
+            <linearGradient id="powerGrad" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stop-color="#44FF44"/>
+              <stop offset="50%" stop-color="#FFFF44"/>
+              <stop offset="100%" stop-color="#FF4444"/>
+            </linearGradient>
+          </defs>
+          <!-- Étiquettes -->
+          <text x="56" y="14" font-size="8" fill="#FF4444" font-family="'Fredoka One',cursive">Max</text>
+          <text x="56" y="36" font-size="8" fill="#FFFF44" font-family="'Fredoka One',cursive">Bon</text>
+          <text x="56" y="56" font-size="8" fill="#44FF44" font-family="'Fredoka One',cursive">Min</text>
+        </svg>
+      </div>
+      <div class="tuto-text">
+        <div class="tuto-title">💪 Puissance</div>
+        <div class="tuto-desc">La jauge à droite indique ta force. <strong>Vert = court</strong>, <strong>rouge = max</strong> — dose bien !</div>
+      </div>
+    </div>
+
+    <!-- Carte 4 : Système de score -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.3s both; flex-direction:column; align-items:stretch; gap:0;">
+      <div class="tuto-title" style="padding:0 0 10px 0;">⛳ Système de score</div>
+
+      <!-- Birdie -->
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="flex-shrink:0;width:80px;text-align:center;">
+          <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#88FF88;animation:scorePopGolf 2s ease-in-out infinite;">−1</div>
+          <div style="font-size:0.62rem;color:#88FF88;font-weight:700;">Birdie 🐦</div>
+        </div>
+        <div style="flex:1;font-size:0.72rem;color:rgba(255,255,255,0.65);line-height:1.45;"><strong style="color:white;">1 coup sous le par</strong> → Excellent ! Tu as été plus efficace que prévu</div>
+      </div>
+
+      <!-- Eagle -->
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="flex-shrink:0;width:80px;text-align:center;">
+          <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#FFD700;animation:scorePopGolf 2s 0.3s ease-in-out infinite;">−2</div>
+          <div style="font-size:0.62rem;color:#FFD700;font-weight:700;">Eagle 🦅</div>
+        </div>
+        <div style="flex:1;font-size:0.72rem;color:rgba(255,255,255,0.65);line-height:1.45;"><strong style="color:white;">2 coups sous le par</strong> → Fantastique ! Performance rare</div>
+      </div>
+
+      <!-- Bogey -->
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;">
+        <div style="flex-shrink:0;width:80px;text-align:center;">
+          <div style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#FF8888;animation:scorePopGolf 2s 0.6s ease-in-out infinite;">+1</div>
+          <div style="font-size:0.62rem;color:#FF8888;font-weight:700;">Bogey 💔</div>
+        </div>
+        <div style="flex:1;font-size:0.72rem;color:rgba(255,255,255,0.65);line-height:1.45;"><strong style="color:white;">1 coup au-dessus du par</strong> → Moins bien — le but est de jouer <strong style="color:#FFD700;">le moins de coups possible !</strong></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Carte adversaire -->
+  <div style="position:relative;z-index:1;width:100%;max-width:340px;padding:0 16px;">
+    <div class="adversaire-card" style="animation:slideIn 0.5s 0.4s both;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:2rem;" id="adv-avatar-start">🏌️</div>
+        <div style="flex:1;text-align:left;">
+          <div class="adversaire-label">Ton adversaire</div>
+          <div class="adversaire-name" id="adv-nom-start">⏳ Chargement...</div>
+          <div class="adversaire-niveau" id="adv-niv-start"></div>
+        </div>
+        <div style="font-family:'Fredoka One',cursive;font-size:0.75rem;color:rgba(255,255,255,0.3);text-align:right;line-height:1.4;">3<br>trous</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bouton jouer -->
+  <div style="position:relative;z-index:1;padding:0 16px 28px;width:100%;max-width:340px;">
+    <button class="start-btn" onclick="demarrerJeu()" style="animation:slideIn 0.5s 0.5s both;">
+      ⛳ C'est parti !
+    </button>
+  </div>
+
 </div>
 
 <!-- Scripts -->
@@ -341,34 +553,38 @@ const ETAT = {
 };
 
 // ══════════════════════════════════════════
-//  CHOIX DU NIVEAU
+//  INIT — Niveau auto depuis profil Supabase
+//  + chargement adversaire au démarrage
 // ══════════════════════════════════════════
-async function choisirNiveau(niveau) {
-  ETAT.niveauChoisi = niveau;
-  // Sensibilité gyro selon le niveau
-  // Débutant = moins sensible (plus facile à contrôler)
-  // Confirmé = très réactif (précision requise)
-  ETAT.gyroSensibilite = niveau === 'facile' ? 0.018 : niveau === 'moyen' ? 0.032 : 0.052;
-  document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById(`btn-${niveau}`).classList.add('selected');
-  document.getElementById('adv-nom-start').textContent = 'Recherche...';
-  document.getElementById('adv-card-start').style.display = 'block';
-  document.getElementById('start-btn').style.display = 'none';
+async function initNiveauEtAdversaire() {
+  let niveau = 'moyen'; // défaut
+  try {
+    const profil = await getProfilCourant();
+    if (profil?.level_golf) {
+      const map = { 'Débutant': 'facile', 'Intermédiaire': 'moyen', 'Confirmé': 'difficile' };
+      niveau = map[profil.level_golf] || 'moyen';
+    }
+  } catch(e) { console.warn('Profil non dispo, niveau moyen par défaut'); }
 
+  ETAT.niveauChoisi = niveau;
+  // Sensibilité gyro adaptée au niveau
+  ETAT.gyroSensibilite = niveau === 'facile' ? 0.018 : niveau === 'moyen' ? 0.032 : 0.052;
+
+  // Charge l'adversaire
   const adv = await getAdversaire('golf', niveau);
   ETAT.adversaire = adv;
   if (adv) {
-    document.getElementById('adv-nom-start').textContent = `${adv.avatar||'🏌️'} ${adv.nom}`;
-    document.getElementById('adv-niv-start').textContent = `Niveau : ${adv.golf||niveau}`;
+    document.getElementById('adv-nom-start').textContent  = `${adv.avatar||'🏌️'} ${adv.nom}`;
+    document.getElementById('adv-niv-start').textContent  = `Niveau : ${adv.golf||niveau}`;
+    document.getElementById('adv-avatar-start').textContent = adv.avatar || '🏌️';
     document.getElementById('adv-avatar-hud').textContent = adv.avatar || '🏌️';
-    document.getElementById('adv-name-hud').textContent = adv.nom;
+    document.getElementById('adv-name-hud').textContent   = adv.nom;
   } else {
-    document.getElementById('adv-nom-start').textContent = '🏌️ CPU';
-    document.getElementById('adv-niv-start').textContent = `Niveau : ${niveau}`;
+    document.getElementById('adv-nom-start').textContent  = '🏌️ CPU';
+    document.getElementById('adv-niv-start').textContent  = `Niveau adapté à toi`;
   }
-  document.getElementById('start-btn').style.display = 'block';
-  if (navigator.vibrate) navigator.vibrate(20);
 }
+initNiveauEtAdversaire();
 
 // ══════════════════════════════════════════
 //  THREE.JS — SCÈNE
