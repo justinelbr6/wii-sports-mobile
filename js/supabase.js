@@ -197,26 +197,47 @@ async function getClassementSport(sport, limit = 20) {
     }
 
     // ── Autres sports : meilleur score ──
-    const { data, error } = await supabaseClient
+    // Step 1: Récupérer les scores sans jointure
+    const { data: scoresData, error: scoresError } = await supabaseClient
       .from('scores')
-      .select('score, gagne, joue_le, user_id, profiles(id, full_name)')
+      .select('score, gagne, joue_le, user_id')
       .eq('sport', sport)
       .order('score', { ascending: sport === 'golf' })
       .limit(200);
 
-    if (error) {
-      console.error('❌ getClassementSport RLS ERROR:', error.message);
-      console.error('   Pour fixer : Exécute supabase-rls-fix.sql dans Supabase SQL Editor');
+    if (scoresError) {
+      console.error('❌ getClassementSport SCORES ERROR:', scoresError.message);
       return [];
     }
+
+    // Step 2: Récupérer les profils des utilisateurs
+    const userIds = [...new Set(scoresData.map(s => s.user_id))];
+    const { data: profilesData, error: profilesError } = await supabaseClient
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', userIds);
+
+    if (profilesError) {
+      console.error('❌ getClassementSport PROFILES ERROR:', profilesError.message);
+      return [];
+    }
+
+    // Step 3: Fusionner les données
+    const profilesMap = {};
+    profilesData.forEach(p => {
+      profilesMap[p.id] = p;
+    });
 
     // Garder seulement le meilleur score par joueur
     const vus = new Set();
     const meilleurs = [];
-    for (const row of (data || [])) {
+    for (const row of (scoresData || [])) {
       if (vus.has(row.user_id)) continue;
       vus.add(row.user_id);
-      meilleurs.push(row);
+      meilleurs.push({
+        ...row,
+        profiles: profilesMap[row.user_id] || { id: row.user_id, full_name: 'Joueur' }
+      });
       if (meilleurs.length >= limit) break;
     }
     console.log(`✅ Classement ${sport}: ${meilleurs.length} joueurs`);
@@ -230,20 +251,24 @@ async function getClassementSport(sport, limit = 20) {
 // ── CLASSEMENT TENNIS (compter victoires) ──────────────────────
 async function getClassementTennis(limit = 20) {
   try {
-    const { data, error } = await supabaseClient
+    // Step 1: Récupérer les victoires au tennis
+    const { data: scoresData, error: scoresError } = await supabaseClient
       .from('scores')
-      .select('user_id, profiles(id, full_name), gagne, joue_le')
+      .select('user_id, gagne, joue_le')
       .eq('sport', 'tennis')
       .eq('gagne', true)
       .limit(500);
 
-    if (error) { console.error('getClassementTennis:', error.message); return []; }
+    if (scoresError) {
+      console.error('❌ getClassementTennis SCORES ERROR:', scoresError.message);
+      return [];
+    }
 
     // Compter les victoires par joueur
     const victoires = {};
     const joueurs = {};
 
-    for (const row of (data || [])) {
+    for (const row of (scoresData || [])) {
       if (!victoires[row.user_id]) {
         victoires[row.user_id] = 0;
         joueurs[row.user_id] = row;
@@ -251,20 +276,41 @@ async function getClassementTennis(limit = 20) {
       victoires[row.user_id]++;
     }
 
-    // Trier par nombre de victoires décroissant
+    // Step 2: Récupérer les profils
+    const userIds = Object.keys(victoires);
+    const { data: profilesData, error: profilesError } = await supabaseClient
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', userIds);
+
+    if (profilesError) {
+      console.error('❌ getClassementTennis PROFILES ERROR:', profilesError.message);
+      return [];
+    }
+
+    // Step 3: Fusionner et trier
+    const profilesMap = {};
+    profilesData.forEach(p => {
+      profilesMap[p.id] = p;
+    });
+
     const resultat = Object.keys(victoires)
       .sort((a, b) => victoires[b] - victoires[a])
       .slice(0, limit)
       .map(user_id => ({
         user_id,
         score: victoires[user_id],
-        profiles: joueurs[user_id].profiles,
+        profiles: profilesMap[user_id] || { id: user_id, full_name: 'Joueur' },
         joue_le: joueurs[user_id].joue_le,
         gagne: true
       }));
 
+    console.log(`✅ Classement tennis: ${resultat.length} joueurs`);
     return resultat;
-  } catch(err) { console.error('getClassementTennis:', err); return []; }
+  } catch(err) {
+    console.error('❌ getClassementTennis ERREUR:', err);
+    return [];
+  }
 }
 
 // ── STATS PROFIL ──────────────────────────────────────────────
