@@ -368,19 +368,125 @@
 
 <!-- Start screen -->
 <div id="start-screen">
-  <span class="start-emoji">🥊</span>
-  <div class="start-title">Boxe</div>
-  <p class="start-sub">
-    📱 Penche ton téléphone pour esquiver les coups !<br>
-    👊 Contre-attaque dans le point faible doré !<br>
-    ❤️ 3 vies — survie infinie.
-  </p>
-  <p class="start-tip">Gyroscope requis · Flèches clavier sur PC</p>
-  <p class="start-tip" id="start-best" style="color:#E040FB;font-size:.75rem"></p>
-  <button class="start-btn" onclick="demarrerJeu()">🥊 FIGHT !</button>
+  <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:360px;gap:0;overflow-y:auto;max-height:100vh;padding:20px 16px 24px;">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-size:3.8rem;animation:bounceY 1.5s ease-in-out infinite;">🥊</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:2.4rem;color:white;line-height:1;">Boxe</div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Comment jouer</div>
+    </div>
+
+    <!-- Carte 1 : Esquiver -->
+    <div style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <div style="flex-shrink:0;">
+        <svg viewBox="0 0 80 70" width="80" height="70">
+          <!-- Téléphone qui s'incline -->
+          <g style="animation:tiltPhone 2s ease-in-out infinite;">
+            <rect x="28" y="10" width="24" height="40" rx="5" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+            <rect x="31" y="14" width="18" height="28" rx="3" fill="rgba(25,118,210,0.3)" stroke="#1976D2" stroke-width="1"/>
+            <circle cx="40" cy="47" r="2" fill="rgba(255,255,255,0.4)"/>
+          </g>
+          <!-- Flèche gauche -->
+          <g style="animation:arrowPulseL 2s ease-in-out infinite;">
+            <text x="6" y="36" font-size="18" fill="#4CAF50">←</text>
+          </g>
+          <!-- Flèche droite -->
+          <g style="animation:arrowPulseR 2s ease-in-out infinite;">
+            <text x="58" y="36" font-size="18" fill="#4CAF50">→</text>
+          </g>
+          <!-- Étiquette -->
+          <text x="40" y="65" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="8" fill="rgba(76,175,80,0.9)">Incline</text>
+        </svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#4CAF50;margin-bottom:4px;">Esquiver 🏃</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,0.6);line-height:1.5;">Incline ton téléphone dans la direction indiquée par la flèche <strong style="color:white;">avant que le temps soit écoulé</strong></div>
+      </div>
+    </div>
+
+    <!-- Carte 2 : Contre-attaquer -->
+    <div style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <div style="flex-shrink:0;">
+        <svg viewBox="0 0 80 70" width="80" height="70">
+          <!-- Grille 3x3 boutons -->
+          <g>
+            <!-- Haut rouge -->
+            <rect x="28" y="4"  width="24" height="18" rx="5" fill="rgba(211,47,47,0.2)"  stroke="#D32F2F" stroke-width="1.5"/>
+            <text x="40" y="17" text-anchor="middle" font-size="10">👊</text>
+            <!-- Gauche orange -->
+            <rect x="4"  y="26" width="24" height="18" rx="5" fill="rgba(245,124,0,0.2)"  stroke="#F57C00" stroke-width="1.5"/>
+            <text x="16" y="39" text-anchor="middle" font-size="10">🤛</text>
+            <!-- Droite violet -->
+            <rect x="52" y="26" width="24" height="18" rx="5" fill="rgba(123,31,162,0.2)" stroke="#7B1FA2" stroke-width="1.5"/>
+            <text x="64" y="39" text-anchor="middle" font-size="10">🤜</text>
+            <!-- Bas bleu -->
+            <rect x="28" y="48" width="24" height="18" rx="5" fill="rgba(25,118,210,0.2)" stroke="#1976D2" stroke-width="1.5"/>
+            <text x="40" y="61" text-anchor="middle" font-size="10">💪</text>
+            <!-- Point doré qui clignote -->
+            <rect x="52" y="26" width="24" height="18" rx="5" fill="rgba(255,215,0,0.25)" stroke="#FFD700" stroke-width="2"
+              style="animation:glowGold 0.7s ease-in-out infinite;"/>
+            <text x="64" y="39" text-anchor="middle" font-size="8" fill="#FFD700" font-family="'Fredoka One',cursive">⭐</text>
+          </g>
+        </svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#FFD700;margin-bottom:4px;">Contre-attaquer ⭐</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,0.6);line-height:1.5;">Après l'esquive, appuie sur le bouton qui <strong style="color:#FFD700;">brille en or</strong> — c'est le point faible de l'adversaire !</div>
+      </div>
+    </div>
+
+    <!-- Carte 3 : Vies & score -->
+    <div style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:14px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">
+      <div style="flex-shrink:0;">
+        <svg viewBox="0 0 80 70" width="80" height="70">
+          <!-- 3 cœurs -->
+          <text x="8"  y="30" font-size="20">❤️</text>
+          <text x="30" y="30" font-size="20">❤️</text>
+          <!-- 3ème gris = perdu -->
+          <text x="52" y="30" font-size="20" opacity="0.2">❤️</text>
+          <!-- Combo -->
+          <rect x="14" y="38" width="52" height="22" rx="6" fill="rgba(255,215,0,0.1)" stroke="rgba(255,215,0,0.3)" stroke-width="1"/>
+          <text x="40" y="53" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="13" fill="#FFD700">x5 🔥</text>
+        </svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#F44336;margin-bottom:4px;">Vies & Combos ❤️</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,0.6);line-height:1.5;">Tu as <strong style="color:white;">3 vies</strong>. Enchaîne les contre-attaques pour monter ton <strong style="color:#FFD700;">combo</strong> et multiplier ton score !</div>
+      </div>
+    </div>
+
+    <!-- Record -->
+    <div id="start-best" style="font-family:'Fredoka One',cursive;font-size:.85rem;color:#E040FB;margin-bottom:14px;display:none;">🏆 Record : 0</div>
+
+    <!-- Bouton -->
+    <button class="start-btn" onclick="demarrerJeu()" style="width:100%;max-width:260px;">🥊 FIGHT !</button>
+    <div style="font-size:.6rem;color:rgba(255,200,50,0.4);font-weight:700;margin-top:8px;">Gyroscope requis · Flèches clavier sur PC</div>
+  </div>
+
+  <style>
+    @keyframes tiltPhone {
+      0%,100% { transform: rotate(0deg); }
+      30%      { transform: rotate(-18deg) translateX(-4px); }
+      70%      { transform: rotate(18deg)  translateX(4px); }
+    }
+    @keyframes arrowPulseL {
+      0%,100% { opacity:.2; transform:translateX(0); }
+      30%     { opacity:1;  transform:translateX(-4px); }
+    }
+    @keyframes arrowPulseR {
+      0%,100% { opacity:.2; transform:translateX(0); }
+      70%     { opacity:1;  transform:translateX(4px); }
+    }
+  </style>
+
   <script>
-    const _b=parseInt(localStorage.getItem('boxe_best')||'0');
-    if(_b>0) document.getElementById('start-best').textContent='🏆 Record : '+_b;
+    const _b = parseInt(localStorage.getItem('boxe_best')||'0');
+    if (_b > 0) {
+      const el = document.getElementById('start-best');
+      el.textContent = '🏆 Record : ' + _b;
+      el.style.display = 'block';
+    }
   </script>
 </div>
 
@@ -1501,19 +1607,17 @@ function animCelebSpec(dur){
 // ══════════════════════════════════════════════════════
 //  GAME OVER
 // ══════════════════════════════════════════════════════
-async function afficherGameOver(){
+function afficherGameOver(){
   // Save best score
   if(G.score>G.bestScore){
     G.bestScore=G.score;
     try{ localStorage.setItem('boxe_best',''+G.score); }catch(e){}
   }
 
-  const gagne = G.score >= 500; // Victoire si score suffisant
-
   document.getElementById('go-title').textContent=
     G.score>=1000?'👑 LÉGENDE !':
-    G.score>=500 ?'🏆 Champion !':
-    G.score>=200 ?'🥊 Bien joué !':'💀 K.O.';
+    G.score>=500?'🏆 Champion !':
+    G.score>=200?'🥊 Bien joué !':'💀 K.O.';
   document.getElementById('go-score').textContent='Score : '+G.score;
   document.getElementById('go-round').textContent=G.round;
   document.getElementById('go-dodges').textContent=G.esquivesOK;
@@ -1534,15 +1638,6 @@ async function afficherGameOver(){
   document.getElementById('big-combo').classList.remove('show');
   hideDodgeIndicator();
   hideSeqDots();
-
-  // ── Sauvegarde Supabase ──
-  const result = await sauvegarderFinPartie('boxe', { score: G.score, gagne });
-  if(result?.xp_gagne){
-    const xpEl=document.createElement('div');
-    xpEl.style.cssText='font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:4px;animation:popIn .4s ease both;';
-    xpEl.textContent=`+${result.xp_gagne} XP ⭐`;
-    document.getElementById('gameover-overlay').appendChild(xpEl);
-  }
 }
 
 // ══════════════════════════════════════════════════════
