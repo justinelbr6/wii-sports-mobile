@@ -291,64 +291,6 @@
       pointer-events: all;
     }
 
-    /* ── Cartes tutoriel ── */
-    .tuto-card {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 18px;
-      padding: 14px 16px;
-      backdrop-filter: blur(8px);
-    }
-    .tuto-icon-wrap {
-      flex-shrink: 0;
-      width: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .tuto-text { flex: 1; }
-    .tuto-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.05rem;
-      color: var(--orange);
-      margin-bottom: 3px;
-    }
-    .tuto-desc {
-      font-size: 0.78rem;
-      color: rgba(255,255,255,0.65);
-      line-height: 1.4;
-      font-weight: 700;
-    }
-    .tuto-desc strong { color: white; }
-
-    /* ── Animations SVG tuto ── */
-    @keyframes tiltPhone {
-      0%,100% { transform: rotate(0deg); }
-      30%     { transform: rotate(-18deg); }
-      70%     { transform: rotate(18deg); }
-    }
-    @keyframes swipeUp {
-      0%,100% { transform: translateY(0); opacity:1; }
-      60%     { transform: translateY(-22px); opacity:0.3; }
-      61%     { transform: translateY(0); opacity:0; }
-      62%     { opacity:1; }
-    }
-    @keyframes ballLaunch {
-      0%,100% { transform: translateY(0); opacity:1; }
-      55%     { transform: translateY(-34px); opacity:0; }
-      56%     { transform: translateY(0); opacity:0; }
-      60%     { opacity:1; }
-    }
-    @keyframes trailFade {
-      0%,40% { opacity:0; }
-      50%    { opacity:1; }
-      70%    { opacity:0; }
-      100%   { opacity:0; }
-    }
-
     /* ── Écran de démarrage ── */
     #start-screen {
       position: fixed;
@@ -358,41 +300,34 @@
       flex-direction: column;
       align-items: center;
       gap: 14px;
-      background: linear-gradient(180deg, #1a1a2e 0%, #2d1b69 100%);
+      background: linear-gradient(160deg, #1a1a2e 0%, #2d1b69 60%, #1a1a2e 100%);
       overflow-y: auto;
       padding-bottom: 16px;
     }
 
-    .start-emoji { font-size: 5rem; animation: bounce 1.5s ease-in-out infinite; }
-    .start-title {
-      font-family: 'Fredoka One', cursive;
-      font-size: 2.8rem;
-      color: white;
-      text-align: center;
-    }
-
     .adversaire-card {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.08);
       border-radius: 20px;
-      padding: 16px 28px;
-      text-align: center;
-      border: 2px solid rgba(255,255,255,0.2);
+      padding: 14px 18px;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      width: 100%;
+      backdrop-filter: blur(8px);
     }
     .adversaire-label {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.5);
+      font-size: 0.68rem;
+      color: rgba(255,255,255,0.45);
       text-transform: uppercase;
       letter-spacing: 2px;
       font-weight: 700;
     }
     .adversaire-name {
       font-family: 'Fredoka One', cursive;
-      font-size: 1.8rem;
+      font-size: 1.5rem;
       color: var(--orange);
     }
     .adversaire-niveau {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.5);
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.45);
       font-weight: 700;
       margin-top: 2px;
     }
@@ -411,30 +346,23 @@
     }
     .start-btn:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--orange-dark); }
 
-    .gyro-info {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.4);
-      text-align: center;
-      max-width: 260px;
-      line-height: 1.5;
-      font-weight: 700;
-    }
-
     /* ── Cartes tutoriel ── */
     .tuto-card {
       display: flex;
       align-items: center;
       gap: 14px;
-      background: rgba(255,255,255,0.08);
-      border: 1.5px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.12);
       border-radius: 18px;
       padding: 14px 16px;
       width: 100%;
       backdrop-filter: blur(8px);
+      transition: border-color 0.2s;
     }
+    .tuto-card:hover { border-color: rgba(245,166,35,0.35); }
     .tuto-icon-wrap {
       flex-shrink: 0;
-      width: 80px; height: 60px;
+      width: 86px; height: 66px;
       display: flex; align-items: center; justify-content: center;
     }
     .tuto-text { flex: 1; }
@@ -453,39 +381,59 @@
     }
     .tuto-desc strong { color: white; }
 
-    /* ── Animations tuto ── */
     @keyframes tiltPhone {
       0%,100% { transform: rotate(0deg); }
-      30%      { transform: rotate(-18deg); }
-      70%      { transform: rotate(18deg); }
+      30%     { transform: rotate(-20deg); }
+      70%     { transform: rotate(20deg); }
     }
-    @keyframes fadeArrowL {
-      0%,100% { opacity:0.2; transform:translateX(0); }
-      30%     { opacity:0.9; transform:translateX(-4px); }
+    @keyframes arrowLeft {
+      0%,100% { opacity:0.15; transform:translateX(0); }
+      30%     { opacity:1; transform:translateX(-5px); }
+      50%,70% { opacity:0.15; }
     }
-    @keyframes fadeArrowR {
-      0%,100% { opacity:0.2; transform:translateX(0); }
-      70%     { opacity:0.9; transform:translateX(4px); }
+    @keyframes arrowRight {
+      0%,50%  { opacity:0.15; transform:translateX(0); }
+      70%     { opacity:1; transform:translateX(5px); }
+      100%    { opacity:0.15; }
     }
-    @keyframes swipeUp {
-      0%     { transform: translateY(0); opacity:1; }
-      60%    { transform: translateY(-22px); opacity:0.3; }
-      61%    { transform: translateY(0); opacity:0; }
-      62%    { transform: translateY(0); opacity:1; }
-      100%   { transform: translateY(0); opacity:1; }
-    }
-    @keyframes ballLaunch {
-      0%,10%  { transform: translateY(0); opacity:1; }
-      55%     { transform: translateY(-30px); opacity:0; }
-      56%     { transform: translateY(0); opacity:0; }
-      70%     { opacity:1; }
+    @keyframes ballRoll {
+      0%,10%  { transform:translateY(0) rotate(0deg); }
+      70%     { transform:translateY(-42px) rotate(-360deg); opacity:0.1; }
+      71%     { transform:translateY(0) rotate(0deg); opacity:0; }
+      80%     { opacity:1; }
       100%    { opacity:1; }
     }
-    @keyframes trailFade {
+    @keyframes fingerSwipe {
+      0%,15%  { transform:translateY(0); opacity:1; }
+      55%     { transform:translateY(-18px); opacity:0.4; }
+      56%     { transform:translateY(0); opacity:0; }
+      65%     { opacity:1; }
+      100%    { opacity:1; }
+    }
+    @keyframes trailAnim {
       0%,15% { opacity:0; }
-      40%    { opacity:0.7; }
-      65%    { opacity:0; }
+      35%,60% { opacity:0.75; }
+      75%    { opacity:0; }
       100%   { opacity:0; }
+    }
+    @keyframes pinShake {
+      0%,60%,100% { transform:translateX(0); }
+      65%  { transform:translateX(-2px) rotate(-8deg); }
+      70%  { transform:translateX(2px) rotate(8deg); }
+      75%  { transform:translateX(-1px); }
+      80%  { transform:translateX(0); }
+    }
+    @keyframes scorePopStrike {
+      0%,85%,100% { transform:scale(1); }
+      90%         { transform:scale(1.12); filter:brightness(1.3); }
+    }
+    @keyframes scorePopSpare {
+      0%,30%,85%,100% { transform:scale(1); }
+      35%             { transform:scale(1.12); filter:brightness(1.3); }
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
     }
 
     /* ── HUD adversaire (score en direct) ── */
@@ -547,6 +495,61 @@
       white-space: nowrap;
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    /* ── Animations tuto ── */
+    @keyframes tiltPhone {
+      0%,100% { transform: rotate(0deg); }
+      30%     { transform: rotate(-20deg); }
+      70%     { transform: rotate(20deg); }
+    }
+    @keyframes arrowLeft {
+      0%,100% { opacity:0.15; transform:translateX(0); }
+      30%     { opacity:1; transform:translateX(-5px); }
+      50%,70% { opacity:0.15; }
+    }
+    @keyframes arrowRight {
+      0%,50%  { opacity:0.15; transform:translateX(0); }
+      70%     { opacity:1; transform:translateX(5px); }
+      100%    { opacity:0.15; }
+    }
+    @keyframes ballRoll {
+      0%,10%  { transform:translateY(0) rotate(0deg); opacity:1; }
+      65%     { transform:translateY(-42px) rotate(-360deg); opacity:0.1; }
+      66%     { transform:translateY(0) rotate(0deg); opacity:0; }
+      78%     { opacity:1; }
+      100%    { opacity:1; }
+    }
+    @keyframes fingerSwipe {
+      0%,15%  { transform:translateY(0); opacity:1; }
+      55%     { transform:translateY(-18px); opacity:0.4; }
+      56%     { transform:translateY(0); opacity:0; }
+      65%     { opacity:1; }
+      100%    { opacity:1; }
+    }
+    @keyframes trailAnim {
+      0%,15%  { opacity:0; }
+      35%,60% { opacity:0.75; }
+      75%     { opacity:0; }
+      100%    { opacity:0; }
+    }
+    @keyframes pinShake {
+      0%,60%,100% { transform:translateX(0); }
+      65%  { transform:translateX(-2px) rotate(-8deg); }
+      70%  { transform:translateX(2px) rotate(8deg); }
+      75%  { transform:translateX(-1px); }
+      80%  { transform:translateX(0); }
+    }
+    @keyframes scorePopStrike {
+      0%,85%,100% { transform:scale(1); }
+      90%         { transform:scale(1.12); filter:brightness(1.3); }
+    }
+    @keyframes scorePopSpare {
+      0%,30%,85%,100% { transform:scale(1); }
+      35%             { transform:scale(1.12); filter:brightness(1.3); }
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
     }
   </style>
 </head>
@@ -629,107 +632,209 @@
   <button class="result-btn" style="background:#2A5FBF;box-shadow:0 6px 0 #1a3f8f" onclick="location.reload()">🔄 Rejouer</button>
 </div>
 
-<!-- Écran de démarrage — Comment jouer -->
+<!-- Écran Comment jouer -->
 <div id="start-screen">
 
+  <!-- Background décoratif -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;">
+    <div style="position:absolute;top:-60px;left:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(245,166,35,0.12) 0%,transparent 70%);"></div>
+    <div style="position:absolute;bottom:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(42,95,191,0.18) 0%,transparent 70%);"></div>
+  </div>
+
   <!-- En-tête -->
-  <div style="text-align:center; padding-top:18px;">
-    <div style="font-size:3rem; line-height:1;">🎳</div>
-    <div style="font-family:'Fredoka One',cursive; font-size:2rem; color:white; margin-top:4px;">Bowling</div>
-    <div style="font-family:'Fredoka One',cursive; font-size:0.75rem; color:rgba(255,255,255,0.4); letter-spacing:3px; text-transform:uppercase; margin-top:2px;">Comment jouer</div>
+  <div style="position:relative;z-index:1;text-align:center;padding-top:22px;padding-bottom:4px;">
+    <div style="font-size:3.2rem;line-height:1;animation:bounce 1.6s ease-in-out infinite;">🎳</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:2.4rem;color:white;margin-top:6px;text-shadow:0 2px 12px rgba(245,166,35,0.4);">Bowling</div>
+    <div style="display:inline-block;background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.35);border-radius:20px;padding:3px 14px;margin-top:6px;">
+      <span style="font-family:'Fredoka One',cursive;font-size:0.72rem;color:rgba(245,166,35,0.9);letter-spacing:3px;text-transform:uppercase;">Comment jouer</span>
+    </div>
   </div>
 
   <!-- Cartes tutoriel -->
-  <div style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:320px; padding:0 16px;">
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:11px;width:100%;max-width:340px;padding:0 16px;">
 
-    <!-- Carte 1 : Viser -->
-    <div class="tuto-card" id="tuto-viser">
+    <!-- Carte 1 : Viser avec le gyroscope -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.1s both;">
       <div class="tuto-icon-wrap">
-        <!-- SVG téléphone qui s'incline -->
-        <svg viewBox="0 0 80 60" width="80" height="60" style="overflow:visible;">
-          <g id="phone-tilt" style="transform-origin:40px 30px; animation:tiltPhone 2s ease-in-out infinite;">
-            <!-- Corps téléphone -->
-            <rect x="28" y="8" width="24" height="40" rx="4" fill="#2255EE" stroke="white" stroke-width="1.5"/>
-            <rect x="31" y="12" width="18" height="30" rx="2" fill="#87CEEB"/>
-            <circle cx="40" cy="45" r="2" fill="white" opacity="0.6"/>
+        <svg viewBox="0 0 86 66" width="86" height="66" style="overflow:visible;">
+          <!-- Téléphone qui s'incline -->
+          <g style="transform-origin:43px 33px;animation:tiltPhone 2.4s ease-in-out infinite;">
+            <rect x="30" y="9" width="26" height="44" rx="5" fill="#1a3a8a" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+            <rect x="33" y="14" width="20" height="32" rx="2" fill="#4488dd"/>
+            <!-- Ecran avec fond piste -->
+            <rect x="33" y="14" width="20" height="32" rx="2" fill="url(#laneGrad)"/>
+            <!-- Boule sur écran -->
+            <circle cx="43" cy="38" r="4" fill="#2255EE" stroke="white" stroke-width="0.8"/>
+            <!-- Bouton home -->
+            <circle cx="43" cy="48" r="2.5" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
           </g>
-          <!-- Flèches direction -->
-          <g style="animation:showArrows 2s ease-in-out infinite;">
-            <text x="8" y="34" font-size="14" fill="rgba(255,255,255,0.6)" style="animation:fadeArrowL 2s ease-in-out infinite;">←</text>
-            <text x="58" y="34" font-size="14" fill="rgba(255,255,255,0.6)" style="animation:fadeArrowR 2s ease-in-out infinite;">→</text>
+          <!-- Flèche gauche -->
+          <g style="animation:arrowLeft 2.4s ease-in-out infinite;">
+            <text x="4" y="36" font-size="16" fill="#F5A623" opacity="0.9">←</text>
           </g>
+          <!-- Flèche droite -->
+          <g style="animation:arrowRight 2.4s ease-in-out infinite;">
+            <text x="64" y="36" font-size="16" fill="#F5A623" opacity="0.9">→</text>
+          </g>
+          <defs>
+            <linearGradient id="laneGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#c8a84b" stop-opacity="0.4"/>
+              <stop offset="100%" stop-color="#8a6a2a" stop-opacity="0.4"/>
+            </linearGradient>
+          </defs>
         </svg>
       </div>
       <div class="tuto-text">
-        <div class="tuto-title">Viser</div>
-        <div class="tuto-desc">Incline ton téléphone <strong>à gauche ou à droite</strong> pour orienter ta boule</div>
+        <div class="tuto-title">🎯 Viser</div>
+        <div class="tuto-desc">Incline ton téléphone <strong>gauche / droite</strong> pour orienter la trajectoire de ta boule</div>
       </div>
     </div>
 
     <!-- Carte 2 : Lancer -->
-    <div class="tuto-card" id="tuto-lancer">
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.2s both;">
       <div class="tuto-icon-wrap">
-        <!-- SVG doigt qui swipe vers le haut -->
-        <svg viewBox="0 0 80 60" width="80" height="60" style="overflow:visible;">
-          <!-- Piste en fond -->
-          <rect x="30" y="5" width="20" height="50" rx="3" fill="rgba(240,216,120,0.25)" stroke="rgba(240,216,120,0.4)" stroke-width="1"/>
-          <!-- Doigt animé -->
-          <g style="animation:swipeUp 1.8s ease-in-out infinite;">
-            <ellipse cx="40" cy="46" rx="7" ry="9" fill="#FFCCA0" stroke="#E8A070" stroke-width="1"/>
-            <rect x="36" y="28" width="8" height="18" rx="4" fill="#FFCCA0" stroke="#E8A070" stroke-width="1"/>
+        <svg viewBox="0 0 86 66" width="86" height="66" style="overflow:visible;">
+          <!-- Piste -->
+          <rect x="34" y="4" width="18" height="56" rx="4" fill="rgba(200,168,75,0.15)" stroke="rgba(200,168,75,0.35)" stroke-width="1.2"/>
+          <!-- Lignes piste -->
+          <line x1="43" y1="4" x2="43" y2="60" stroke="rgba(200,168,75,0.2)" stroke-width="0.6"/>
+          <!-- Quilles au fond -->
+          <g style="animation:pinShake 2s 0.8s ease-in-out infinite;">
+            <circle cx="40" cy="14" r="2.5" fill="white" opacity="0.8"/>
+            <circle cx="43" cy="11" r="2.5" fill="white" opacity="0.8"/>
+            <circle cx="46" cy="14" r="2.5" fill="white" opacity="0.8"/>
           </g>
           <!-- Boule animée -->
-          <circle id="boule-anim" cx="40" cy="42" r="6" fill="#2255EE" stroke="white" stroke-width="1"
-            style="animation:ballLaunch 1.8s ease-in-out infinite;"/>
-          <!-- Trait vitesse -->
-          <line x1="40" y1="36" x2="40" y2="12" stroke="rgba(245,166,35,0.5)" stroke-width="2" stroke-dasharray="3,3"
-            style="animation:trailFade 1.8s ease-in-out infinite;"/>
+          <g style="animation:ballRoll 2s ease-in-out infinite;">
+            <circle cx="43" cy="52" r="7" fill="#2255EE" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+            <!-- Trous boule -->
+            <circle cx="41" cy="50" r="1.2" fill="#001133"/>
+            <circle cx="44" cy="48" r="1.2" fill="#001133"/>
+            <circle cx="46" cy="51" r="1.2" fill="#001133"/>
+          </g>
+          <!-- Sillage vitesse -->
+          <g style="animation:trailAnim 2s ease-in-out infinite;">
+            <line x1="43" y1="44" x2="43" y2="26" stroke="#F5A623" stroke-width="2" stroke-dasharray="3,4" opacity="0.7"/>
+          </g>
+          <!-- Doigt -->
+          <g style="animation:fingerSwipe 2s ease-in-out infinite;">
+            <ellipse cx="43" cy="59" rx="5.5" ry="7" fill="#FFCCA0" stroke="#D4965C" stroke-width="1"/>
+            <rect x="39.5" y="47" width="7" height="14" rx="3.5" fill="#FFCCA0" stroke="#D4965C" stroke-width="1"/>
+          </g>
         </svg>
       </div>
       <div class="tuto-text">
-        <div class="tuto-title">Lancer</div>
-        <div class="tuto-desc"><strong>Swipe vers le haut</strong> — plus tu vas vite, plus la boule est puissante</div>
+        <div class="tuto-title">🏃 Lancer</div>
+        <div class="tuto-desc"><strong>Swipe vers le haut</strong> sur l'écran — plus tu es rapide, plus la boule est puissante !</div>
       </div>
     </div>
 
-    <!-- Carte 3 : Score -->
-    <div class="tuto-card" id="tuto-score">
-      <div class="tuto-icon-wrap">
-        <svg viewBox="0 0 80 60" width="80" height="60">
-          <!-- Case Strike -->
-          <rect x="4" y="14" width="22" height="32" rx="4" fill="rgba(245,166,35,0.2)" stroke="rgba(245,166,35,0.6)" stroke-width="1.5"/>
-          <text x="15" y="26" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="bold" fill="#F5A623">X</text>
-          <text x="15" y="38" text-anchor="middle" font-family="sans-serif" font-size="7" fill="rgba(255,255,255,0.5)">Strike</text>
-          <text x="15" y="47" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="bold" fill="white">30</text>
-          <!-- Case Spare -->
-          <rect x="29" y="14" width="22" height="32" rx="4" fill="rgba(91,191,106,0.2)" stroke="rgba(91,191,106,0.6)" stroke-width="1.5"/>
-          <text x="40" y="26" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="bold" fill="#5BBF6A">/</text>
-          <text x="40" y="38" text-anchor="middle" font-family="sans-serif" font-size="7" fill="rgba(255,255,255,0.5)">Spare</text>
-          <text x="40" y="47" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="bold" fill="white">+1</text>
-          <!-- Case Normal -->
-          <rect x="54" y="14" width="22" height="32" rx="4" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-          <text x="65" y="26" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="bold" fill="white">7</text>
-          <text x="65" y="38" text-anchor="middle" font-family="sans-serif" font-size="7" fill="rgba(255,255,255,0.5)">Normal</text>
-          <text x="65" y="47" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="bold" fill="white">= 7</text>
-        </svg>
+    <!-- Carte 3 : Système de score -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.3s both; flex-direction:column; align-items:stretch; gap:0;">
+      <div class="tuto-title" style="padding:0 0 10px 0;">📊 Système de score</div>
+
+      <!-- SPARE -->
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <!-- Illustration spare -->
+        <div style="flex-shrink:0;">
+          <svg viewBox="0 0 90 52" width="90" height="52">
+            <!-- Frame 1 : 7 quilles -->
+            <rect x="2" y="8" width="26" height="36" rx="5" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+            <!-- quilles debout (3 restantes en gris) -->
+            <g fill="rgba(255,255,255,0.35)">
+              <rect x="13" y="12" width="4" height="10" rx="2"/>
+              <rect x="8"  y="14" width="4" height="8"  rx="2"/>
+              <rect x="18" y="14" width="4" height="8"  rx="2"/>
+            </g>
+            <!-- quilles tombées (7) en orange -->
+            <g fill="#F5A623" opacity="0.7">
+              <rect x="6"  y="26" width="7" height="3" rx="1" transform="rotate(-30 6 26)"/>
+              <rect x="12" y="27" width="7" height="3" rx="1" transform="rotate(20 12 27)"/>
+              <rect x="18" y="25" width="6" height="3" rx="1" transform="rotate(-15 18 25)"/>
+              <rect x="9"  y="30" width="6" height="3" rx="1" transform="rotate(40 9 30)"/>
+            </g>
+            <text x="15" y="48" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="8" fill="rgba(255,255,255,0.4)">7</text>
+
+            <!-- Flèche -->
+            <text x="34" y="28" text-anchor="middle" font-family="sans-serif" font-size="12" fill="rgba(255,255,255,0.4)">+</text>
+
+            <!-- Frame 2 : 3 restantes tombées = SPARE -->
+            <rect x="42" y="8" width="26" height="36" rx="5" fill="rgba(91,191,106,0.15)" stroke="#5BBF6A" stroke-width="1.8"/>
+            <g fill="#5BBF6A" opacity="0.8">
+              <rect x="46" y="24" width="7" height="3" rx="1" transform="rotate(-25 46 24)"/>
+              <rect x="52" y="26" width="7" height="3" rx="1" transform="rotate(15 52 26)"/>
+              <rect x="58" y="23" width="6" height="3" rx="1" transform="rotate(-40 58 23)"/>
+            </g>
+            <text x="55" y="20" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="14" fill="#5BBF6A">/</text>
+            <text x="55" y="48" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="8" fill="#5BBF6A">spare</text>
+
+            <!-- = 10 + prochain -->
+            <text x="76" y="24" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="9" fill="white">=10</text>
+            <text x="76" y="34" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="8" fill="rgba(91,191,106,0.9)">+next</text>
+          </svg>
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:'Fredoka One',cursive;font-size:0.9rem;color:#5BBF6A;margin-bottom:3px;">Spare ✨</div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.65);line-height:1.45;">Les 10 quilles tombent en <strong style="color:white;">2 lancers</strong> → 10 pts + les points du <strong style="color:#5BBF6A;">lancer suivant</strong></div>
+        </div>
       </div>
-      <div class="tuto-text">
-        <div class="tuto-title">Score</div>
-        <div class="tuto-desc"><strong>Strike</strong> = 10 + bonus · <strong>Spare</strong> = 10 + prochain · 10 frames au total</div>
+
+      <!-- STRIKE -->
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;">
+        <!-- Illustration strike -->
+        <div style="flex-shrink:0;">
+          <svg viewBox="0 0 90 52" width="90" height="52">
+            <!-- Frame 1 : toutes tombées d'un coup = STRIKE -->
+            <rect x="2" y="8" width="36" height="36" rx="5" fill="rgba(245,166,35,0.15)" stroke="#F5A623" stroke-width="1.8"/>
+            <!-- Boule qui entre -->
+            <circle cx="12" cy="28" r="6" fill="#2A5FBF" stroke="#5588FF" stroke-width="1"/>
+            <!-- Quilles qui s'éparpillent -->
+            <g fill="#F5A623" opacity="0.85" style="animation:scorePopStrike 2s ease-in-out infinite;">
+              <rect x="20" y="12" width="5" height="11" rx="2" transform="rotate(-45 20 12)"/>
+              <rect x="27" y="10" width="5" height="11" rx="2" transform="rotate(60 27 10)"/>
+              <rect x="30" y="20" width="5" height="11" rx="2" transform="rotate(-20 30 20)"/>
+              <rect x="22" y="24" width="5" height="11" rx="2" transform="rotate(50 22 24)"/>
+              <rect x="15" y="16" width="5" height="11" rx="2" transform="rotate(-70 15 16)"/>
+            </g>
+            <text x="20" y="38" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="13" fill="#F5A623">X</text>
+            <text x="20" y="48" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="8" fill="#F5A623">strike</text>
+
+            <!-- = 10 + 2 prochains -->
+            <text x="62" y="22" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="9" fill="white">= 10</text>
+            <text x="62" y="33" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="8" fill="rgba(245,166,35,0.9)">+2 next</text>
+            <text x="62" y="43" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="7" fill="rgba(255,255,255,0.4)">lancers</text>
+          </svg>
+        </div>
+        <div style="flex:1;">
+          <div style="font-family:'Fredoka One',cursive;font-size:0.9rem;color:#F5A623;margin-bottom:3px;">Strike 🎳</div>
+          <div style="font-size:0.72rem;color:rgba(255,255,255,0.65);line-height:1.45;">Les 10 quilles tombent au <strong style="color:white;">1er lancer</strong> → 10 pts + les points des <strong style="color:#F5A623;">2 lancers suivants</strong></div>
+        </div>
       </div>
     </div>
 
   </div>
 
-  <!-- Adversaire -->
-  <div class="adversaire-card" id="adv-card">
-    <div class="adversaire-label">Ton adversaire</div>
-    <div class="adversaire-name" id="adv-name">⏳ Chargement...</div>
-    <div class="adversaire-niveau" id="adv-niveau"></div>
+  <!-- Carte adversaire -->
+  <div style="position:relative;z-index:1;width:100%;max-width:340px;padding:0 16px;">
+    <div class="adversaire-card" id="adv-card" style="animation:slideIn 0.5s 0.4s both;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:2rem;" id="adv-avatar-start">🤖</div>
+        <div style="flex:1;text-align:left;">
+          <div class="adversaire-label">Ton adversaire</div>
+          <div class="adversaire-name" id="adv-name" style="font-size:1.4rem;">⏳ Chargement...</div>
+          <div class="adversaire-niveau" id="adv-niveau"></div>
+        </div>
+        <div style="font-family:'Fredoka One',cursive;font-size:0.75rem;color:rgba(255,255,255,0.3);text-align:right;line-height:1.4;">10<br>frames</div>
+      </div>
+    </div>
   </div>
 
-  <!-- Bouton lancer -->
-  <button class="start-btn" onclick="demarrerJeu()" style="margin-bottom:24px;">🎳 C'est parti !</button>
+  <!-- Bouton jouer -->
+  <div style="position:relative;z-index:1;padding:0 16px 28px;width:100%;max-width:340px;">
+    <button class="start-btn" onclick="demarrerJeu()" style="width:100%;font-size:1.35rem;animation:slideIn 0.5s 0.5s both;">
+      🎳 C'est parti !
+    </button>
+  </div>
 
 </div>
 
