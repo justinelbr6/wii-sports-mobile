@@ -204,7 +204,11 @@ async function getClassementSport(sport, limit = 20) {
       .order('score', { ascending: sport === 'golf' })
       .limit(200);
 
-    if (error) { console.error('getClassementSport:', error.message); return []; }
+    if (error) {
+      console.error('❌ getClassementSport RLS ERROR:', error.message);
+      console.error('   Pour fixer : Exécute supabase-rls-fix.sql dans Supabase SQL Editor');
+      return [];
+    }
 
     // Garder seulement le meilleur score par joueur
     const vus = new Set();
@@ -215,8 +219,12 @@ async function getClassementSport(sport, limit = 20) {
       meilleurs.push(row);
       if (meilleurs.length >= limit) break;
     }
+    console.log(`✅ Classement ${sport}: ${meilleurs.length} joueurs`);
     return meilleurs;
-  } catch(err) { return []; }
+  } catch(err) {
+    console.error('❌ getClassementSport ERREUR:', err);
+    return [];
+  }
 }
 
 // ── CLASSEMENT TENNIS (compter victoires) ──────────────────────
