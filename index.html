@@ -53,36 +53,12 @@
       align-items: center;
       padding: 12px 16px 0;
     }
-
-    /* ── Profil Mii (coin gauche) ── */
-    .profil-mii {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255,255,255,0.25);
-      backdrop-filter: blur(10px);
-      border: 1.5px solid rgba(255,255,255,0.5);
-      border-radius: 50px;
-      padding: 4px 12px 4px 4px;
-      cursor: pointer;
-      transition: transform 0.15s, background 0.15s;
+    .logo-left {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.7);
+      font-weight: 700;
     }
-    .profil-mii:active { transform: scale(0.95); }
-    .profil-mii-avatar {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.4);
-      border: 2px solid rgba(255,255,255,0.7);
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .profil-mii-avatar svg { width: 38px; height: 38px; }
-    .profil-mii-info { display: flex; flex-direction: column; gap: 1px; }
-    .profil-mii-nom  { font-size: 0.75rem; font-weight: 800; color: rgba(255,255,255,0.95); line-height: 1; }
-    .profil-mii-sub  { font-size: 0.58rem; font-weight: 700; color: rgba(255,255,255,0.55); letter-spacing: 0.5px; text-transform: uppercase; }
-
-    .logo-right { text-align: right; display: flex; align-items: center; gap: 8px; }
+    .logo-right { text-align: right; }
     .logo-wii-line {
       font-size: 1rem; font-weight: 800; color: #555; line-height: 1;
     }
@@ -228,28 +204,21 @@
 <div class="wii-bg"></div>
 
 <div class="logo-area">
-
-  <!-- ── Profil Mii — coin gauche ── -->
-  <div class="profil-mii" onclick="seDeconnecter()" title="Se déconnecter">
-    <div class="profil-mii-avatar" id="mii-avatar-header">
-      <!-- Mii SVG injecté via JS après chargement du profil -->
-      <span style="font-size:1.4rem;">😊</span>
-    </div>
-    <div class="profil-mii-info">
-      <div class="profil-mii-nom" id="user-greeting">…</div>
-      <div class="profil-mii-sub">Déconnexion 🚪</div>
-    </div>
+  <div class="logo-left" style="display:flex;flex-direction:column;gap:2px;">
+    <span>Main Menu</span>
+    <span id="user-greeting" style="font-size:0.7rem;color:rgba(255,255,255,0.5);font-weight:700;"></span>
   </div>
-
-  <!-- ── Logo Wii Sports — coin droit ── -->
-  <div class="logo-right">
-    <div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="logo-right">
       <div class="logo-wii-line">Wii<em>Sports</em></div>
       <div class="logo-sports-line">Mobile</div>
       <div class="logo-badge">✦ Fan Made ✦</div>
     </div>
+    <button onclick="seDeconnecter()" title="Se déconnecter"
+      style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.3);border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer;flex-shrink:0;">
+      🚪
+    </button>
   </div>
-
 </div>
 
 <div class="main-layout">
@@ -339,6 +308,15 @@
     <div class="play-btn-text">▶&nbsp; Jouer !</div>
   </button>
 
+  <button onclick="window.location.href='classements.html'"
+    style="width:100%;background:rgba(255,255,255,0.45);backdrop-filter:blur(10px);border:2px solid rgba(255,255,255,0.8);border-radius:16px;padding:12px;cursor:pointer;box-shadow:0 3px 0 rgba(140,195,235,0.6),0 5px 14px rgba(0,60,140,0.08);transition:transform .1s,box-shadow .1s;outline:none;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Baloo 2',cursive;font-size:1rem;font-weight:800;color:#1a5fa0;"
+    onmousedown="this.style.transform='translateY(3px)';this.style.boxShadow='0 0 0 rgba(140,195,235,0.6)'"
+    onmouseup="this.style.transform='';this.style.boxShadow=''"
+    ontouchstart="this.style.transform='translateY(3px)'"
+    ontouchend="this.style.transform=''">
+    🏆&nbsp; Classements
+  </button>
+
 </div>
 
 <div class="loading-screen" id="loadingScreen">
@@ -363,36 +341,25 @@
     document.body.appendChild(b);
   }
 
-  // ── Auth + chargement du Mii profil ──
+  // ── Garde auth : redirige si non connecté, affiche le prénom sinon ──
   (async () => {
     const session = await checkAuth();
-    if (!session) return;
-
+    if (!session) return; // checkAuth redirige vers login.html tout seul
     const profil = await getProfilCourant();
     if (profil) {
-      // Afficher le prénom
-      const prenom = profil.full_name ? profil.full_name.split(' ')[0] : 'Toi';
-      document.getElementById('user-greeting').textContent = prenom;
-
-      // Injecter le Mii SVG dans le header
-      const avatarWrap = document.getElementById('mii-avatar-header');
-      avatarWrap.innerHTML = genererMiiSVG(
-        profil.mii_color      || '#4FC3F7',
-        profil.mii_hair       || 'hair1',
-        profil.mii_hair_color || '#4A2C0A',
-        38, 46
-      );
+      const prenom = profil.full_name.split(' ')[0];
+      document.getElementById('user-greeting').textContent = `👋 ${prenom}`;
     }
   })();
 
   // ── Menu sports ──
   let sportActuel = 'bowling';
   const infos = {
-    bowling:  { emoji:'🎳', nom:'Bowling',  desc:'Renverse toutes les quilles !', t1:'3 Frames',  t2:'2 lancers / frame', t3:'📐 Gyroscope' },
-    golf:     { emoji:'⛳', nom:'Golf',     desc:'Mets la balle dans le trou !',  t1:'3 Trous',   t2:'Par / Score',       t3:'📐 Gyroscope' },
-    tennis:   { emoji:'🎾', nom:'Tennis',   desc:'Gagne les 3 sets !',            t1:'3 Sets',    t2:'15·30·40·Jeu',      t3:'📐 Gyroscope' },
-    boxe:     { emoji:'🥊', nom:'Boxe',     desc:'Crie pour frapper plus fort !', t1:'3 Rounds',  t2:'Barre de vie',      t3:'🎤 Micro'     },
-    baseball: { emoji:'⚾️', nom:'Baseball', desc:'Sois précis dans le timing !',  t1:'5 Rounds',  t2:'Barre de vie'                        },
+    bowling: { emoji:'🎳', nom:'Bowling', desc:'Renverse toutes les quilles !', t1:'3 Frames',  t2:'2 lancers / frame', t3:'📐 Gyroscope' },
+    golf:    { emoji:'⛳', nom:'Golf',    desc:'Mets la balle dans le trou !',  t1:'3 Trous',   t2:'Par / Score',       t3:'📐 Gyroscope' },
+    tennis:  { emoji:'🎾', nom:'Tennis',  desc:'Gagne les 3 sets !',            t1:'3 Sets',    t2:'15·30·40·Jeu',      t3:'📐 Gyroscope' },
+    boxe:    { emoji:'🥊', nom:'Boxe',    desc:'Crie pour frapper plus fort !', t1:'3 Rounds',  t2:'Barre de vie',      t3:'🎤 Micro'     },
+    baseball: { emoji:'⚾️', nom:'Baseball', desc:'Sois précis dans le timing !', t1:'5 Rounds', t2:'Barre de vie' },
   };
 
   function selectionner(sport, emoji, nom, desc, t1, t2, t3) {
@@ -405,10 +372,9 @@
       document.getElementById('prevEmoji').textContent = emoji;
       document.getElementById('prevTitle').textContent = nom;
       document.getElementById('prevDesc').textContent  = desc;
-      document.getElementById('prevTag1').textContent  = t1 || '';
-      document.getElementById('prevTag2').textContent  = t2 || '';
-      document.getElementById('prevTag3').textContent  = t3 || '';
-      document.getElementById('prevTag3').style.display = t3 ? '' : 'none';
+      document.getElementById('prevTag1').textContent  = t1;
+      document.getElementById('prevTag2').textContent  = t2;
+      document.getElementById('prevTag3').textContent  = t3;
       c.style.transition = 'all 0.28s cubic-bezier(0.34,1.56,0.64,1)';
       c.style.opacity = '1'; c.style.transform = 'scale(1)';
     }, 140);
