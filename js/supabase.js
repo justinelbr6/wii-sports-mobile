@@ -206,6 +206,59 @@ async function getClassementSport(sport, limit = 20) {
   } catch(err) { return []; }
 }
 
+// ── STATS PROFIL ──────────────────────────────────────────────
+async function getStatsProfil() {
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return null;
+
+    // Récupérer tous les records de l'utilisateur dans la table classement
+    const { data, error } = await supabaseClient
+      .from('classement')
+      .select('sport, score')
+      .eq('user_id', user.id);
+
+    if (error) { console.error('Erreur getStatsProfil:', error.message); return null; }
+
+    const stats = {
+      bowling: 0,
+      golf: 0, // Pour le golf, le meilleur score est le plus bas
+      tennis: 0,
+      boxe: 0,
+      baseball: 0,
+      moyenne: 0
+    };
+
+    if (!data || data.length === 0) return stats;
+
+    let totalScore = 0;
+    let count = 0;
+
+    // On extrait le meilleur score par sport
+    data.forEach(row => {
+       if (row.sport === 'golf') {
+           if (stats.golf === 0 || row.score < stats.golf) stats.golf = row.score;
+       } else {
+           if (row.score > stats[row.sport]) stats[row.sport] = row.score;
+       }
+    });
+
+    // Calcul de la moyenne globale des scores
+    for (const key in stats) {
+       if (key !== 'moyenne' && stats[key] !== 0) {
+           totalScore += stats[key];
+           count++;
+       }
+    }
+    stats.moyenne = count > 0 ? Math.round(totalScore / count) : 0;
+
+    return stats;
+  } catch (err) {
+    console.error('getStatsProfil:', err);
+    return null;
+  }
+}
+
 // Alias legacy
 async function sauvegarderScore(sport, score) {
   return sauvegarderFinPartie(sport, { score, gagne: false });
