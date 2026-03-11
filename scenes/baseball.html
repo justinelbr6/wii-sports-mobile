@@ -200,10 +200,100 @@
 </div>
 
 <div id="start-screen">
-  <span class="start-emoji">⚾</span>
-  <div class="start-title">Baseball</div>
-  <p class="start-sub">🏏 Appuie au bon moment pour frapper la balle !<br>Tu as 3 vies. Chaque raté = 1 vie perdue.</p>
-  <button class="start-btn" onclick="demarrerJeu()">⚾ Prêt !</button>
+  <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:360px;gap:0;overflow-y:auto;max-height:100vh;padding:20px 16px 24px;">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-size:3.8rem;animation:bounceY 1.5s ease-in-out infinite;">⚾</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:2.4rem;color:white;line-height:1;">Baseball</div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-top:2px;">Comment jouer</div>
+    </div>
+
+    <!-- Carte 1 : Timing -->
+    <div style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <div style="flex-shrink:0;">
+        <svg viewBox="0 0 80 70" width="80" height="70">
+          <!-- Barre de timing -->
+          <rect x="6" y="28" width="68" height="14" rx="7" fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+          <!-- Zone verte -->
+          <rect x="28" y="28" width="24" height="14" rx="4" fill="rgba(67,160,71,0.35)" stroke="#43A047" stroke-width="1.5"/>
+          <!-- Zone parfaite orange -->
+          <rect x="38" y="28" width="4" height="14" rx="2" fill="rgba(245,166,35,0.8)" stroke="#F5A623" stroke-width="1"/>
+          <!-- Curseur animé -->
+          <rect x="10" y="25" width="5" height="20" rx="2.5" fill="white" style="animation:cursorSlide 1.8s ease-in-out infinite;">
+            <animateTransform attributeName="transform" type="translate" values="0,0;58,0;0,0" dur="1.8s" repeatCount="indefinite"/>
+          </rect>
+          <!-- Labels -->
+          <text x="40" y="52" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="7" fill="#F5A623">PARFAIT</text>
+          <text x="40" y="62" text-anchor="middle" font-family="sans-serif" font-size="6" fill="rgba(67,160,71,0.8)">zone verte = bon</text>
+          <!-- Balle en approche -->
+          <circle cx="40" cy="14" r="6" fill="white" stroke="rgba(0,0,0,0.3)" stroke-width="1">
+            <animateTransform attributeName="transform" type="translate" values="0,-8;0,4;0,-8" dur="1.8s" repeatCount="indefinite"/>
+          </circle>
+          <text x="40" y="18" text-anchor="middle" font-size="8">⚾</text>
+        </svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#F5A623;margin-bottom:4px;">Frappe au bon moment 🏏</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,0.6);line-height:1.5;">Appuie sur <strong style="color:white;">FRAPPE</strong> quand le curseur est dans la <strong style="color:#43A047;">zone verte</strong> — et vise le centre <strong style="color:#F5A623;">orange</strong> pour le parfait !</div>
+      </div>
+    </div>
+
+    <!-- Carte 2 : Score & Combo -->
+    <div style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+      <div style="flex-shrink:0;">
+        <svg viewBox="0 0 80 70" width="80" height="70">
+          <!-- Home Run -->
+          <rect x="4" y="4" width="72" height="20" rx="6" fill="rgba(255,215,0,0.12)" stroke="#FFD700" stroke-width="1.5"/>
+          <text x="40" y="17" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="9" fill="#FFD700">HOME RUN +100 🔥</text>
+          <!-- Bon -->
+          <rect x="4" y="28" width="72" height="18" rx="6" fill="rgba(67,160,71,0.12)" stroke="#43A047" stroke-width="1.5"/>
+          <text x="40" y="40" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="9" fill="#43A047">Bien joué ! +50</text>
+          <!-- Combo -->
+          <rect x="4" y="50" width="72" height="16" rx="6" fill="rgba(245,166,35,0.12)" stroke="#F5A623" stroke-width="1.5"/>
+          <text x="40" y="62" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="8" fill="#F5A623">Combo x3 → bonus ×3 ⚡</text>
+        </svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#FFD700;margin-bottom:4px;">Score & Combos ⚡</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,0.6);line-height:1.5;">Enchaîne les frappes sans rater pour monter ton <strong style="color:#F5A623;">combo</strong> — il multiplie les points à chaque coup réussi !</div>
+      </div>
+    </div>
+
+    <!-- Carte 3 : Vies -->
+    <div style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:14px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">
+      <div style="flex-shrink:0;">
+        <svg viewBox="0 0 80 70" width="80" height="70">
+          <!-- 3 balles de vie -->
+          <text x="8"  y="32" font-size="20">⚾</text>
+          <text x="30" y="32" font-size="20">⚾</text>
+          <text x="52" y="32" font-size="20" opacity="0.2">⚾</text>
+          <!-- Raté -->
+          <rect x="14" y="42" width="52" height="20" rx="6" fill="rgba(211,47,47,0.12)" stroke="rgba(211,47,47,0.4)" stroke-width="1"/>
+          <text x="40" y="56" text-anchor="middle" font-family="'Fredoka One',cursive" font-size="10" fill="#F44336">Raté → -1 vie</text>
+        </svg>
+      </div>
+      <div style="flex:1;">
+        <div style="font-family:'Fredoka One',cursive;font-size:.95rem;color:#F44336;margin-bottom:4px;">3 vies ⚾</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,0.6);line-height:1.5;">Chaque <strong style="color:#F44336;">raté ou mauvais timing</strong> te coûte une vie. Le meilleur score (coups réussis + combos) est <strong style="color:white;">sauvegardé</strong> !</div>
+      </div>
+    </div>
+
+    <!-- Record -->
+    <div id="start-best" style="font-family:'Fredoka One',cursive;font-size:.85rem;color:#F5A623;margin-bottom:14px;display:none;">🏆 Record : 0</div>
+
+    <!-- Bouton -->
+    <button class="start-btn" onclick="demarrerJeu()" style="width:100%;max-width:260px;">⚾ Prêt !</button>
+  </div>
+
+  <script>
+    const _b = parseInt(localStorage.getItem('baseball_best')||'0');
+    if (_b > 0) {
+      const el = document.getElementById('start-best');
+      el.textContent = '🏆 Record : ' + _b;
+      el.style.display = 'block';
+    }
+  </script>
 </div>
 
 <!-- ✅ Ordre correct : Three.js → Supabase CDN → supabase.js → sensors.js -->
@@ -557,9 +647,7 @@ function majHud(){document.getElementById('hud-score').textContent=G.score;docum
 function majVies(){document.querySelectorAll('.hud-heart').forEach((h,i)=>h.classList.toggle('lost',i>=G.vies));}
 function flashCoup(color){const el=document.getElementById('flash');el.style.background=color;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),100);}
 
-async function afficherGameOver(){
-  const gagne = G.score >= 200; // Victoire si bon score
-
+function afficherGameOver(){
   document.getElementById('go-score').textContent=`Score : ${G.score}`;
   document.getElementById('go-pitches').textContent=G.lancers;
   document.getElementById('go-hits').textContent=G.frappes;
@@ -568,16 +656,23 @@ async function afficherGameOver(){
   const ratio=G.lancers>0?Math.round((G.frappes/G.lancers)*100):0;
   document.getElementById('go-detail').textContent=`Précision : ${ratio}%`;
   document.getElementById('go-title').textContent=G.score>=500?'🏆 Incroyable !':G.score>=200?'⚾ Bien joué !':'⚾ Game Over';
-  document.getElementById('gameover-overlay').classList.add('show');
+
+  // ── Meilleur score localStorage ──
+  const prev = parseInt(localStorage.getItem('baseball_best')||'0');
+  if (G.score > prev) {
+    localStorage.setItem('baseball_best', G.score);
+    const badge = document.createElement('div');
+    badge.style.cssText = 'font-family:"Fredoka One",cursive;font-size:1rem;color:#F5A623;text-align:center;animation:popIn .4s ease both;';
+    badge.textContent = '🏆 Nouveau record !';
+    document.getElementById('gameover-overlay').insertBefore(badge, document.querySelector('.go-btn'));
+  }
 
   // ── Sauvegarde Supabase ──
-  const result = await sauvegarderFinPartie('baseball', { score: G.score, gagne });
-  if(result?.xp_gagne){
-    const xpEl=document.createElement('div');
-    xpEl.style.cssText='font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:8px;animation:popIn .4s ease both;';
-    xpEl.textContent=`+${result.xp_gagne} XP ⭐`;
-    document.getElementById('gameover-overlay').appendChild(xpEl);
+  if (typeof sauvegarderFinPartie === 'function') {
+    sauvegarderFinPartie('baseball', { score: G.score, gagne: G.score > 0 });
   }
+
+  document.getElementById('gameover-overlay').classList.add('show');
 }
 
 let camShake=0;
