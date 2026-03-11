@@ -492,6 +492,9 @@
 
 <!-- Three.js -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script src="sensors.js"></script>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -1608,14 +1611,14 @@ function animCelebSpec(dur){
 //  GAME OVER
 // ══════════════════════════════════════════════════════
 function afficherGameOver(){
-  // Save best score
+  // Save best score localStorage
   if(G.score>G.bestScore){
     G.bestScore=G.score;
     try{ localStorage.setItem('boxe_best',''+G.score); }catch(e){}
   }
 
-  // ── Sauvegarde Supabase ──
-  const gagne = G.score >= 200; // victoire si score ≥ 200
+  // Sauvegarde Supabase
+  const gagne = G.score >= 200;
   if (typeof sauvegarderFinPartie === 'function') {
     sauvegarderFinPartie('boxe', { score: G.score, gagne });
   }

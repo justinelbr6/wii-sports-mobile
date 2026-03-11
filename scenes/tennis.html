@@ -163,47 +163,83 @@ canvas { display:block; }
   box-shadow:0 4px 0 rgba(0,0,0,0.3);
 }
 
-/* ── START SCREEN ── */
+/* ── START SCREEN — style tuto ── */
 #start-screen {
   position:fixed; inset:0; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; z-index:100;
-  background:linear-gradient(160deg,#1a2e1a 0%,#1B5E20 40%,#0D47A1 100%);
-  gap:16px; padding:28px; text-align:center;
+  align-items:center; z-index:100;
+  background:linear-gradient(160deg,#0d1f0d 0%,#1a3a3a 60%,#0d0d2e 100%);
+  gap:14px; overflow-y:auto; padding-bottom:20px;
 }
-.start-emoji { font-size:72px; animation:bounce 1.5s ease-in-out infinite; }
-@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-.start-title {
-  font-family:'Fredoka One',cursive; font-size:3.2rem; color:#fff;
-  text-shadow:3px 3px 0 rgba(0,0,0,0.3);
+.tuto-card {
+  display:flex; align-items:center; gap:14px;
+  background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:18px; padding:14px 16px; width:100%;
+  backdrop-filter:blur(8px); transition:border-color .2s;
 }
-.start-sub { font-size:14px; color:rgba(255,255,255,0.6); max-width:280px; line-height:1.7; font-weight:700; }
-.diff-grid { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:4px; }
-.diff-btn {
-  padding:14px 24px; border-radius:18px;
-  border:2px solid rgba(255,255,255,0.25);
-  background:rgba(255,255,255,0.08); color:#fff;
-  font-family:'Fredoka One',cursive; font-size:16px;
-  cursor:pointer; transition:all 0.15s; min-width:105px;
+.tuto-card:hover { border-color:rgba(255,229,0,0.3); }
+.tuto-icon-wrap { flex-shrink:0; width:86px; height:66px; display:flex; align-items:center; justify-content:center; }
+.tuto-text { flex:1; }
+.tuto-title-t { font-family:'Fredoka One',cursive; font-size:1.05rem; color:#FFE500; line-height:1.1; }
+.tuto-desc { font-size:0.78rem; color:rgba(255,255,255,0.65); font-weight:700; line-height:1.4; margin-top:3px; }
+.tuto-desc strong { color:white; }
+.adversaire-card-t {
+  background:rgba(255,255,255,0.08); border-radius:20px; padding:14px 18px;
+  border:1.5px solid rgba(255,255,255,0.15); width:100%; backdrop-filter:blur(8px);
 }
-.diff-btn:active { transform:scale(0.96); }
-.diff-btn.selected {
-  background:rgba(255,229,0,0.2); border-color:#FFE500; color:#FFE500;
-}
-.adv-card {
-  background:rgba(255,255,255,0.07); border:1.5px solid rgba(255,255,255,0.15);
-  border-radius:18px; padding:12px 24px; display:none; min-width:220px;
-}
-.adv-lbl { font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:2px; font-weight:800; }
-.adv-nom { font-family:'Fredoka One',cursive; font-size:1.6rem; color:#FFE500; margin-top:3px; }
-.start-btn {
+.adversaire-label { font-size:0.68rem; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:2px; font-weight:700; }
+.adversaire-name  { font-family:'Fredoka One',cursive; font-size:1.5rem; color:#FFE500; }
+.adversaire-niveau{ font-size:0.75rem; color:rgba(255,255,255,0.45); font-weight:700; margin-top:2px; }
+.start-btn-t {
   background:linear-gradient(135deg,#FFE500,#FF9800);
-  color:#000; font-family:'Fredoka One',cursive; font-size:1.3rem;
-  border:none; border-radius:50px; padding:15px 42px;
-  cursor:pointer; box-shadow:0 8px 0 #b36200;
-  transition:transform .1s; display:none;
+  color:#000; font-family:'Fredoka One',cursive; font-size:1.4rem;
+  border:none; border-radius:50px; padding:16px 48px;
+  cursor:pointer; box-shadow:0 8px 0 #b36200; width:100%;
+  transition:transform .1s;
 }
-.start-btn.visible { display:block; }
-.start-btn:active { transform:translateY(4px); box-shadow:0 4px 0 #b36200; }
+.start-btn-t:active { transform:translateY(4px); box-shadow:0 4px 0 #b36200; }
+
+/* Animations tuto tennis */
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes popIn { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes slideIn { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+@keyframes tiltTennis {
+  0%,100% { transform:rotate(0deg); }
+  30%     { transform:rotate(-22deg); }
+  70%     { transform:rotate(22deg); }
+}
+@keyframes ballBounce {
+  0%,10%  { transform:translateY(0); }
+  40%     { transform:translateY(-30px); }
+  55%     { transform:translateY(0); }
+  70%     { transform:translateY(-12px); }
+  85%,100%{ transform:translateY(0); }
+}
+@keyframes raquetteSwing {
+  0%,15%  { transform:rotate(0deg); }
+  35%     { transform:rotate(-35deg); }
+  50%,100%{ transform:rotate(0deg); }
+}
+@keyframes livesFlash {
+  0%,80%,100% { opacity:1; }
+  85%         { opacity:0.2; }
+}
+@keyframes arrowLeft {
+  0%,100% { opacity:0.15; transform:translateX(0); }
+  30%     { opacity:1;    transform:translateX(-5px); }
+  50%,70% { opacity:0.15; }
+}
+@keyframes arrowRight {
+  0%,50%  { opacity:0.15; transform:translateX(0); }
+  70%     { opacity:1;    transform:translateX(5px); }
+  100%    { opacity:0.15; }
+}
+@keyframes fingerSwipe {
+  0%,15%  { transform:translateY(0); opacity:1; }
+  55%     { transform:translateY(-16px); opacity:0.4; }
+  56%     { transform:translateY(0); opacity:0; }
+  65%     { opacity:1; }
+  100%    { opacity:1; }
+}
 </style>
 </head>
 <body>
@@ -255,25 +291,144 @@ canvas { display:block; }
 </div>
 
 <div id="start-screen">
-  <div class="start-emoji">🎾</div>
-  <div class="start-title">Tennis</div>
-  <div class="start-sub">2 contre 2 · Penche ton téléphone<br>pour diriger tes tirs · 3 jeux pour gagner !</div>
-  <div class="diff-grid">
-    <div class="diff-btn" onclick="choisirDiff('facile',this)">😊 Facile</div>
-    <div class="diff-btn" onclick="choisirDiff('moyen',this)">😤 Moyen</div>
-    <div class="diff-btn" onclick="choisirDiff('difficile',this)">💀 Difficile</div>
+
+  <!-- Background décoratif -->
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;">
+    <div style="position:absolute;top:-60px;left:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,229,0,0.10) 0%,transparent 70%);"></div>
+    <div style="position:absolute;bottom:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(13,71,161,0.2) 0%,transparent 70%);"></div>
   </div>
-  <div class="adv-card" id="adv-card">
-    <div class="adv-lbl">Adversaire</div>
-    <div class="adv-nom" id="adv-nom">…</div>
+
+  <!-- En-tête -->
+  <div style="position:relative;z-index:1;text-align:center;padding-top:22px;padding-bottom:4px;">
+    <div style="font-size:3.2rem;line-height:1;animation:bounce 1.6s ease-in-out infinite;">🎾</div>
+    <div style="font-family:'Fredoka One',cursive;font-size:2.4rem;color:white;margin-top:6px;text-shadow:0 2px 12px rgba(255,229,0,0.3);">Tennis</div>
+    <div style="display:inline-block;background:rgba(255,229,0,0.12);border:1px solid rgba(255,229,0,0.35);border-radius:20px;padding:3px 14px;margin-top:6px;">
+      <span style="font-family:'Fredoka One',cursive;font-size:0.72rem;color:rgba(255,229,0,0.9);letter-spacing:3px;text-transform:uppercase;">Comment jouer</span>
+    </div>
   </div>
-  <button class="start-btn" id="startBtn" onclick="demarrer()">C'est parti ! 🎾</button>
+
+  <!-- Cartes tutoriel -->
+  <div style="position:relative;z-index:1;display:flex;flex-direction:column;gap:11px;width:100%;max-width:340px;padding:0 16px;">
+
+    <!-- Carte 1 : Incline pour diriger -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.1s both;">
+      <div class="tuto-icon-wrap">
+        <svg viewBox="0 0 86 66" width="86" height="66" style="overflow:visible;">
+          <g style="transform-origin:43px 33px;animation:tiltTennis 2.4s ease-in-out infinite;">
+            <rect x="30" y="9" width="26" height="44" rx="5" fill="#0D3060" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+            <rect x="33" y="14" width="20" height="32" rx="2" fill="#1565C0" opacity="0.8"/>
+            <!-- raquette miniature sur écran -->
+            <ellipse cx="43" cy="28" rx="5" ry="5" fill="none" stroke="#FF9800" stroke-width="1.5"/>
+            <line x1="43" y1="33" x2="43" y2="40" stroke="#FF9800" stroke-width="1.5"/>
+            <!-- balle -->
+            <circle cx="43" cy="22" r="2" fill="#FFE500"/>
+            <circle cx="43" cy="48" r="2.5" fill="rgba(255,255,255,0.3)" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
+          </g>
+          <g style="animation:arrowLeft 2.4s ease-in-out infinite;">
+            <text x="4" y="36" font-size="16" fill="#FFE500" opacity="0.9">←</text>
+          </g>
+          <g style="animation:arrowRight 2.4s ease-in-out infinite;">
+            <text x="64" y="36" font-size="16" fill="#FFE500" opacity="0.9">→</text>
+          </g>
+        </svg>
+      </div>
+      <div class="tuto-text">
+        <div class="tuto-title-t">📐 Diriger la raquette</div>
+        <div class="tuto-desc">Incline ton téléphone <strong>gauche / droite</strong> pour déplacer ta raquette et intercepter la balle</div>
+      </div>
+    </div>
+
+    <!-- Carte 2 : Swipe pour frapper -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.2s both;">
+      <div class="tuto-icon-wrap">
+        <svg viewBox="0 0 86 66" width="86" height="66" style="overflow:visible;">
+          <!-- Court vu de côté -->
+          <rect x="20" y="42" width="46" height="3" rx="1" fill="rgba(191,107,48,0.4)" stroke="rgba(191,107,48,0.6)" stroke-width="1"/>
+          <!-- Filet -->
+          <line x1="43" y1="20" x2="43" y2="45" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+          <!-- Raquette -->
+          <g style="transform-origin:24px 38px;animation:raquetteSwing 2s ease-in-out infinite;">
+            <ellipse cx="24" cy="30" rx="7" ry="7" fill="none" stroke="#FF9800" stroke-width="2"/>
+            <line x1="24" y1="37" x2="24" y2="48" stroke="#FF9800" stroke-width="2"/>
+          </g>
+          <!-- Balle animée -->
+          <g style="animation:ballBounce 2s ease-in-out infinite;">
+            <circle cx="55" cy="36" r="5" fill="#FFE500" stroke="rgba(0,0,0,0.15)" stroke-width="0.8"/>
+          </g>
+          <!-- Doigt swipe -->
+          <g style="animation:fingerSwipe 2s ease-in-out infinite;">
+            <ellipse cx="24" cy="60" rx="5" ry="6" fill="#FFCCA0" stroke="#D4965C" stroke-width="1"/>
+            <rect x="20.5" y="50" width="7" height="12" rx="3.5" fill="#FFCCA0" stroke="#D4965C" stroke-width="1"/>
+          </g>
+        </svg>
+      </div>
+      <div class="tuto-text">
+        <div class="tuto-title-t">🎾 Frapper</div>
+        <div class="tuto-desc"><strong>Swipe vers le haut</strong> pour renvoyer la balle — choisis bien ton moment !</div>
+      </div>
+    </div>
+
+    <!-- Carte 3 : Règles du match -->
+    <div class="tuto-card" style="animation:slideIn 0.5s 0.3s both; flex-direction:column; align-items:stretch; gap:0;">
+      <div class="tuto-title-t" style="padding:0 0 10px 0;">📊 Règles du match</div>
+
+      <!-- Sets -->
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="flex-shrink:0;width:56px;text-align:center;">
+          <div style="font-family:'Fredoka One',cursive;font-size:1.5rem;color:#FFE500;">2/3</div>
+          <div style="font-size:0.62rem;color:rgba(255,229,0,0.7);font-weight:700;">Sets</div>
+        </div>
+        <div style="flex:1;font-size:0.72rem;color:rgba(255,255,255,0.65);line-height:1.45;">Remporte <strong style="color:white;">2 sets sur 3</strong> pour gagner le match. Chaque set = 4 jeux.</div>
+      </div>
+
+      <!-- Points -->
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div style="flex-shrink:0;width:56px;text-align:center;">
+          <div style="font-family:'Fredoka One',cursive;font-size:1rem;color:white;line-height:1.3;">0→15<br>→30→40</div>
+        </div>
+        <div style="flex:1;font-size:0.72rem;color:rgba(255,255,255,0.65);line-height:1.45;">Score classique tennis. <strong style="color:white;">40 + 1 point</strong> = jeu remporté !</div>
+      </div>
+
+      <!-- Balle perdue -->
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;">
+        <div style="flex-shrink:0;width:56px;text-align:center;animation:livesFlash 2s ease-in-out infinite;">
+          <div style="font-size:1.4rem;">🎾🎾🎾</div>
+          <div style="font-size:0.58rem;color:rgba(255,100,100,0.9);font-weight:700;">Vies</div>
+        </div>
+        <div style="flex:1;font-size:0.72rem;color:rgba(255,255,255,0.65);line-height:1.45;">Tu as <strong style="color:white;">3 vies</strong>. Si la balle touche le sol dans ton camp, tu perds 1 vie et un point !</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Carte adversaire -->
+  <div style="position:relative;z-index:1;width:100%;max-width:340px;padding:0 16px;">
+    <div class="adversaire-card-t" style="animation:slideIn 0.5s 0.4s both;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="font-size:2rem;" id="adv-avatar-start">🎾</div>
+        <div style="flex:1;text-align:left;">
+          <div class="adversaire-label">Ton adversaire</div>
+          <div class="adversaire-name" id="adv-nom-start">⏳ Chargement...</div>
+          <div class="adversaire-niveau" id="adv-niv-start"></div>
+        </div>
+        <div style="font-family:'Fredoka One',cursive;font-size:0.75rem;color:rgba(255,255,255,0.3);text-align:right;line-height:1.4;">3<br>sets</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bouton jouer -->
+  <div style="position:relative;z-index:1;padding:0 16px 28px;width:100%;max-width:340px;">
+    <button class="start-btn-t" onclick="demarrer()" style="animation:slideIn 0.5s 0.5s both;">
+      🎾 C'est parti !
+    </button>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supabase.js"></script>
-<script src="../js/sensors.js"></script>
+<script src="supabase.js"></script>
+<script src="sensors.js"></script>
 <script>
 // ══════════════════════════════════════════
 //  CONFIG NIVEAUX
@@ -302,7 +457,6 @@ let etat = {
   phase:'service',
   animSpec:null,
   temps:0,
-  ballesRenvoyees: 0,             // ← compteur de balles renvoyées avec succès par le joueur
 };
 
 // ══════════════════════════════════════════
@@ -546,26 +700,34 @@ function appliquerTilt() {
 let difficulte = 'moyen';
 let jeuActif   = false;
 
-async function choisirDiff(d, btn) {
-  difficulte = d;
-  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected');
-  document.getElementById('adv-card').style.display = 'block';
-  document.getElementById('adv-nom').textContent = '…';
-  document.getElementById('startBtn').classList.remove('visible');
+// ══════════════════════════════════════════
+//  INIT — Niveau auto depuis profil Supabase
+// ══════════════════════════════════════════
+async function initNiveauEtAdversaire() {
+  try {
+    const profil = await getProfilCourant();
+    if (profil?.level_tennis) {
+      const map = { 'Débutant': 'facile', 'Intermédiaire': 'moyen', 'Confirmé': 'difficile' };
+      difficulte = map[profil.level_tennis] || 'moyen';
+    }
+  } catch(e) { console.warn('Profil non dispo, niveau moyen par défaut'); }
+
+  etat.difficulte = difficulte;
 
   try {
-    const adv = await getAdversaire('tennis', d);
+    const adv = await getAdversaire('tennis', difficulte);
     etat.adversaire = adv;
     const nom = adv ? `${adv.avatar||'🎾'} ${adv.nom}` : '🎾 CPU';
-    document.getElementById('adv-nom').textContent      = nom;
-    document.getElementById('adv-name-hud').textContent = `🔴 ${adv?.nom||'CPU'}`;
+    document.getElementById('adv-nom-start').textContent    = nom;
+    document.getElementById('adv-niv-start').textContent    = `Niveau : ${adv?.tennis || difficulte}`;
+    document.getElementById('adv-avatar-start').textContent = adv?.avatar || '🎾';
+    document.getElementById('adv-name-hud').textContent     = `🔴 ${adv?.nom||'CPU'}`;
   } catch(e) {
-    document.getElementById('adv-nom').textContent = '🎾 CPU';
+    document.getElementById('adv-nom-start').textContent = '🎾 CPU';
+    document.getElementById('adv-niv-start').textContent = `Niveau adapté à toi`;
   }
-  document.getElementById('startBtn').classList.add('visible');
-  if (navigator.vibrate) navigator.vibrate(15);
 }
+initNiveauEtAdversaire();
 
 function demarrer() {
   document.getElementById('start-screen').style.display='none';
@@ -817,7 +979,6 @@ function updateBalle() {
     b.vy = 0.03 + power * 0.02;
     b.direction = -1;
     animerFrappe(miiJ1.brasG, raqJ1);
-    etat.ballesRenvoyees++; // ← comptage retour joueur J1
     // Afficher hint retour pour le prochain échange
     document.getElementById('retour-hint').style.display = 'block';
     setTimeout(()=>{ document.getElementById('retour-hint').style.display='none'; }, 1500);
@@ -836,7 +997,6 @@ function updateBalle() {
     b.vy = 0.015 + power * 0.015;
     b.direction = -1;
     animerFrappe(miiJ2.brasG, raqJ2);
-    etat.ballesRenvoyees++; // ← comptage retour joueur J2
     document.getElementById('retour-hint').style.display = 'block';
     setTimeout(()=>{ document.getElementById('retour-hint').style.display='none'; }, 1500);
   }
@@ -995,7 +1155,7 @@ async function finDeMatch() {
   else { if(navigator.vibrate) navigator.vibrate([20,10,20,10,20]); }
 
   // ── Sauvegarde Supabase ──
-  const scoreTotal = etat.ballesRenvoyees; // nb de balles renvoyées avec succès
+  const scoreTotal = etat.setsJoueur * 100 + etat.jeuxJoueur * 10;
   const result = await sauvegarderFinPartie('tennis', { score: scoreTotal, gagne: victoire });
   if (result?.xp_gagne) {
     const xpEl = document.createElement('div');
