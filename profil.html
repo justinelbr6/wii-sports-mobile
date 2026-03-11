@@ -615,8 +615,13 @@ function initEditScene(){
   if(editSceneInit) return;
   editSceneInit = true;
   const wrap = document.getElementById('mii3dWrap');
-  const W = wrap.clientWidth || 330, H = 200;
+  // Forcer les dimensions réelles (le modal peut être en transform off-screen)
+  const W = wrap.getBoundingClientRect().width || wrap.offsetWidth || 350;
+  const H = 200;
   const canvas = document.getElementById('mii3dCanvas');
+  // Taille interne du canvas
+  canvas.width  = W;
+  canvas.height = H;
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(15, W/H, 10, 10000);
   cam.position.set(0,37.05,415.53);
@@ -802,7 +807,7 @@ async function rafraichirAvatar(){
   if(!profil) return;
   const gender = profil.gender || 'man';
   if(profil.mii_color && profil.mii_hair_color){
-    const miiCanvas = await MII_RENDERER.createMiiCanvas(profil, gender, 120);
+    const miiCanvas = await MII_RENDERER.createMiiCanvas(profil, gender, 120, true);
     if(miiCanvas){
       const container = document.getElementById('profileAvatarContainer');
       container.innerHTML = '';
@@ -829,10 +834,10 @@ async function rafraichirAvatar(){
     if (profil) {
       document.getElementById('userName').textContent = profil.full_name || 'Joueur Inconnu';
 
-      // ✅ Afficher le Mii personnalisé
+      // ✅ Afficher le Mii personnalisé (recadré sur la tête)
       const gender = profil.gender || 'man';
       if (profil.mii_color && profil.mii_hair_color) {
-        const miiCanvas = await MII_RENDERER.createMiiCanvas(profil, gender, 120);
+        const miiCanvas = await MII_RENDERER.createMiiCanvas(profil, gender, 120, true);
         if (miiCanvas) {
           const container = document.getElementById('profileAvatarContainer');
           container.innerHTML = ''; // Remplacer l'emoji
