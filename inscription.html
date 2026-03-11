@@ -15,10 +15,11 @@
     }
     .bubble { position:fixed; border-radius:50%; background:rgba(255,255,255,0.18); animation:floatUp linear infinite; pointer-events:none; z-index:0; }
     @keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 10%{opacity:1} 90%{opacity:0.5} 100%{transform:translateY(-100px) scale(1);opacity:0} }
+
     .card {
       position:relative; z-index:2; background:rgba(255,255,255,0.55); backdrop-filter:blur(20px);
       border:2px solid rgba(255,255,255,0.8); border-radius:32px; padding:32px 28px 28px;
-      width:100%; max-width:380px; box-shadow:0 20px 60px rgba(0,100,180,0.18);
+      width:100%; max-width:390px; box-shadow:0 20px 60px rgba(0,100,180,0.18);
       display:flex; flex-direction:column; align-items:center;
     }
     .logo-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:20px; }
@@ -26,6 +27,7 @@
     @keyframes bounce { 0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-10px) rotate(3deg)} }
     .logo-title { font-size:1.8rem; font-weight:800; color:#0D47A1; line-height:1; }
     .logo-sub { font-size:.72rem; font-weight:700; color:rgba(13,71,161,0.5); text-transform:uppercase; letter-spacing:1.5px; }
+
     .screen { display:none; flex-direction:column; align-items:center; gap:12px; width:100%; }
     .screen.active { display:flex; }
     .form { display:flex; flex-direction:column; gap:10px; width:100%; }
@@ -45,6 +47,7 @@
     }
     .pwd-strength { width:100%; height:4px; border-radius:2px; background:rgba(13,71,161,0.1); overflow:hidden; margin-top:4px; }
     .pwd-strength-bar { height:100%; border-radius:2px; transition:width .3s,background .3s; width:0%; }
+
     .btn-play {
       width:100%; margin-top:4px; background:linear-gradient(135deg, #1976D2, #0D47A1); color:white;
       font-family:'Baloo 2',cursive; font-size:1.15rem; font-weight:800;
@@ -62,7 +65,6 @@
     .spinner { width:36px; height:36px; border:4px solid rgba(13,71,161,0.15); border-top-color:#1976D2; border-radius:50%; animation:spin .7s linear infinite; }
     @keyframes spin { to{transform:rotate(360deg)} }
     .spinner-label { font-size:.85rem; font-weight:700; color:rgba(13,71,161,0.5); }
-    .success-icon { font-size:4rem; animation:popIn .5s cubic-bezier(0.34,1.56,0.64,1); }
     @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
     .success-title { font-size:1.4rem; font-weight:800; color:#0D47A1; text-align:center; }
     .success-msg { font-size:.82rem; font-weight:700; color:rgba(13,71,161,0.6); text-align:center; line-height:1.5; }
@@ -80,74 +82,130 @@
     .niv-btn:active { transform:scale(0.96); }
     .niv-btn.sel { background:linear-gradient(135deg, #1976D2, #0D47A1); border-color:#0D47A1; color:white; box-shadow:0 3px 10px rgba(13,71,161,0.35); }
 
-    /* ══════════════════════════════════
-       MII CREATOR STYLES
-    ══════════════════════════════════ */
-    .mii-section-title {
-      font-size:1.15rem; font-weight:800; color:#0D47A1; text-align:center; margin-bottom:4px;
-    }
-    .mii-section-sub {
-      font-size:.75rem; font-weight:700; color:rgba(13,71,161,0.5); text-align:center; margin-bottom:14px;
-    }
+    /* ══ MII CREATOR ══ */
+    .mii-title { font-size:1.15rem; font-weight:800; color:#0D47A1; text-align:center; }
+    .mii-sub   { font-size:.75rem; font-weight:700; color:rgba(13,71,161,0.5); text-align:center; }
 
-    /* Prévisualisation SVG du Mii */
-    .mii-preview-wrap {
-      display:flex; flex-direction:column; align-items:center; gap:6px;
-      background:rgba(255,255,255,0.6); border-radius:24px;
+    .mii-3d-wrap {
+      width:100%; height:230px; border-radius:20px; overflow:hidden;
+      background:linear-gradient(160deg,#dff0ff 0%,#c2e0ff 100%);
       border:2px solid rgba(255,255,255,0.9);
-      padding:16px 24px; width:100%;
-      box-shadow:0 4px 20px rgba(0,100,180,0.12);
+      box-shadow:0 4px 20px rgba(0,100,180,0.15);
+      position:relative; touch-action:none;
     }
-    #mii-preview-svg {
-      width:100px; height:120px;
-      filter:drop-shadow(0 6px 12px rgba(0,0,0,0.18));
-      transition:all .25s cubic-bezier(0.34,1.56,0.64,1);
+    #mii3dCanvas { width:100% !important; height:100% !important; display:block; }
+    .mii-3d-loading {
+      position:absolute; inset:0; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:8px; pointer-events:none;
     }
-    #mii-preview-svg.pop {
-      transform:scale(1.15) rotate(3deg);
-    }
-    .mii-preview-name {
-      font-size:.85rem; font-weight:800; color:#1565C0;
-    }
+    .mii-3d-loading .sp { width:28px; height:28px; border:3px solid rgba(13,71,161,0.2); border-top-color:#1976D2; border-radius:50%; animation:spin .7s linear infinite; }
+    .mii-3d-loading span { font-size:.75rem; font-weight:700; color:#1565C0; }
 
-    /* Groupes d'options */
     .mii-option-group { width:100%; display:flex; flex-direction:column; gap:6px; }
-    .mii-option-label {
-      font-size:.68rem; font-weight:800; color:rgba(13,71,161,0.55);
-      text-transform:uppercase; letter-spacing:1.2px; padding-left:4px;
-    }
+    .mii-option-label { font-size:.68rem; font-weight:800; color:rgba(13,71,161,0.55); text-transform:uppercase; letter-spacing:1.2px; padding-left:4px; }
 
-    /* Couleurs (cercles cliquables) */
-    .color-row {
-      display:flex; gap:8px; flex-wrap:wrap; padding:4px 0;
-    }
+    .color-row { display:flex; gap:8px; flex-wrap:wrap; padding:4px 0; }
     .color-dot {
-      width:36px; height:36px; border-radius:50%; cursor:pointer;
+      width:34px; height:34px; border-radius:50%; cursor:pointer;
       border:3px solid transparent; transition:all .15s; flex-shrink:0;
-      box-shadow:0 2px 6px rgba(0,0,0,0.15);
+      box-shadow:0 2px 6px rgba(0,0,0,0.2);
     }
     .color-dot:active { transform:scale(0.9); }
-    .color-dot.sel { border-color:#0D47A1; box-shadow:0 0 0 3px rgba(13,71,161,0.3), 0 2px 8px rgba(0,0,0,0.2); transform:scale(1.1); }
+    .color-dot.sel { border-color:#0D47A1; box-shadow:0 0 0 3px rgba(13,71,161,0.3); transform:scale(1.12); }
 
-    /* Coiffures (cartes SVG) */
-    .hair-row {
-      display:flex; gap:8px;
-    }
+    .hair-row { display:flex; gap:8px; }
     .hair-card {
       flex:1; background:rgba(255,255,255,0.7); border:2.5px solid rgba(13,71,161,0.15);
       border-radius:16px; padding:10px 6px 6px;
       display:flex; flex-direction:column; align-items:center; gap:4px;
-      cursor:pointer; transition:all .15s; -webkit-appearance:none;
+      cursor:pointer; transition:all .15s; -webkit-appearance:none; border-style:solid;
     }
     .hair-card:active { transform:scale(0.95); }
-    .hair-card.sel {
-      background:rgba(25,118,210,0.12); border-color:#1976D2;
-      box-shadow:0 3px 12px rgba(13,71,161,0.25);
-    }
-    .hair-card svg { width:40px; height:40px; }
+    .hair-card.sel { background:rgba(25,118,210,0.12); border-color:#1976D2; box-shadow:0 3px 12px rgba(13,71,161,0.25); }
+    .hair-card svg { width:36px; height:36px; }
     .hair-card span { font-size:.68rem; font-weight:700; color:rgba(13,71,161,0.6); }
     .hair-card.sel span { color:#1565C0; }
+
+    #succes-mii-wrap {
+      width:170px; height:190px; border-radius:18px; overflow:hidden;
+      background:linear-gradient(160deg,#dff0ff,#c2e0ff);
+      border:2px solid rgba(255,255,255,0.9);
+      box-shadow:0 6px 20px rgba(0,100,180,0.2);
+      animation:popIn .6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    #succesCanvas { width:100% !important; height:100% !important; display:block; }
   </style>
+
+  <!-- Three.js r126 -->
+  <script src="https://unpkg.com/three@0.126.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.126.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://unpkg.com/three@0.126.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Vertex Shader FFL officiel -->
+  <script id="vertexShader" type="x-shader/x-vertex">
+    attribute vec4 _color;
+    attribute vec3 tangent;
+    varying vec4 v_color;
+    varying vec4 v_position;
+    varying vec3 v_normal;
+    varying vec3 v_tangent;
+    varying vec2 v_texCoord;
+    void main(){
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+      v_position  = modelViewMatrix * vec4(position,1.0);
+      v_normal    = normalize(normalMatrix * normal);
+      v_texCoord  = uv;
+      v_tangent   = normalize(normalMatrix * tangent.xyz);
+      v_color     = _color;
+    }
+  </script>
+
+  <!-- Fragment Shader FFL officiel -->
+  <script id="fragmentShader" type="x-shader/x-fragment">
+    precision mediump float;
+    #define FFL_MODULATE_MODE_CONSTANT 0
+    varying vec4 v_color; varying vec4 v_position;
+    varying vec3 v_normal; varying vec3 v_tangent; varying vec2 v_texCoord;
+    uniform vec4  u_const1;
+    uniform vec4  u_light_ambient, u_light_diffuse, u_light_specular;
+    uniform vec3  u_light_dir;
+    uniform bool  u_light_enable;
+    uniform vec4  u_material_ambient, u_material_diffuse, u_material_specular;
+    uniform int   u_material_specular_mode;
+    uniform float u_material_specular_power;
+    uniform int   u_mode;
+    uniform vec4  u_rim_color;
+    uniform float u_rim_power;
+    uniform sampler2D s_texture;
+    float calcBlinn(vec3 l,vec3 n,vec3 e,float p){ return pow(max(dot(reflect(-l,n),e),0.0),p); }
+    float calcAniso(vec3 l,vec3 t,vec3 e,float p){
+      float lt=dot(l,t),vt=dot(e,t),ln=sqrt(1.0-lt*lt);
+      return pow(max(ln*sqrt(1.0-vt*vt)-lt*vt,0.0),p);
+    }
+    void main(){
+      vec4 color;
+      if(u_mode==FFL_MODULATE_MODE_CONSTANT) color=u_const1;
+      else color=texture2D(s_texture,v_texCoord);
+      if(u_light_enable){
+        vec3 amb=u_light_ambient.xyz*u_material_ambient.xyz;
+        vec3 norm=normalize(v_normal);
+        vec3 eye=normalize(-v_position.xyz);
+        float fDot=max(dot(u_light_dir,norm),0.1);
+        vec3 diff=u_light_diffuse.xyz*u_material_diffuse.xyz*fDot;
+        float refl; float str=v_color.g;
+        if(u_material_specular_mode==0){
+          str=1.0; refl=calcBlinn(u_light_dir,norm,eye,u_material_specular_power);
+        } else {
+          refl=mix(calcAniso(u_light_dir,v_tangent,eye,u_material_specular_power),
+                   calcBlinn(u_light_dir,norm,eye,u_material_specular_power),v_color.r);
+        }
+        vec3 spec=u_light_specular.xyz*u_material_specular.xyz*refl*str;
+        vec3 rim=u_rim_color.rgb*pow(v_color.a*(1.0-abs(norm.z)),u_rim_power);
+        color.rgb=(amb+diff)*color.rgb+spec+rim;
+      }
+      gl_FragColor=color;
+    }
+  </script>
 </head>
 <body>
 <script>
@@ -193,7 +251,7 @@
     <p class="link-login">Déjà un compte ? <a href="login.html">Se connecter →</a></p>
   </div>
 
-  <!-- ══ Écran 2 : Chargement ══ -->
+  <!-- ══ Écran 2 : Loading ══ -->
   <div class="screen" id="screen-loading">
     <div class="spinner-wrap">
       <div class="spinner"></div>
@@ -201,7 +259,7 @@
     </div>
   </div>
 
-  <!-- ══ Écran 3 : Niveaux par sport ══ -->
+  <!-- ══ Écran 3 : Niveaux ══ -->
   <div class="screen" id="screen-onboarding">
     <div class="onb-title">Compte créé ! 🎉<br>Choisis ton niveau pour chaque sport</div>
     <div class="onb-sub">Tu pourras évoluer selon ta progression.</div>
@@ -249,107 +307,64 @@
     <button class="btn-play" id="btn-onboarding" onclick="allerMii()" disabled>🎨 Créer mon Mii →</button>
   </div>
 
-  <!-- ══ Écran 4 : CRÉATION DU MII ══ -->
+  <!-- ══ Écran 4 : CRÉATION DU MII 3D ══ -->
   <div class="screen" id="screen-mii">
-    <div class="mii-section-title">Crée ton Mii ! 🧍</div>
-    <div class="mii-section-sub">Il t'accompagnera dans tous les jeux</div>
+    <div class="mii-title">Crée ton Mii ! 🧍</div>
+    <div class="mii-sub">Il t'accompagnera dans tous tes sports</div>
 
-    <!-- Prévisualisation live -->
-    <div class="mii-preview-wrap">
-      <svg id="mii-preview-svg" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-        <!-- Corps -->
-        <ellipse id="mii-body" cx="50" cy="98" rx="26" ry="20" fill="#4FC3F7"/>
-        <!-- Bras gauche -->
-        <ellipse id="mii-arm-l" cx="22" cy="90" rx="8" ry="6" fill="#4FC3F7" transform="rotate(-20,22,90)"/>
-        <!-- Bras droit -->
-        <ellipse id="mii-arm-r" cx="78" cy="90" rx="8" ry="6" fill="#4FC3F7" transform="rotate(20,78,90)"/>
-        <!-- Cou -->
-        <rect x="44" y="65" width="12" height="10" rx="4" fill="#FFCBA4"/>
-        <!-- Tête -->
-        <ellipse id="mii-head" cx="50" cy="52" rx="24" ry="26" fill="#FFCBA4"/>
-        <!-- Oreilles -->
-        <ellipse cx="26" cy="54" rx="5" ry="7" fill="#FFCBA4"/>
-        <ellipse cx="74" cy="54" rx="5" ry="7" fill="#FFCBA4"/>
-        <!-- Yeux -->
-        <ellipse cx="40" cy="50" rx="5" ry="6" fill="white"/>
-        <ellipse cx="60" cy="50" rx="5" ry="6" fill="white"/>
-        <circle cx="41" cy="51" r="3" fill="#333"/>
-        <circle cx="61" cy="51" r="3" fill="#333"/>
-        <circle cx="42" cy="49.5" r="1" fill="white"/>
-        <circle cx="62" cy="49.5" r="1" fill="white"/>
-        <!-- Nez -->
-        <ellipse cx="50" cy="58" rx="3" ry="2.5" fill="#F0A080"/>
-        <!-- Bouche (sourire) -->
-        <path d="M43 64 Q50 70 57 64" stroke="#C07050" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <!-- Joues rosées -->
-        <ellipse cx="34" cy="60" rx="5" ry="3.5" fill="rgba(255,150,150,0.3)"/>
-        <ellipse cx="66" cy="60" rx="5" ry="3.5" fill="rgba(255,150,150,0.3)"/>
-        <!-- Cheveux (dynamique) -->
-        <g id="mii-hair-group"></g>
-      </svg>
-      <div class="mii-preview-name" id="mii-preview-name">Ton Mii</div>
-    </div>
-
-    <!-- Option 1 : Couleur du corps -->
-    <div class="mii-option-group">
-      <div class="mii-option-label">🎨 Couleur de la tenue</div>
-      <div class="color-row" id="color-body-row">
-        <div class="color-dot sel" style="background:#4FC3F7" data-color="#4FC3F7" onclick="choisirCouleur('body','#4FC3F7',this)" title="Bleu ciel"></div>
-        <div class="color-dot" style="background:#EF5350" data-color="#EF5350" onclick="choisirCouleur('body','#EF5350',this)" title="Rouge"></div>
-        <div class="color-dot" style="background:#66BB6A" data-color="#66BB6A" onclick="choisirCouleur('body','#66BB6A',this)" title="Vert"></div>
-        <div class="color-dot" style="background:#FFA726" data-color="#FFA726" onclick="choisirCouleur('body','#FFA726',this)" title="Orange"></div>
-        <div class="color-dot" style="background:#AB47BC" data-color="#AB47BC" onclick="choisirCouleur('body','#AB47BC',this)" title="Violet"></div>
-        <div class="color-dot" style="background:#EC407A" data-color="#EC407A" onclick="choisirCouleur('body','#EC407A',this)" title="Rose"></div>
-        <div class="color-dot" style="background:#FFEE58" data-color="#FFEE58" onclick="choisirCouleur('body','#FFEE58',this)" title="Jaune"></div>
-        <div class="color-dot" style="background:#78909C" data-color="#78909C" onclick="choisirCouleur('body','#78909C',this)" title="Gris"></div>
+    <!-- Canvas 3D preview -->
+    <div class="mii-3d-wrap" id="mii3dWrap">
+      <canvas id="mii3dCanvas"></canvas>
+      <div class="mii-3d-loading" id="mii3dLoading">
+        <div class="sp"></div>
+        <span>Chargement du Mii…</span>
       </div>
     </div>
 
-    <!-- Option 2 : Coiffure -->
+    <!-- Couleur t-shirt -->
+    <div class="mii-option-group">
+      <div class="mii-option-label">🎨 Couleur de la tenue</div>
+      <div class="color-row" id="color-body-row">
+        <div class="color-dot sel" style="background:#E8531E" onclick="choisirCouleurBody('#E8531E',this)" title="Orange Wii"></div>
+        <div class="color-dot" style="background:#2962FF" onclick="choisirCouleurBody('#2962FF',this)" title="Bleu"></div>
+        <div class="color-dot" style="background:#D50000" onclick="choisirCouleurBody('#D50000',this)" title="Rouge"></div>
+        <div class="color-dot" style="background:#2E7D32" onclick="choisirCouleurBody('#2E7D32',this)" title="Vert"></div>
+        <div class="color-dot" style="background:#F9A825" onclick="choisirCouleurBody('#F9A825',this)" title="Jaune"></div>
+        <div class="color-dot" style="background:#6A1B9A" onclick="choisirCouleurBody('#6A1B9A',this)" title="Violet"></div>
+        <div class="color-dot" style="background:#AD1457" onclick="choisirCouleurBody('#AD1457',this)" title="Rose"></div>
+        <div class="color-dot" style="background:#37474F" onclick="choisirCouleurBody('#37474F',this)" title="Gris foncé"></div>
+      </div>
+    </div>
+
+    <!-- Coiffure -->
     <div class="mii-option-group">
       <div class="mii-option-label">✂️ Coiffure</div>
       <div class="hair-row">
-        <!-- Coiffure 1 : Courte lisse -->
-        <button class="hair-card sel" data-hair="hair1" onclick="choisirCheveux('hair1',this)">
-          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="20" cy="18" rx="14" ry="15" fill="currentColor" id="h1-fill" style="fill:#4A2C0A"/>
-            <ellipse cx="20" cy="23" rx="14" ry="10" fill="#FFCBA4"/>
-          </svg>
+        <button class="hair-card sel" onclick="choisirCoiffure(0,this)">
+          <svg viewBox="0 0 36 36"><ellipse cx="18" cy="11" rx="13" ry="11" fill="#5C3317"/><ellipse cx="18" cy="19" rx="13" ry="9" fill="#FFCBA4"/></svg>
           <span>Courte</span>
         </button>
-        <!-- Coiffure 2 : Longue -->
-        <button class="hair-card" data-hair="hair2" onclick="choisirCheveux('hair2',this)">
-          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="20" cy="16" rx="14" ry="15" fill="#4A2C0A" id="h2-fill" class="hair-svg-fill"/>
-            <rect x="6" y="22" width="5" height="14" rx="3" fill="#4A2C0A" class="hair-svg-fill"/>
-            <rect x="29" y="22" width="5" height="14" rx="3" fill="#4A2C0A" class="hair-svg-fill"/>
-            <ellipse cx="20" cy="23" rx="13" ry="9" fill="#FFCBA4"/>
-          </svg>
-          <span>Longue</span>
+        <button class="hair-card" onclick="choisirCoiffure(1,this)">
+          <svg viewBox="0 0 36 36"><ellipse cx="18" cy="10" rx="13" ry="11" fill="#2A1A0A"/><rect x="5" y="16" width="5" height="14" rx="3" fill="#2A1A0A"/><rect x="26" y="16" width="5" height="14" rx="3" fill="#2A1A0A"/><ellipse cx="18" cy="19" rx="12" ry="8" fill="#FFCBA4"/></svg>
+          <span>Mi-long</span>
         </button>
-        <!-- Coiffure 3 : Bouclée -->
-        <button class="hair-card" data-hair="hair3" onclick="choisirCheveux('hair3',this)">
-          <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="10" cy="14" r="7" fill="#4A2C0A" class="hair-svg-fill"/>
-            <circle cx="20" cy="10" r="8" fill="#4A2C0A" class="hair-svg-fill"/>
-            <circle cx="30" cy="14" r="7" fill="#4A2C0A" class="hair-svg-fill"/>
-            <ellipse cx="20" cy="23" rx="13" ry="10" fill="#FFCBA4"/>
-          </svg>
+        <button class="hair-card" onclick="choisirCoiffure(2,this)">
+          <svg viewBox="0 0 36 36"><circle cx="9" cy="11" r="7" fill="#C8882A"/><circle cx="18" cy="7" r="8" fill="#C8882A"/><circle cx="27" cy="11" r="7" fill="#C8882A"/><ellipse cx="18" cy="19" rx="13" ry="8" fill="#FFCBA4"/></svg>
           <span>Bouclée</span>
         </button>
       </div>
     </div>
 
-    <!-- Option 3 : Couleur cheveux -->
+    <!-- Couleur cheveux -->
     <div class="mii-option-group">
       <div class="mii-option-label">💇 Couleur des cheveux</div>
       <div class="color-row" id="color-hair-row">
-        <div class="color-dot sel" style="background:#4A2C0A" data-color="#4A2C0A" onclick="choisirCouleur('hair','#4A2C0A',this)" title="Brun foncé"></div>
-        <div class="color-dot" style="background:#1A1A1A" data-color="#1A1A1A" onclick="choisirCouleur('hair','#1A1A1A',this)" title="Noir"></div>
-        <div class="color-dot" style="background:#C8882A" data-color="#C8882A" onclick="choisirCouleur('hair','#C8882A',this)" title="Châtain"></div>
-        <div class="color-dot" style="background:#F5C842" data-color="#F5C842" onclick="choisirCouleur('hair','#F5C842',this)" title="Blond"></div>
-        <div class="color-dot" style="background:#CC3333" data-color="#CC3333" onclick="choisirCouleur('hair','#CC3333',this)" title="Roux"></div>
-        <div class="color-dot" style="background:#CCCCCC" data-color="#CCCCCC" onclick="choisirCouleur('hair','#CCCCCC',this)" title="Gris/Blanc"></div>
+        <div class="color-dot sel" style="background:#3D1C02" onclick="choisirCouleurHair('#3D1C02',this)" title="Brun foncé"></div>
+        <div class="color-dot" style="background:#0D0D0D" onclick="choisirCouleurHair('#0D0D0D',this)" title="Noir"></div>
+        <div class="color-dot" style="background:#8B4513" onclick="choisirCouleurHair('#8B4513',this)" title="Châtain"></div>
+        <div class="color-dot" style="background:#C8A800" onclick="choisirCouleurHair('#C8A800',this)" title="Blond"></div>
+        <div class="color-dot" style="background:#8B1A1A" onclick="choisirCouleurHair('#8B1A1A',this)" title="Roux"></div>
+        <div class="color-dot" style="background:#AAAAAA" onclick="choisirCouleurHair('#AAAAAA',this)" title="Gris/Blanc"></div>
       </div>
     </div>
 
@@ -359,10 +374,10 @@
 
   <!-- ══ Écran 5 : Succès ══ -->
   <div class="screen" id="screen-succes">
-    <div id="succes-mii-preview" style="display:flex;flex-direction:column;align-items:center;gap:8px;animation:popIn .6s cubic-bezier(0.34,1.56,0.64,1);">
-      <!-- SVG du mii final injecté ici -->
+    <div id="succes-mii-wrap">
+      <canvas id="succesCanvas"></canvas>
     </div>
-    <div class="success-title">Ton Mii est prêt ! 🎉</div>
+    <div class="success-title" style="margin-top:8px;">Ton Mii est prêt ! 🎉</div>
     <p class="success-msg">Bienvenue dans Wii Sports Mobile !<br>À toi de jouer !</p>
     <button class="btn-play" onclick="window.location.href='index.html'">🎮 Jouer maintenant !</button>
   </div>
@@ -372,59 +387,186 @@
 <script src="js/supabase.js"></script>
 <script>
 /* ═══════════════════════════════════════════════════
-   DONNÉES GLOBALES
+   DONNÉES
 ═══════════════════════════════════════════════════ */
-const DOMAINES = ['albertschool.com', 'albertschool.fr'];
-function estEmailAutorise(e) { return DOMAINES.includes(e.split('@')[1]?.toLowerCase()); }
+const DOMAINES=['albertschool.com','albertschool.fr'];
+function estEmailAutorise(e){ return DOMAINES.includes(e.split('@')[1]?.toLowerCase()); }
 
-const choix = { tennis:null, golf:null, baseball:null, bowling:null, boxe:null };
-let nomUser  = '';
-let userCree = null;
-
-// Choix Mii courant
-const mii = {
-  color:      '#4FC3F7',
-  hair:       'hair1',
-  hairColor:  '#4A2C0A',
-};
+const choix={tennis:null,golf:null,baseball:null,bowling:null,boxe:null};
+let nomUser='', userCree=null;
+const mii={bodyColor:'#E8531E', hairType:0, hairColor:'#3D1C02'};
 
 /* ═══════════════════════════════════════════════════
-   NAVIGATION ÉCRANS
+   NAVIGATION
 ═══════════════════════════════════════════════════ */
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function affMsg(id, txt, type) { const el=document.getElementById(id); el.textContent=txt; el.className=`msg ${type}`; }
-function cachMsg(id) { const el=document.getElementById(id); el.textContent=''; el.className='msg'; }
+function affMsg(id,txt,type){const el=document.getElementById(id);el.textContent=txt;el.className=`msg ${type}`;}
+function cachMsg(id){const el=document.getElementById(id);el.textContent='';el.className='msg';}
 
 /* ═══════════════════════════════════════════════════
-   FORMULAIRE — VALIDATION
+   THREE.JS — MOTEUR MII 3D
 ═══════════════════════════════════════════════════ */
-function verifierEmail() {
-  const email = document.getElementById('input-email').value.trim().toLowerCase();
-  const badge = document.getElementById('domain-badge');
-  const input = document.getElementById('input-email');
-  const ok = email.includes('@') && estEmailAutorise(email);
-  badge.style.display = ok ? 'flex' : 'none';
-  input.style.borderColor = email.includes('@') ? (ok ? '#2E7D32' : '#C62828') : '';
-  if (email.includes('@') && !ok) affMsg('msg-inscription','❌ Seules les adresses @albertschool.com ou @albertschool.fr sont acceptées.','error');
+// Paramètres matériaux FFL officiels (par modulateType)
+const MAT=[
+  {a:new THREE.Vector4(.85,.75,.75,1),d:new THREE.Vector4(.75,.75,.75,1),s:new THREE.Vector4(.3,.3,.3,1),  sp:1.2, sm:0}, // faceline
+  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(0,0,0,1),      sp:40,  sm:1}, // beard
+  {a:new THREE.Vector4(.9,.85,.85,1),d:new THREE.Vector4(.75,.75,.75,1),s:new THREE.Vector4(.22,.22,.22,1),sp:1.5, sm:0}, // nose
+  {a:new THREE.Vector4(.85,.75,.75,1),d:new THREE.Vector4(.75,.75,.75,1),s:new THREE.Vector4(.3,.3,.3,1), sp:1.2, sm:0}, // forehead
+  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(.35,.35,.35,1),sp:10,  sm:1}, // hair
+  {a:new THREE.Vector4(.75,.75,.75,1),d:new THREE.Vector4(.72,.72,.72,1),s:new THREE.Vector4(.3,.3,.3,1), sp:1.5, sm:0}, // cap
+  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(0,0,0,1),      sp:40,  sm:1}, // mask
+  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(0,0,0,1),      sp:40,  sm:1}, // noseline
+  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(0,0,0,1),      sp:40,  sm:1}, // glass
+];
+const LAMB=new THREE.Vector4(.73,.73,.73,1);
+const LDIF=new THREE.Vector4(.6,.6,.6,1);
+const LSPE=new THREE.Vector4(.7,.7,.7,1);
+const LDIR=new THREE.Vector3(-.4531,.4226,.7849);
+const RIMC=new THREE.Vector4(.3,.3,.3,1);
+const RIMP=2.0;
+
+// Créer une scène Three.js sur un canvas donné
+function creerScene(canvasId, W, H){
+  const canvas=document.getElementById(canvasId);
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(15, W/H, 10, 10000);
+  cam.position.set(0,37.05,415.53);
+  cam.lookAt(0,37.05,0);
+  const rend=new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  rend.setSize(W,H,false);
+  rend.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  return {scene,cam,rend};
+}
+
+// Charger un .glb avec le shader FFL
+function chargerGLB(scene, url, cb){
+  new THREE.GLTFLoader().load(url, gltf=>{
+    const model=gltf.scene;
+    model.traverse(node=>{
+      if(!node.isMesh) return;
+      const ud=node.geometry.userData;
+      const mt=ud.modulateType;
+      const mp=(mt!==undefined&&mt<9)?MAT[mt]:MAT[0];
+      const mm=ud.modulateMode===undefined?0:ud.modulateMode;
+      const mc=ud.modulateColor?new THREE.Vector4(...ud.modulateColor,1):new THREE.Vector4(1,0,0,1);
+      const le=mt>5?false:true;
+      const ori=node.material;
+      if(ori.map) ori.map.colorSpace=THREE.LinearSRGBColorSpace;
+      let side=ori.side;
+      if(ud.cullMode!==undefined) side=ud.cullMode===0?THREE.DoubleSide:ud.cullMode===1?THREE.FrontSide:THREE.BackSide;
+      node.material=new THREE.ShaderMaterial({
+        vertexShader:document.getElementById('vertexShader').textContent,
+        fragmentShader:document.getElementById('fragmentShader').textContent,
+        uniforms:{
+          u_const1:{value:mc},u_light_ambient:{value:LAMB},u_light_diffuse:{value:LDIF},
+          u_light_specular:{value:LSPE},u_light_dir:{value:LDIR},u_light_enable:{value:le},
+          u_material_ambient:{value:mp.a},u_material_diffuse:{value:mp.d},u_material_specular:{value:mp.s},
+          u_material_specular_mode:{value:mp.sm},u_material_specular_power:{value:mp.sp},
+          u_mode:{value:mm},u_rim_color:{value:RIMC},u_rim_power:{value:RIMP},s_texture:{value:ori.map},
+        },
+        side, blending:THREE.CustomBlending, blendDstAlpha:THREE.OneFactor,
+        transparent:ori.transparent, alphaTest:ori.alphaTest,
+      });
+    });
+    scene.add(model);
+    cb&&cb(model);
+  },undefined,err=>{console.warn('GLB err:',err);cb&&cb(null);});
+}
+
+// Construire l'URL API Mii
+// hairType : 0=court, 1=mi-long, 2=bouclé
+// Les types de cheveux disponibles dans l'API FFL : 0,33,57 correspondent environ aux 3 styles
+const HAIR_API=[0,33,57];
+function getMiiURL(bodyColor, hairType, hairColor){
+  const shirt=bodyColor.replace('#','');
+  const hair=hairColor.replace('#','');
+  const ht=HAIR_API[hairType]||0;
+  // Mii data générique (Mii neutre de base)
+  return `https://mii-unsecure.ariankordi.net/miis/image.glb?data=AwAAQOlVognnx6YhuP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==&shirtColor=${shirt}&hairColor=${hair}&hairType=${ht}&width=512&verifyAsync=1`;
+}
+
+// ── Scène principale (écran Mii) ──
+let mainCtx=null, mainModel=null, mainAnimId=null;
+let mii3dReady=false;
+
+function initMiiScreen(){
+  if(mii3dReady) return;
+  mii3dReady=true;
+  const wrap=document.getElementById('mii3dWrap');
+  const W=wrap.clientWidth||330, H=wrap.clientHeight||230;
+  mainCtx=creerScene('mii3dCanvas',W,H);
+  // Contrôles orbitaux (touch/drag)
+  const ctrl=new THREE.OrbitControls(mainCtx.cam,mainCtx.rend.domElement);
+  ctrl.target.set(0,37.05,0); ctrl.update();
+  // Loop de rendu
+  (function loop(){mainAnimId=requestAnimationFrame(loop);if(mainModel)mainModel.rotation.y+=0.012;mainCtx.rend.render(mainCtx.scene,mainCtx.cam);})();
+  rechargerMii();
+}
+
+function rechargerMii(){
+  if(!mainCtx) return;
+  if(mainModel){mainCtx.scene.remove(mainModel);mainModel=null;}
+  const loading=document.getElementById('mii3dLoading');
+  loading.style.display='flex';
+  chargerGLB(mainCtx.scene, getMiiURL(mii.bodyColor,mii.hairType,mii.hairColor), model=>{
+    loading.style.display='none';
+    if(model) mainModel=model;
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   SÉLECTION MII
+═══════════════════════════════════════════════════ */
+function choisirCouleurBody(color,el){
+  mii.bodyColor=color;
+  document.querySelectorAll('#color-body-row .color-dot').forEach(d=>d.classList.remove('sel'));
+  el.classList.add('sel');
+  if(navigator.vibrate)navigator.vibrate(8);
+  rechargerMii();
+}
+function choisirCoiffure(type,btn){
+  mii.hairType=type;
+  document.querySelectorAll('.hair-card').forEach(c=>c.classList.remove('sel'));
+  btn.classList.add('sel');
+  if(navigator.vibrate)navigator.vibrate(8);
+  rechargerMii();
+}
+function choisirCouleurHair(color,el){
+  mii.hairColor=color;
+  document.querySelectorAll('#color-hair-row .color-dot').forEach(d=>d.classList.remove('sel'));
+  el.classList.add('sel');
+  if(navigator.vibrate)navigator.vibrate(8);
+  rechargerMii();
+}
+
+/* ═══════════════════════════════════════════════════
+   FORMULAIRE
+═══════════════════════════════════════════════════ */
+function verifierEmail(){
+  const email=document.getElementById('input-email').value.trim().toLowerCase();
+  const badge=document.getElementById('domain-badge');
+  const input=document.getElementById('input-email');
+  const ok=email.includes('@')&&estEmailAutorise(email);
+  badge.style.display=ok?'flex':'none';
+  input.style.borderColor=email.includes('@')?(ok?'#2E7D32':'#C62828'):'';
+  if(email.includes('@')&&!ok) affMsg('msg-inscription','❌ Seules les adresses @albertschool.com ou @albertschool.fr sont acceptées.','error');
   else cachMsg('msg-inscription');
   verifierFormulaire();
 }
-
-function verifierMotDePasse() {
-  const pwd = document.getElementById('input-password').value;
-  const bar = document.getElementById('pwd-bar');
-  let f = 0;
-  if (pwd.length>=6) f++; if (pwd.length>=10) f++;
-  if (/[A-Z]/.test(pwd)) f++; if (/[0-9]/.test(pwd)) f++; if (/[^A-Za-z0-9]/.test(pwd)) f++;
-  const pct = Math.min(100, f*22);
-  bar.style.width=pct+'%'; bar.style.background=pct>=66?'#A5D6A7':pct>=33?'#FFE082':'#EF9A9A';
+function verifierMotDePasse(){
+  const pwd=document.getElementById('input-password').value;
+  const bar=document.getElementById('pwd-bar');
+  let f=0;
+  if(pwd.length>=6)f++;if(pwd.length>=10)f++;
+  if(/[A-Z]/.test(pwd))f++;if(/[0-9]/.test(pwd))f++;if(/[^A-Za-z0-9]/.test(pwd))f++;
+  const pct=Math.min(100,f*22);
+  bar.style.width=pct+'%';bar.style.background=pct>=66?'#A5D6A7':pct>=33?'#FFE082':'#EF9A9A';
   verifierFormulaire();
 }
-
-function verifierFormulaire() {
+function verifierFormulaire(){
   const nom=document.getElementById('input-nom').value.trim();
   const email=document.getElementById('input-email').value.trim().toLowerCase();
   const pwd=document.getElementById('input-password').value;
@@ -435,235 +577,100 @@ function verifierFormulaire() {
   ci.style.borderColor=confirm.length>0?(pwd===confirm?'#2E7D32':'#C62828'):'';
 }
 
-/* ═══════════════════════════════════════════════════
-   INSCRIPTION
-═══════════════════════════════════════════════════ */
-async function sInscrire() {
+async function sInscrire(){
   const nom=document.getElementById('input-nom').value.trim();
   const email=document.getElementById('input-email').value.trim().toLowerCase();
   const pwd=document.getElementById('input-password').value;
   const confirm=document.getElementById('input-confirm').value;
-
-  if (!nom||nom.length<2)   { affMsg('msg-inscription','❌ Entre ton prénom et ton nom.','error'); return; }
-  if (!estEmailAutorise(email)) { affMsg('msg-inscription','❌ Adresse email non autorisée.','error'); return; }
-  if (pwd.length<6)         { affMsg('msg-inscription','❌ Mot de passe trop court.','error'); return; }
-  if (pwd!==confirm)        { affMsg('msg-inscription','❌ Les mots de passe ne correspondent pas.','error'); return; }
-
-  nomUser = nom;
+  if(!nom||nom.length<2){affMsg('msg-inscription','❌ Entre ton prénom et ton nom.','error');return;}
+  if(!estEmailAutorise(email)){affMsg('msg-inscription','❌ Adresse email non autorisée.','error');return;}
+  if(pwd.length<6){affMsg('msg-inscription','❌ Mot de passe trop court.','error');return;}
+  if(pwd!==confirm){affMsg('msg-inscription','❌ Les mots de passe ne correspondent pas.','error');return;}
+  nomUser=nom;
   document.getElementById('btn-inscription').disabled=true;
   document.getElementById('loading-label').textContent='Création du compte…';
   showScreen('screen-loading');
-
-  const { data, error } = await supabaseClient.auth.signUp({
-    email, password: pwd,
-    options: { data: { full_name: nom } }
-  });
-
-  if (error) {
+  const{data,error}=await supabaseClient.auth.signUp({email,password:pwd,options:{data:{full_name:nom}}});
+  if(error){
     showScreen('screen-inscription');
     document.getElementById('btn-inscription').disabled=false;
-    affMsg('msg-inscription', traduireErreur(error.message), 'error');
-    return;
+    affMsg('msg-inscription',traduireErreur(error.message),'error');return;
   }
-
-  userCree = data.user;
+  userCree=data.user;
   showScreen('screen-onboarding');
 }
 
 /* ═══════════════════════════════════════════════════
-   ONBOARDING — NIVEAUX
+   ONBOARDING
 ═══════════════════════════════════════════════════ */
-function choisirNiv(sport, niveau, btn) {
-  choix[sport] = niveau;
-  document.querySelectorAll(`#niv-${sport} .niv-btn`).forEach(b => b.classList.remove('sel'));
+function choisirNiv(sport,niveau,btn){
+  choix[sport]=niveau;
+  document.querySelectorAll(`#niv-${sport} .niv-btn`).forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
-  if (navigator.vibrate) navigator.vibrate(10);
-  document.getElementById('btn-onboarding').disabled = !Object.values(choix).every(v => v !== null);
+  if(navigator.vibrate)navigator.vibrate(10);
+  document.getElementById('btn-onboarding').disabled=!Object.values(choix).every(v=>v!==null);
 }
 
-function allerMii() {
-  if (!Object.values(choix).every(v => v !== null)) {
-    affMsg('msg-onboarding','❌ Choisis un niveau pour chaque sport !','error'); return;
+function allerMii(){
+  if(!Object.values(choix).every(v=>v!==null)){
+    affMsg('msg-onboarding','❌ Choisis un niveau pour chaque sport !','error');return;
   }
-  // Met à jour le nom dans la preview Mii
-  const prenom = nomUser.split(' ')[0];
-  document.getElementById('mii-preview-name').textContent = prenom;
-  rafraichirMii();
   showScreen('screen-mii');
+  setTimeout(initMiiScreen,100);
 }
 
 /* ═══════════════════════════════════════════════════
-   MII — SÉLECTION
+   SAUVEGARDE
 ═══════════════════════════════════════════════════ */
-function choisirCouleur(type, color, el) {
-  if (type === 'body') {
-    mii.color = color;
-    document.querySelectorAll('#color-body-row .color-dot').forEach(d => d.classList.remove('sel'));
-  } else {
-    mii.hairColor = color;
-    document.querySelectorAll('#color-hair-row .color-dot').forEach(d => d.classList.remove('sel'));
-  }
-  el.classList.add('sel');
-  if (navigator.vibrate) navigator.vibrate(8);
-  rafraichirMii();
-}
-
-function choisirCheveux(hairId, btn) {
-  mii.hair = hairId;
-  document.querySelectorAll('.hair-card').forEach(c => c.classList.remove('sel'));
-  btn.classList.add('sel');
-  if (navigator.vibrate) navigator.vibrate(8);
-  rafraichirMii();
-}
-
-/* ═══════════════════════════════════════════════════
-   MII — RENDU SVG DYNAMIQUE
-═══════════════════════════════════════════════════ */
-function rafraichirMii() {
-  const svg = document.getElementById('mii-preview-svg');
-
-  // Corps + bras
-  svg.querySelectorAll('#mii-body, #mii-arm-l, #mii-arm-r').forEach(el => {
-    el.setAttribute('fill', mii.color);
-  });
-
-  // Cheveux
-  const hairGroup = document.getElementById('mii-hair-group');
-  hairGroup.innerHTML = getHairSVG(mii.hair, mii.hairColor);
-
-  // Animation pop
-  svg.classList.add('pop');
-  setTimeout(() => svg.classList.remove('pop'), 280);
-}
-
-function getHairSVG(hairType, color) {
-  const c = color;
-  if (hairType === 'hair1') {
-    // Courte lisse — calotte sur le haut de la tête
-    return `
-      <ellipse cx="50" cy="30" rx="24" ry="18" fill="${c}"/>
-      <rect x="26" y="30" width="48" height="10" fill="${c}"/>
-    `;
-  } else if (hairType === 'hair2') {
-    // Longue — avec mèches sur les côtés
-    return `
-      <ellipse cx="50" cy="28" rx="24" ry="18" fill="${c}"/>
-      <rect x="26" y="28" width="10" height="12" fill="${c}"/>
-      <rect x="64" y="28" width="10" height="12" fill="${c}"/>
-      <rect x="22" y="38" width="8" height="22" rx="4" fill="${c}"/>
-      <rect x="70" y="38" width="8" height="22" rx="4" fill="${c}"/>
-    `;
-  } else {
-    // Bouclée — cercles sur le dessus
-    return `
-      <circle cx="32" cy="28" r="10" fill="${c}"/>
-      <circle cx="50" cy="22" r="12" fill="${c}"/>
-      <circle cx="68" cy="28" r="10" fill="${c}"/>
-      <rect x="26" y="30" width="48" height="8" fill="${c}"/>
-    `;
-  }
-}
-
-/* ═══════════════════════════════════════════════════
-   MII + NIVEAUX — SAUVEGARDE FINALE
-═══════════════════════════════════════════════════ */
-async function validerMiiEtSauvegarder() {
-  document.getElementById('btn-mii').disabled = true;
-  document.getElementById('loading-label').textContent = 'Sauvegarde de ton Mii…';
+async function validerMiiEtSauvegarder(){
+  document.getElementById('btn-mii').disabled=true;
+  document.getElementById('loading-label').textContent='Sauvegarde de ton Mii…';
   showScreen('screen-loading');
+  const{data:{user}}=await supabaseClient.auth.getUser();
+  const u=user||userCree;
+  if(!u){showScreen('screen-inscription');affMsg('msg-inscription','❌ Session perdue.','error');return;}
 
-  const { data:{ user } } = await supabaseClient.auth.getUser();
-  const u = user || userCree;
+  const{error}=await supabaseClient.from('profiles').upsert({
+    id:u.id,email:u.email,
+    full_name:nomUser||u.user_metadata?.full_name||u.email.split('@')[0],
+    level_tennis:choix.tennis,level_golf:choix.golf,
+    level_baseball:choix.baseball,level_bowling:choix.bowling,level_boxe:choix.boxe,
+    mii_color:mii.bodyColor, mii_hair:String(mii.hairType), mii_hair_color:mii.hairColor,
+    onboarding_done:true,
+  },{onConflict:'id'});
 
-  if (!u) {
-    showScreen('screen-inscription');
-    affMsg('msg-inscription','❌ Session perdue, réessaie.','error'); return;
+  if(error){
+    console.error(error);showScreen('screen-mii');
+    document.getElementById('btn-mii').disabled=false;
+    affMsg('msg-mii',`❌ ${error.message}`,'error');return;
   }
-
-  const { error } = await supabaseClient.from('profiles').upsert({
-    id:              u.id,
-    email:           u.email,
-    full_name:       nomUser || u.user_metadata?.full_name || u.email.split('@')[0],
-    level_tennis:    choix.tennis,
-    level_golf:      choix.golf,
-    level_baseball:  choix.baseball,
-    level_bowling:   choix.bowling,
-    level_boxe:      choix.boxe,
-    mii_color:       mii.color,
-    mii_hair:        mii.hair,
-    mii_hair_color:  mii.hairColor,
-    onboarding_done: true,
-  }, { onConflict: 'id' });
-
-  if (error) {
-    console.error('Erreur upsert:', error);
-    showScreen('screen-mii');
-    document.getElementById('btn-mii').disabled = false;
-    affMsg('msg-mii', `❌ Erreur: ${error.message}`, 'error'); return;
-  }
-
-  // Afficher le Mii final dans l'écran succès
-  const prenom = nomUser.split(' ')[0];
-  const miiSVGFinal = genererMiiSVG(mii.color, mii.hair, mii.hairColor, 110, 132);
-  document.getElementById('succes-mii-preview').innerHTML = `
-    ${miiSVGFinal}
-    <div style="font-size:1rem;font-weight:800;color:#1565C0;">${prenom}</div>
-  `;
 
   showScreen('screen-succes');
+  // Lancer le Mii 3D sur l'écran succès
+  setTimeout(()=>{
+    const wrap=document.getElementById('succes-mii-wrap');
+    const W=wrap.clientWidth||170, H=wrap.clientHeight||190;
+    const ctx=creerScene('succesCanvas',W,H);
+    let succesModel=null;
+    chargerGLB(ctx.scene,getMiiURL(mii.bodyColor,mii.hairType,mii.hairColor),model=>{
+      succesModel=model;
+      (function loop(){requestAnimationFrame(loop);if(succesModel)succesModel.rotation.y+=0.018;ctx.rend.render(ctx.scene,ctx.cam);})();
+    });
+  },150);
 }
 
 /* ═══════════════════════════════════════════════════
-   FONCTION GLOBALE — genererMiiSVG()
-   (aussi utilisable depuis index.html, jeux, etc.)
+   INIT
 ═══════════════════════════════════════════════════ */
-function genererMiiSVG(bodyColor, hairType, hairColor, width=80, height=96) {
-  const hair = hairType === 'hair1'
-    ? `<ellipse cx="50" cy="30" rx="24" ry="18" fill="${hairColor}"/><rect x="26" y="30" width="48" height="10" fill="${hairColor}"/>`
-    : hairType === 'hair2'
-    ? `<ellipse cx="50" cy="28" rx="24" ry="18" fill="${hairColor}"/><rect x="22" y="38" width="8" height="22" rx="4" fill="${hairColor}"/><rect x="70" y="38" width="8" height="22" rx="4" fill="${hairColor}"/><rect x="26" y="28" width="10" height="12" fill="${hairColor}"/><rect x="64" y="28" width="10" height="12" fill="${hairColor}"/>`
-    : `<circle cx="32" cy="28" r="10" fill="${hairColor}"/><circle cx="50" cy="22" r="12" fill="${hairColor}"/><circle cx="68" cy="28" r="10" fill="${hairColor}"/><rect x="26" y="30" width="48" height="8" fill="${hairColor}"/>`;
-
-  return `<svg width="${width}" height="${height}" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="50" cy="98" rx="26" ry="20" fill="${bodyColor}"/>
-    <ellipse cx="22" cy="90" rx="8" ry="6" fill="${bodyColor}" transform="rotate(-20,22,90)"/>
-    <ellipse cx="78" cy="90" rx="8" ry="6" fill="${bodyColor}" transform="rotate(20,78,90)"/>
-    <rect x="44" y="65" width="12" height="10" rx="4" fill="#FFCBA4"/>
-    <ellipse cx="50" cy="52" rx="24" ry="26" fill="#FFCBA4"/>
-    <ellipse cx="26" cy="54" rx="5" ry="7" fill="#FFCBA4"/>
-    <ellipse cx="74" cy="54" rx="5" ry="7" fill="#FFCBA4"/>
-    ${hair}
-    <ellipse cx="40" cy="50" rx="5" ry="6" fill="white"/>
-    <ellipse cx="60" cy="50" rx="5" ry="6" fill="white"/>
-    <circle cx="41" cy="51" r="3" fill="#333"/>
-    <circle cx="61" cy="51" r="3" fill="#333"/>
-    <circle cx="42" cy="49.5" r="1" fill="white"/>
-    <circle cx="62" cy="49.5" r="1" fill="white"/>
-    <ellipse cx="50" cy="58" rx="3" ry="2.5" fill="#F0A080"/>
-    <path d="M43 64 Q50 70 57 64" stroke="#C07050" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <ellipse cx="34" cy="60" rx="5" ry="3.5" fill="rgba(255,150,150,0.3)"/>
-    <ellipse cx="66" cy="60" rx="5" ry="3.5" fill="rgba(255,150,150,0.3)"/>
-  </svg>`;
-}
-
-/* ═══════════════════════════════════════════════════
-   INIT : initialiser la preview Mii dès le chargement
-═══════════════════════════════════════════════════ */
-rafraichirMii();
-
-/* ═══════════════════════════════════════════════════
-   UTILITAIRES
-═══════════════════════════════════════════════════ */
-// Si déjà connecté → index
-(async () => {
-  const { data:{ session } } = await supabaseClient.auth.getSession();
-  if (session) window.location.replace('index.html');
+(async()=>{
+  const{data:{session}}=await supabaseClient.auth.getSession();
+  if(session) window.location.replace('index.html');
 })();
 
-function traduireErreur(msg) {
-  if (msg.includes('User already registered')||msg.includes('already been registered')) return '❌ Cet email a déjà un compte. Connecte-toi →';
-  if (msg.includes('Password should be'))   return '❌ Mot de passe trop court (6 caractères minimum).';
-  if (msg.includes('rate limit')||msg.includes('over_email')) return '⏳ Trop de tentatives. Attends 1h ou utilise une adresse +test.';
+function traduireErreur(msg){
+  if(msg.includes('User already registered')||msg.includes('already been registered')) return '❌ Cet email a déjà un compte.';
+  if(msg.includes('Password should be')) return '❌ Mot de passe trop court (6 min).';
+  if(msg.includes('rate limit')||msg.includes('over_email')) return '⏳ Trop de tentatives, attends 1h.';
   return '❌ Erreur lors de la création du compte. Réessaie.';
 }
 </script>
