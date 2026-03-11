@@ -291,7 +291,65 @@
       pointer-events: all;
     }
 
-    /* Écran de démarrage */
+    /* ── Cartes tutoriel ── */
+    .tuto-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 14px 16px;
+      backdrop-filter: blur(8px);
+    }
+    .tuto-icon-wrap {
+      flex-shrink: 0;
+      width: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tuto-text { flex: 1; }
+    .tuto-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.05rem;
+      color: var(--orange);
+      margin-bottom: 3px;
+    }
+    .tuto-desc {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.4;
+      font-weight: 700;
+    }
+    .tuto-desc strong { color: white; }
+
+    /* ── Animations SVG tuto ── */
+    @keyframes tiltPhone {
+      0%,100% { transform: rotate(0deg); }
+      30%     { transform: rotate(-18deg); }
+      70%     { transform: rotate(18deg); }
+    }
+    @keyframes swipeUp {
+      0%,100% { transform: translateY(0); opacity:1; }
+      60%     { transform: translateY(-22px); opacity:0.3; }
+      61%     { transform: translateY(0); opacity:0; }
+      62%     { opacity:1; }
+    }
+    @keyframes ballLaunch {
+      0%,100% { transform: translateY(0); opacity:1; }
+      55%     { transform: translateY(-34px); opacity:0; }
+      56%     { transform: translateY(0); opacity:0; }
+      60%     { opacity:1; }
+    }
+    @keyframes trailFade {
+      0%,40% { opacity:0; }
+      50%    { opacity:1; }
+      70%    { opacity:0; }
+      100%   { opacity:0; }
+    }
+
+    /* ── Écran de démarrage ── */
     #start-screen {
       position: fixed;
       inset: 0;
@@ -299,9 +357,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 20px;
+      gap: 14px;
       background: linear-gradient(180deg, #1a1a2e 0%, #2d1b69 100%);
+      overflow-y: auto;
+      padding-bottom: 16px;
     }
 
     .start-emoji { font-size: 5rem; animation: bounce 1.5s ease-in-out infinite; }
@@ -361,29 +420,73 @@
       font-weight: 700;
     }
 
-    /* ── Boutons de niveau ── */
-    .niveau-btn {
+    /* ── Cartes tutoriel ── */
+    .tuto-card {
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(255,255,255,0.1);
-      border: 2px solid rgba(255,255,255,0.2);
-      border-radius: 16px;
-      padding: 12px 18px;
-      color: white;
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.15s;
+      gap: 14px;
+      background: rgba(255,255,255,0.08);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 18px;
+      padding: 14px 16px;
       width: 100%;
+      backdrop-filter: blur(8px);
     }
-    .niveau-btn:active { transform: scale(0.97); }
-    .niveau-btn.selected {
-      background: rgba(245,166,35,0.3);
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(245,166,35,0.2);
+    .tuto-icon-wrap {
+      flex-shrink: 0;
+      width: 80px; height: 60px;
+      display: flex; align-items: center; justify-content: center;
     }
-    .niveau-btn span:nth-child(2) { flex: 1; text-align: left; }
+    .tuto-text { flex: 1; }
+    .tuto-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.05rem;
+      color: var(--orange);
+      line-height: 1.1;
+    }
+    .tuto-desc {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.65);
+      font-weight: 700;
+      line-height: 1.4;
+      margin-top: 3px;
+    }
+    .tuto-desc strong { color: white; }
+
+    /* ── Animations tuto ── */
+    @keyframes tiltPhone {
+      0%,100% { transform: rotate(0deg); }
+      30%      { transform: rotate(-18deg); }
+      70%      { transform: rotate(18deg); }
+    }
+    @keyframes fadeArrowL {
+      0%,100% { opacity:0.2; transform:translateX(0); }
+      30%     { opacity:0.9; transform:translateX(-4px); }
+    }
+    @keyframes fadeArrowR {
+      0%,100% { opacity:0.2; transform:translateX(0); }
+      70%     { opacity:0.9; transform:translateX(4px); }
+    }
+    @keyframes swipeUp {
+      0%     { transform: translateY(0); opacity:1; }
+      60%    { transform: translateY(-22px); opacity:0.3; }
+      61%    { transform: translateY(0); opacity:0; }
+      62%    { transform: translateY(0); opacity:1; }
+      100%   { transform: translateY(0); opacity:1; }
+    }
+    @keyframes ballLaunch {
+      0%,10%  { transform: translateY(0); opacity:1; }
+      55%     { transform: translateY(-30px); opacity:0; }
+      56%     { transform: translateY(0); opacity:0; }
+      70%     { opacity:1; }
+      100%    { opacity:1; }
+    }
+    @keyframes trailFade {
+      0%,15% { opacity:0; }
+      40%    { opacity:0.7; }
+      65%    { opacity:0; }
+      100%   { opacity:0; }
+    }
 
     /* ── HUD adversaire (score en direct) ── */
     #hud-adv {
@@ -473,7 +576,7 @@
 <div id="hud">
   <div class="hud-card">
     <div class="hud-label">Frame</div>
-    <div class="hud-value orange" id="hud-frame">1 / 3</div>
+    <div class="hud-value orange" id="hud-frame">1 / 10</div>
   </div>
   <div class="hud-card">
     <div class="hud-label">Score</div>
@@ -508,8 +611,9 @@
 
 <!-- Overlay fin de partie -->
 <div id="final-overlay">
-  <div class="final-title">🏆 Partie terminée !</div>
+  <div class="final-title" id="final-title-text">🏆 Victoire !</div>
   <div class="final-score" id="final-score-display">0</div>
+  <div style="font-family:'Fredoka One',cursive; color:rgba(255,255,255,0.5); font-size:0.8rem; letter-spacing:2px; text-transform:uppercase; margin-top:-12px;">Points</div>
   <div class="final-vs">
     <div class="final-player">
       <div class="final-player-name">Toi</div>
@@ -525,38 +629,108 @@
   <button class="result-btn" style="background:#2A5FBF;box-shadow:0 6px 0 #1a3f8f" onclick="location.reload()">🔄 Rejouer</button>
 </div>
 
-<!-- Écran de démarrage avec choix de niveau -->
+<!-- Écran de démarrage — Comment jouer -->
 <div id="start-screen">
-  <span class="start-emoji">🎳</span>
-  <div class="start-title">Bowling</div>
 
-  <!-- Choix du niveau -->
-  <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:300px;">
-    <div style="font-family:'Fredoka One',cursive; color:rgba(255,255,255,0.7); font-size:0.85rem; text-align:center; letter-spacing:2px; text-transform:uppercase;">Choisis ton niveau</div>
-
-    <button class="niveau-btn" id="btn-facile" onclick="choisirNiveau('facile')">
-      <span>😊</span> <span>Facile</span>
-      <span style="font-size:0.7rem; opacity:0.7;">Adversaires débutants</span>
-    </button>
-    <button class="niveau-btn" id="btn-moyen" onclick="choisirNiveau('moyen')">
-      <span>😤</span> <span>Moyen</span>
-      <span style="font-size:0.7rem; opacity:0.7;">Adversaires expérimentés</span>
-    </button>
-    <button class="niveau-btn" id="btn-difficile" onclick="choisirNiveau('difficile')">
-      <span>💀</span> <span>Difficile</span>
-      <span style="font-size:0.7rem; opacity:0.7;">Adversaires redoutables</span>
-    </button>
+  <!-- En-tête -->
+  <div style="text-align:center; padding-top:18px;">
+    <div style="font-size:3rem; line-height:1;">🎳</div>
+    <div style="font-family:'Fredoka One',cursive; font-size:2rem; color:white; margin-top:4px;">Bowling</div>
+    <div style="font-family:'Fredoka One',cursive; font-size:0.75rem; color:rgba(255,255,255,0.4); letter-spacing:3px; text-transform:uppercase; margin-top:2px;">Comment jouer</div>
   </div>
 
-  <!-- Adversaire (affiché après choix du niveau) -->
-  <div class="adversaire-card" id="adv-card" style="display:none;">
+  <!-- Cartes tutoriel -->
+  <div style="display:flex; flex-direction:column; gap:12px; width:100%; max-width:320px; padding:0 16px;">
+
+    <!-- Carte 1 : Viser -->
+    <div class="tuto-card" id="tuto-viser">
+      <div class="tuto-icon-wrap">
+        <!-- SVG téléphone qui s'incline -->
+        <svg viewBox="0 0 80 60" width="80" height="60" style="overflow:visible;">
+          <g id="phone-tilt" style="transform-origin:40px 30px; animation:tiltPhone 2s ease-in-out infinite;">
+            <!-- Corps téléphone -->
+            <rect x="28" y="8" width="24" height="40" rx="4" fill="#2255EE" stroke="white" stroke-width="1.5"/>
+            <rect x="31" y="12" width="18" height="30" rx="2" fill="#87CEEB"/>
+            <circle cx="40" cy="45" r="2" fill="white" opacity="0.6"/>
+          </g>
+          <!-- Flèches direction -->
+          <g style="animation:showArrows 2s ease-in-out infinite;">
+            <text x="8" y="34" font-size="14" fill="rgba(255,255,255,0.6)" style="animation:fadeArrowL 2s ease-in-out infinite;">←</text>
+            <text x="58" y="34" font-size="14" fill="rgba(255,255,255,0.6)" style="animation:fadeArrowR 2s ease-in-out infinite;">→</text>
+          </g>
+        </svg>
+      </div>
+      <div class="tuto-text">
+        <div class="tuto-title">Viser</div>
+        <div class="tuto-desc">Incline ton téléphone <strong>à gauche ou à droite</strong> pour orienter ta boule</div>
+      </div>
+    </div>
+
+    <!-- Carte 2 : Lancer -->
+    <div class="tuto-card" id="tuto-lancer">
+      <div class="tuto-icon-wrap">
+        <!-- SVG doigt qui swipe vers le haut -->
+        <svg viewBox="0 0 80 60" width="80" height="60" style="overflow:visible;">
+          <!-- Piste en fond -->
+          <rect x="30" y="5" width="20" height="50" rx="3" fill="rgba(240,216,120,0.25)" stroke="rgba(240,216,120,0.4)" stroke-width="1"/>
+          <!-- Doigt animé -->
+          <g style="animation:swipeUp 1.8s ease-in-out infinite;">
+            <ellipse cx="40" cy="46" rx="7" ry="9" fill="#FFCCA0" stroke="#E8A070" stroke-width="1"/>
+            <rect x="36" y="28" width="8" height="18" rx="4" fill="#FFCCA0" stroke="#E8A070" stroke-width="1"/>
+          </g>
+          <!-- Boule animée -->
+          <circle id="boule-anim" cx="40" cy="42" r="6" fill="#2255EE" stroke="white" stroke-width="1"
+            style="animation:ballLaunch 1.8s ease-in-out infinite;"/>
+          <!-- Trait vitesse -->
+          <line x1="40" y1="36" x2="40" y2="12" stroke="rgba(245,166,35,0.5)" stroke-width="2" stroke-dasharray="3,3"
+            style="animation:trailFade 1.8s ease-in-out infinite;"/>
+        </svg>
+      </div>
+      <div class="tuto-text">
+        <div class="tuto-title">Lancer</div>
+        <div class="tuto-desc"><strong>Swipe vers le haut</strong> — plus tu vas vite, plus la boule est puissante</div>
+      </div>
+    </div>
+
+    <!-- Carte 3 : Score -->
+    <div class="tuto-card" id="tuto-score">
+      <div class="tuto-icon-wrap">
+        <svg viewBox="0 0 80 60" width="80" height="60">
+          <!-- Case Strike -->
+          <rect x="4" y="14" width="22" height="32" rx="4" fill="rgba(245,166,35,0.2)" stroke="rgba(245,166,35,0.6)" stroke-width="1.5"/>
+          <text x="15" y="26" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="bold" fill="#F5A623">X</text>
+          <text x="15" y="38" text-anchor="middle" font-family="sans-serif" font-size="7" fill="rgba(255,255,255,0.5)">Strike</text>
+          <text x="15" y="47" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="bold" fill="white">30</text>
+          <!-- Case Spare -->
+          <rect x="29" y="14" width="22" height="32" rx="4" fill="rgba(91,191,106,0.2)" stroke="rgba(91,191,106,0.6)" stroke-width="1.5"/>
+          <text x="40" y="26" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="bold" fill="#5BBF6A">/</text>
+          <text x="40" y="38" text-anchor="middle" font-family="sans-serif" font-size="7" fill="rgba(255,255,255,0.5)">Spare</text>
+          <text x="40" y="47" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="bold" fill="white">+1</text>
+          <!-- Case Normal -->
+          <rect x="54" y="14" width="22" height="32" rx="4" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+          <text x="65" y="26" text-anchor="middle" font-family="sans-serif" font-size="9" font-weight="bold" fill="white">7</text>
+          <text x="65" y="38" text-anchor="middle" font-family="sans-serif" font-size="7" fill="rgba(255,255,255,0.5)">Normal</text>
+          <text x="65" y="47" text-anchor="middle" font-family="sans-serif" font-size="8" font-weight="bold" fill="white">= 7</text>
+        </svg>
+      </div>
+      <div class="tuto-text">
+        <div class="tuto-title">Score</div>
+        <div class="tuto-desc"><strong>Strike</strong> = 10 + bonus · <strong>Spare</strong> = 10 + prochain · 10 frames au total</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Adversaire -->
+  <div class="adversaire-card" id="adv-card">
     <div class="adversaire-label">Ton adversaire</div>
-    <div class="adversaire-name" id="adv-name">Chargement...</div>
+    <div class="adversaire-name" id="adv-name">⏳ Chargement...</div>
     <div class="adversaire-niveau" id="adv-niveau"></div>
   </div>
 
-  <button class="start-btn" id="start-btn" style="display:none;" onclick="demarrerJeu()">🎳 C'est parti !</button>
-  <p class="gyro-info">📐 Incline ton téléphone pour viser<br>👆 Swipe vers le haut pour lancer</p>
+  <!-- Bouton lancer -->
+  <button class="start-btn" onclick="demarrerJeu()" style="margin-bottom:24px;">🎳 C'est parti !</button>
+
 </div>
 
 <!-- Scripts -->
@@ -569,54 +743,54 @@
 // ============================================
 //  ÉTAT DU JEU
 // ============================================
+const NB_FRAMES = 10;
 const ETAT = {
   frameActuelle: 0,
   lancerActuel: 0,
   quillesTombees: 0,
   quillesTombeesFrame: 0,
-  scores: [null, null, null],
-  throwsParFrame: [[], [], []],
+  throwsParFrame: Array.from({length: NB_FRAMES}, () => []),
   scoreTotal: 0,
   ballEnMouvement: false,
   adversaire: null,
   peutLancer: true,
-  // Nouveau :
   niveauChoisi: null,
   scoreTotalAdv: 0,
-  scoresAdv: [],
+  throwsAdv: Array.from({length: NB_FRAMES}, () => []), // lancers IA par frame
 };
 
 // ============================================
-//  CHOIX DU NIVEAU
+//  INIT — Niveau auto depuis profil Supabase
+//  + chargement adversaire au démarrage
 // ============================================
-async function choisirNiveau(niveau) {
+async function initNiveauEtAdversaire() {
+  // Récupère le niveau bowling du profil connecté
+  let niveau = 'moyen'; // défaut
+  try {
+    const profil = await getProfilCourant();
+    if (profil?.level_bowling) {
+      // Mappe les valeurs Supabase → difficulté IA
+      const map = { 'Débutant': 'facile', 'Intermédiaire': 'moyen', 'Confirmé': 'difficile' };
+      niveau = map[profil.level_bowling] || 'moyen';
+    }
+  } catch(e) { console.warn('Profil non dispo, niveau moyen par défaut'); }
+
   ETAT.niveauChoisi = niveau;
 
-  // Highlight bouton sélectionné
-  document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById(`btn-${niveau}`).classList.add('selected');
-
-  // Charge l'adversaire selon le niveau
-  document.getElementById('adv-name').textContent = 'Recherche...';
-  document.getElementById('adv-card').style.display = 'block';
-  document.getElementById('start-btn').style.display = 'none';
-
+  // Charge l'adversaire
   const adv = await getAdversaire('bowling', niveau);
   ETAT.adversaire = adv;
-
   if (adv) {
-    document.getElementById('adv-name').textContent = `${adv.avatar} ${adv.nom}`;
-    document.getElementById('adv-niveau').textContent = `Niveau : ${adv.bowling}`;
+    document.getElementById('adv-name').textContent    = `${adv.avatar || '🤖'} ${adv.nom}`;
+    document.getElementById('adv-niveau').textContent  = `Niveau : ${adv.bowling || niveau}`;
     document.getElementById('adv-avatar-hud').textContent = adv.avatar || '🤖';
-    document.getElementById('adv-name-hud').textContent = adv.nom;
+    document.getElementById('adv-name-hud').textContent   = adv.nom;
   } else {
-    document.getElementById('adv-name').textContent = '🤖 CPU';
-    document.getElementById('adv-niveau').textContent = `Niveau : ${niveau}`;
+    document.getElementById('adv-name').textContent   = '🤖 CPU';
+    document.getElementById('adv-niveau').textContent = `Niveau adapté à toi`;
   }
-
-  document.getElementById('start-btn').style.display = 'block';
-  if (navigator.vibrate) navigator.vibrate(20);
 }
+initNiveauEtAdversaire();
 
 // ============================================
 //  THREE.JS — SCÈNE 3D
@@ -1387,7 +1561,6 @@ function finLancer() {
   throws.push(nouvellesTombees);
   ETAT.quillesTombeesFrame = tombees;
 
-  // Calcule et affiche le résultat
   afficherResultatLancer(tombees, nouvellesTombees, throws);
   mettreAJourScore();
   mettreAJourFramesBar();
@@ -1395,31 +1568,29 @@ function finLancer() {
 
 function afficherResultatLancer(total, nouvelles, throws) {
   const overlay = document.getElementById('result-overlay');
-  const emoji = document.getElementById('result-emoji');
-  const titre = document.getElementById('result-title');
-  const sub = document.getElementById('result-sub');
+  const emoji   = document.getElementById('result-emoji');
+  const titre   = document.getElementById('result-title');
+  const sub     = document.getElementById('result-sub');
+
+  const est10eme = ETAT.frameActuelle === 9;
 
   if (throws.length === 1 && nouvelles === 10) {
-    emoji.textContent = '🎳';
-    titre.textContent = 'STRIKE !';
-    sub.textContent = 'Toutes les quilles !';
+    emoji.textContent = '🎳'; titre.textContent = 'STRIKE !';
+    sub.textContent = est10eme ? 'Encore 2 lancers !' : 'Toutes les quilles !';
     titre.style.color = '#F5A623';
-    animerApplaudissements(3000);
-    zoomVersCrowd(3000);
-  } else if (throws.length === 2 && total === 10) {
-    emoji.textContent = '✨';
-    titre.textContent = 'SPARE !';
-    sub.textContent = 'Bien joué !';
-    titre.style.color = '#5BBF6A';
-    animerApplaudissements(2500);
-    zoomVersCrowd(2500);
+    animerApplaudissements(3000); zoomVersCrowd(3000);
+  } else if (!est10eme && throws.length === 2 && total === 10) {
+    emoji.textContent = '✨'; titre.textContent = 'SPARE !';
+    sub.textContent = 'Bien joué !'; titre.style.color = '#5BBF6A';
+    animerApplaudissements(2500); zoomVersCrowd(2500);
+  } else if (est10eme && throws.length === 2 && throws[0] !== 10 && total === 10) {
+    emoji.textContent = '✨'; titre.textContent = 'SPARE !';
+    sub.textContent = 'Encore 1 lancer bonus !'; titre.style.color = '#5BBF6A';
+    animerApplaudissements(2000); zoomVersCrowd(2000);
   } else if (nouvelles === 0) {
-    emoji.textContent = '😬';
-    titre.textContent = 'Rigole !';
-    sub.textContent = 'Retente ta chance...';
-    titre.style.color = '#F55A5A';
-    animerRotation(2200);
-    zoomVersCrowd(2200);
+    emoji.textContent = '😬'; titre.textContent = 'Rigole !';
+    sub.textContent = 'Retente ta chance...'; titre.style.color = '#F55A5A';
+    animerRotation(2200); zoomVersCrowd(2200);
   } else {
     emoji.textContent = '👍';
     titre.textContent = `${nouvelles} quille${nouvelles > 1 ? 's' : ''} !`;
@@ -1433,28 +1604,61 @@ function afficherResultatLancer(total, nouvelles, throws) {
 function nextThrow() {
   document.getElementById('result-overlay').classList.remove('show');
 
-  const throws = ETAT.throwsParFrame[ETAT.frameActuelle];
-  const strike = throws.length === 1 && throws[0] === 10;
+  const f      = ETAT.frameActuelle;
+  const throws = ETAT.throwsParFrame[f];
+  const est10eme = f === 9;
 
-  if (strike || throws.length >= 2) {
-    // Passe à la frame suivante
-    ETAT.frameActuelle++;
-    ETAT.lancerActuel = 0;
-    ETAT.quillesTombeesFrame = 0;
+  // ── Logique 10ème frame spéciale ──
+  if (est10eme) {
+    const [t1, t2, t3] = throws;
+    // 3 lancers accordés si : strike au 1er, ou spare au 2ème
+    const strike1 = t1 === 10;
+    const spare12 = !strike1 && t2 !== undefined && (t1 + t2 === 10);
+    const peutBonus = strike1 || spare12;
 
-    // Score adversaire après chaque frame !
-    mettreAJourScoreAdv();
-
-    creerQuilles();
-
-    if (ETAT.frameActuelle >= 3) {
-      finPartie();
-      return;
+    if (throws.length === 1) {
+      // Toujours un 2ème lancer
+      if (strike1) {
+        // Reset quilles pour le 2ème lancer
+        ETAT.quillesTombeesFrame = 0;
+        creerQuilles();
+      }
+      // Sinon garde les quilles restantes
+    } else if (throws.length === 2) {
+      if (peutBonus) {
+        // 3ème lancer accordé
+        ETAT.quillesTombeesFrame = 0;
+        creerQuilles();
+      } else {
+        // Fini
+        mettreAJourScoreAdv();
+        finPartie(); return;
+      }
+    } else {
+      // 3 lancers joués → fin
+      mettreAJourScoreAdv();
+      finPartie(); return;
     }
+
   } else {
-    // Deuxième lancer de la même frame
-    ETAT.lancerActuel = 1;
-    // Garde les quilles tombées
+    // ── Frames 1–9 ──
+    const strike  = throws.length === 1 && throws[0] === 10;
+    const frameOK = throws.length >= 2;
+
+    if (strike || frameOK) {
+      ETAT.frameActuelle++;
+      ETAT.lancerActuel = 0;
+      ETAT.quillesTombeesFrame = 0;
+      mettreAJourScoreAdv(); // l'IA joue sa frame en parallèle
+      creerQuilles();
+
+      if (ETAT.frameActuelle >= NB_FRAMES) {
+        finPartie(); return;
+      }
+    } else {
+      // 2ème lancer de la même frame
+      ETAT.lancerActuel = 1;
+    }
   }
 
   resetBoule();
@@ -1464,36 +1668,35 @@ function nextThrow() {
 }
 
 function mettreAJourScore() {
-  // Calcul officiel du bowling :
-  // On a tous les lancers à plat dans un tableau
+  // Score officiel du bowling sur 10 frames
   // Strike  → 10 + 2 prochains lancers
   // Spare   → 10 + prochain lancer
   // Normal  → somme des 2 lancers
+  // 10ème frame : somme brute des 2 ou 3 lancers
 
-  // Reconstruit la liste plate de tous les lancers
   const tous = [];
   ETAT.throwsParFrame.forEach(t => t.forEach(v => tous.push(v)));
 
   let total = 0;
-  let idx = 0; // index dans le tableau plat
+  let idx   = 0;
 
-  for (let f = 0; f < 3; f++) {
+  for (let f = 0; f < NB_FRAMES; f++) {
     const throws = ETAT.throwsParFrame[f];
     if (throws.length === 0) break;
 
+    if (f === 9) {
+      // 10ème frame : somme brute
+      total += throws.reduce((a,b) => a+b, 0);
+      break;
+    }
+
     if (throws[0] === 10) {
-      // STRIKE : 10 + 2 prochains lancers
-      const bonus1 = tous[idx + 1] ?? 0;
-      const bonus2 = tous[idx + 2] ?? 0;
-      total += 10 + bonus1 + bonus2;
-      idx += 1; // strike = 1 lancer
+      total += 10 + (tous[idx+1] ?? 0) + (tous[idx+2] ?? 0);
+      idx += 1;
     } else if (throws.length >= 2 && throws[0] + throws[1] === 10) {
-      // SPARE : 10 + prochain lancer
-      const bonus = tous[idx + 2] ?? 0;
-      total += 10 + bonus;
+      total += 10 + (tous[idx+2] ?? 0);
       idx += 2;
     } else {
-      // Normal
       total += (throws[0] ?? 0) + (throws[1] ?? 0);
       idx += throws.length;
     }
@@ -1504,15 +1707,19 @@ function mettreAJourScore() {
 }
 
 function mettreAJourHUD() {
-  document.getElementById('hud-frame').textContent = `${ETAT.frameActuelle + 1} / 3`;
-  document.getElementById('hud-pins').textContent = 10 - ETAT.quillesTombeesFrame;
+  document.getElementById('hud-frame').textContent = `${ETAT.frameActuelle + 1} / 10`;
+  const quillesTombeesCetteFrame = ETAT.quillesTombeesFrame;
+  const est10eme = ETAT.frameActuelle === 9;
+  const throws = ETAT.throwsParFrame[ETAT.frameActuelle];
+  // En 10ème frame, après un strike le compteur repart de 10
+  document.getElementById('hud-pins').textContent = 10 - (est10eme && throws.length >= 1 && throws[0] === 10 ? 0 : quillesTombeesCetteFrame);
 }
 
 function mettreAJourFramesBar() {
   const bar = document.getElementById('frames-bar');
   bar.innerHTML = '';
 
-  // Reconstruit le tableau plat pour les scores cumulés
+  // Calcul des scores cumulés officiels
   const tous = [];
   ETAT.throwsParFrame.forEach(t => t.forEach(v => tous.push(v)));
 
@@ -1520,69 +1727,91 @@ function mettreAJourFramesBar() {
   let idx = 0;
   let cumul = 0;
 
-  for (let f = 0; f < 3; f++) {
+  for (let f = 0; f < NB_FRAMES; f++) {
     const throws = ETAT.throwsParFrame[f];
-    if (throws.length === 0) { scoresCumules.push(null); idx++; continue; }
+    if (throws.length === 0) { scoresCumules.push(null); continue; }
 
-    let scoreFrame = 0;
-    if (throws[0] === 10) {
-      scoreFrame = 10 + (tous[idx+1] ?? 0) + (tous[idx+2] ?? 0);
-      idx += 1;
-    } else if (throws.length >= 2 && throws[0] + throws[1] === 10) {
-      scoreFrame = 10 + (tous[idx+2] ?? 0);
-      idx += 2;
-    } else {
-      scoreFrame = (throws[0] ?? 0) + (throws[1] ?? 0);
-      idx += throws.length;
+    if (f === 9) {
+      // 10ème frame : score brut seulement si complète
+      const complete = (throws[0] === 10 && throws.length === 3)
+                    || (throws[0] !== 10 && throws.length >= 2 && throws[0]+throws[1] === 10 && throws.length === 3)
+                    || (throws[0] !== 10 && throws.length >= 2 && throws[0]+throws[1] < 10 && throws.length === 2);
+      if (complete) {
+        cumul += throws.reduce((a,b) => a+b, 0);
+        scoresCumules.push(cumul);
+      } else {
+        scoresCumules.push('...');
+      }
+      break;
     }
 
-    // N'affiche le score que si la frame est complète
-    const frameComplete = throws[0] === 10 || throws.length >= 2;
-    // Et si le bonus est connu (strike/spare : on a les lancers suivants)
-    const bonusConnu = throws[0] !== 10 && !(throws.length >= 2 && throws[0]+throws[1]===10)
-      || (throws[0] === 10 && ETAT.throwsParFrame[f+1]?.length >= 1 && (ETAT.throwsParFrame[f+1][0] !== 10 ? ETAT.throwsParFrame[f+1].length >= 2 : ETAT.throwsParFrame[f+2]?.length >= 1))
-      || (throws.length >= 2 && throws[0]+throws[1]===10 && ETAT.throwsParFrame[f+1]?.length >= 1);
+    const strike = throws[0] === 10;
+    const spare  = !strike && throws.length >= 2 && throws[0]+throws[1] === 10;
+    const normal = !strike && throws.length >= 2 && throws[0]+throws[1] < 10;
 
-    if (frameComplete && bonusConnu) {
-      cumul += scoreFrame;
+    if (strike) {
+      const b1 = tous[idx+1] ?? null;
+      const b2 = tous[idx+2] ?? null;
+      if (b1 !== null && b2 !== null) { cumul += 10+b1+b2; scoresCumules.push(cumul); }
+      else scoresCumules.push('...');
+      idx += 1;
+    } else if (spare) {
+      const b = tous[idx+2] ?? null;
+      if (b !== null) { cumul += 10+b; scoresCumules.push(cumul); }
+      else scoresCumules.push('...');
+      idx += 2;
+    } else if (normal) {
+      cumul += throws[0]+throws[1];
       scoresCumules.push(cumul);
-    } else if (frameComplete) {
-      scoresCumules.push('...'); // En attente du bonus
+      idx += 2;
     } else {
-      scoresCumules.push(null);
+      scoresCumules.push(null); // frame en cours
+      idx += throws.length;
     }
   }
 
-  for (let f = 0; f < 3; f++) {
+  for (let f = 0; f < NB_FRAMES; f++) {
     const throws = ETAT.throwsParFrame[f];
+    const est10eme = f === 9;
     const div = document.createElement('div');
     div.className = `frame${f === ETAT.frameActuelle ? ' active' : ''}`;
+    // Frames bar un peu plus petites sur 10 frames
+    div.style.cssText = 'min-width:28px; flex:1; max-width:42px;';
 
     const num = document.createElement('div');
     num.className = 'frame-num';
-    num.textContent = `F${f + 1}`;
+    num.textContent = f === 9 ? '10' : `${f+1}`;
 
     const throwsDiv = document.createElement('div');
     throwsDiv.className = 'frame-throws';
 
-    throws.forEach((t, i) => {
-      const box = document.createElement('div');
-      box.className = 'throw-box';
-      if (i === 0 && t === 10) {
-        box.textContent = 'X'; box.classList.add('strike');
-      } else if (i === 1 && throws[0] + t === 10) {
-        box.textContent = '/'; box.classList.add('spare');
-      } else {
-        box.textContent = t;
-      }
-      throwsDiv.appendChild(box);
-    });
+    if (est10eme) {
+      // 10ème frame : jusqu'à 3 lancers affichés
+      throws.forEach((t, i) => {
+        const box = document.createElement('div');
+        box.className = 'throw-box';
+        box.style.width = '14px'; box.style.height = '14px'; box.style.fontSize = '0.55rem';
+        if (t === 10) { box.textContent = 'X'; box.classList.add('strike'); }
+        else if (i === 1 && throws[0] !== 10 && throws[0]+t === 10) { box.textContent = '/'; box.classList.add('spare'); }
+        else if (i === 2 && throws[1] !== 10 && (throws[1]||0)+t === 10) { box.textContent = '/'; box.classList.add('spare'); }
+        else { box.textContent = t; }
+        throwsDiv.appendChild(box);
+      });
+    } else {
+      throws.forEach((t, i) => {
+        const box = document.createElement('div');
+        box.className = 'throw-box';
+        if (i === 0 && t === 10) { box.textContent = 'X'; box.classList.add('strike'); }
+        else if (i === 1 && throws[0]+t === 10) { box.textContent = '/'; box.classList.add('spare'); }
+        else { box.textContent = t; }
+        throwsDiv.appendChild(box);
+      });
+    }
 
     const scoreDiv = document.createElement('div');
     scoreDiv.className = 'frame-score';
-    if (scoresCumules[f] !== null && scoresCumules[f] !== undefined) {
-      scoreDiv.textContent = scoresCumules[f];
-    }
+    const sc = scoresCumules[f];
+    if (sc !== null && sc !== undefined) scoreDiv.textContent = sc;
 
     div.appendChild(num);
     div.appendChild(throwsDiv);
@@ -1592,30 +1821,12 @@ function mettreAJourFramesBar() {
 }
 
 // ============================================
-//  SCORE ADVERSAIRE — PAR FRAME, RÉALISTE
+//  SCORE ADVERSAIRE — IA RÉALISTE 10 FRAMES
 // ============================================
-
-// Scores par frame selon le niveau (quilles tombées sur 10, par lancer)
-// Facile  : 0-6 par frame  → total ~0-18 sur 3 frames
-// Moyen   : 5-16 par frame → total ~15-48
-// Difficile: 15-25 par frame → total ~45-75
-// Champion (rare) : jusqu'à 30 par frame → total ~90
-
-// ============================================
-//  SCORE ADVERSAIRE — RÈGLES OFFICIELLES
-// ============================================
-
-// L'IA génère des lancers réalistes, on calcule le vrai score
-// Facile   : jamais de strike/spare → 2-6 pts/frame → ~6-18 total
-// Moyen    : spare possible, strike rare → 5-16 pts/frame → ~15-40 total  
-// Difficile: strikes et spares réguliers → 10-25 pts/frame → ~30-70 total
-// Champion (2%) : strikes en série → jusqu'à ~90
-
-// Messages de provocation
 const PROVOCS = {
   adv_devant:    ["😤 Il est devant toi !", "💪 Rattrape-moi si tu peux !", "😏 Trop facile...", "🎳 Regarde mon score !"],
-  joueur_devant: ["😤 Je vais te rattraper !", "🔥 C'est pas fini !", "😅 J'ai encore 2 frames !", "⚡ Je me réchauffe..."],
-  egal:          ["😬 C'est serré !", "🤝 Match nul pour l'instant...", "😮 On est à égalité !"],
+  joueur_devant: ["😤 Je vais te rattraper !", "🔥 C'est pas fini !", "😅 J'ai encore des frames !", "⚡ Je me réchauffe..."],
+  egal:          ["😬 C'est serré !", "🤝 Égalité pour l'instant !", "😮 On est au coude à coude !"],
 };
 
 function afficherProvoc(scoreAdv, scoreJoueur) {
@@ -1629,111 +1840,119 @@ function afficherProvoc(scoreAdv, scoreJoueur) {
   setTimeout(() => { bubble.style.display = 'none'; }, 2500);
 }
 
-function genererLancersIA(niveau) {
-  // Retourne [lancer1, lancer2?] pour une frame
+function genererLancersIA(niveau, quillesRestantes = 10) {
   const r = Math.random();
-
   if (niveau === 'facile') {
-    // Jamais de strike, rarement spare
-    const l1 = Math.floor(Math.random() * 5);       // 0-4
-    const l2 = Math.floor(Math.random() * (6 - l1)); // complète sans spare
-    return [l1, l2];
-
+    const l1 = Math.floor(Math.random() * Math.min(5, quillesRestantes + 1));
+    const l2 = Math.floor(Math.random() * Math.min(5 - l1, quillesRestantes - l1 + 1));
+    return quillesRestantes === 10 ? [l1, l2] : [Math.min(l1, quillesRestantes)];
   } else if (niveau === 'moyen') {
-    if (r < 0.06) return [10];                        // 6% strike
-    const l1 = 3 + Math.floor(Math.random() * 5);   // 3-7
-    if (r < 0.20) return [l1, 10 - l1];             // ~14% spare
-    const l2 = Math.floor(Math.random() * (9 - l1));
-    return [l1, Math.max(0, l2)];
-
-  } else { // difficile
-    if (r < 0.35) return [10];                       // 35% strike
-    const l1 = 5 + Math.floor(Math.random() * 4);   // 5-8
-    if (r < 0.65) return [l1, 10 - l1];             // 30% spare
-    const l2 = Math.floor(Math.random() * (10 - l1));
-    return [l1, Math.max(0, l2)];
+    if (quillesRestantes === 10) {
+      if (r < 0.08) return [10];
+      const l1 = 3 + Math.floor(Math.random() * 5);
+      if (r < 0.22) return [l1, 10 - l1];
+      return [l1, Math.floor(Math.random() * (9 - l1))];
+    }
+    return [r < 0.35 ? quillesRestantes : Math.floor(Math.random() * (quillesRestantes + 1))];
+  } else {
+    if (quillesRestantes === 10) {
+      if (r < 0.38) return [10];
+      const l1 = 6 + Math.floor(Math.random() * 3);
+      if (r < 0.68) return [l1, 10 - l1];
+      return [l1, Math.floor(Math.random() * (10 - l1))];
+    }
+    return [r < 0.60 ? quillesRestantes : Math.floor(Math.random() * (quillesRestantes + 1))];
   }
 }
 
-function scoreParFrame(niveau) {
-  // Champion : chance de strike (2%)
-  const estChampion = Math.random() < 0.02;
-  if (estChampion) return 10; // strike, bonus compté séparément
-
-  const lancers = genererLancersIA(niveau);
-  return lancers.reduce((a, b) => a + b, 0);
-}
-
-// Génère 3 frames + bonus pour strikes/spares
-function genererScoreIAComplet(niveau) {
-  const frames = [];
-  for (let f = 0; f < 3; f++) {
-    frames.push(genererLancersIA(niveau));
-  }
-
-  // Aplatit tous les lancers
-  const tous = frames.flat();
-
-  // Calcule le score officiel
-  let total = 0;
-  let idx = 0;
-  for (let f = 0; f < 3; f++) {
-    if (frames[f][0] === 10) {
-      total += 10 + (tous[idx+1] ?? 0) + (tous[idx+2] ?? 0);
-      idx += 1;
-    } else if (frames[f][0] + (frames[f][1] ?? 0) === 10) {
-      total += 10 + (tous[idx+2] ?? 0);
-      idx += 2;
+function calculerScoreIA() {
+  // Calcule le score officiel des lancers IA déjà joués
+  const tous = ETAT.throwsAdv.flat();
+  let total = 0, idx = 0;
+  for (let f = 0; f < NB_FRAMES; f++) {
+    const t = ETAT.throwsAdv[f];
+    if (!t || t.length === 0) break;
+    if (f === 9) { total += t.reduce((a,b)=>a+b,0); break; }
+    if (t[0] === 10) {
+      total += 10 + (tous[idx+1]??0) + (tous[idx+2]??0); idx += 1;
+    } else if (t.length >= 2 && t[0]+t[1] === 10) {
+      total += 10 + (tous[idx+2]??0); idx += 2;
     } else {
-      total += frames[f].reduce((a,b) => a+b, 0);
-      idx += frames[f].length;
+      total += (t[0]??0) + (t[1]??0); idx += t.length;
     }
   }
-
-  return { frames, total };
+  return total;
 }
 
 function mettreAJourScoreAdv() {
+  const f      = ETAT.frameActuelle - 1; // frame qui vient d'être jouée
+  if (f < 0 || f >= NB_FRAMES) return;
   const niveau = ETAT.niveauChoisi || 'moyen';
 
-  // Génère le score de la frame actuelle de l'IA
-  const lancers = genererLancersIA(niveau);
-  const scoreFrame = lancers.reduce((a, b) => a + b, 0);
-  ETAT.scoresAdv.push(scoreFrame);
-  ETAT.scoreTotalAdv += scoreFrame;
+  // Génère la frame de l'IA
+  if (f === 9) {
+    // 10ème frame IA : jusqu'à 3 lancers
+    const t = ETAT.throwsAdv[9];
+    if (t.length === 0) {
+      const l = genererLancersIA(niveau, 10);
+      t.push(...l);
+      if (l[0] === 10) {
+        // Strike → 2 lancers bonus
+        const l2 = genererLancersIA(niveau, 10);
+        t.push(l2[0]);
+        if (l2[0] === 10) t.push(genererLancersIA(niveau, 10)[0]);
+        else t.push(Math.min(genererLancersIA(niveau, 10-l2[0])[0], 10-l2[0]));
+      } else if (l.length >= 2 && l[0]+l[1] === 10) {
+        // Spare → 1 lancer bonus
+        t.push(genererLancersIA(niveau, 10)[0]);
+      }
+    }
+  } else {
+    const lancers = genererLancersIA(niveau, 10);
+    ETAT.throwsAdv[f] = lancers;
+  }
 
-  // Anime le score
+  const scoreIA = calculerScoreIA();
+  ETAT.scoreTotalAdv = scoreIA;
+
   const el = document.getElementById('adv-score-hud');
-  el.textContent = `${ETAT.scoreTotalAdv} pts`;
+  el.textContent = `${scoreIA} pts`;
   el.classList.remove('danger');
   void el.offsetWidth;
   el.classList.add('danger');
 
-  // Provocation
-  setTimeout(() => afficherProvoc(ETAT.scoreTotalAdv, ETAT.scoreTotal), 800);
+  setTimeout(() => afficherProvoc(scoreIA, ETAT.scoreTotal), 800);
 }
 
 async function finPartie() {
   const scoreJoueur = ETAT.scoreTotal;
   const scoreAdv    = ETAT.scoreTotalAdv;
-  const gagne       = scoreJoueur > scoreAdv;
+  const gagne       = scoreJoueur >= scoreAdv;
 
-  document.getElementById('final-score-display').textContent = gagne ? '🏆 Victoire !' : '😔 Défaite';
+  document.getElementById('final-score-display').textContent = scoreJoueur;
   document.getElementById('final-player').textContent = scoreJoueur;
   document.getElementById('final-player').className = `final-player-score${gagne ? ' winner' : ''}`;
   document.getElementById('final-adv').textContent = scoreAdv;
   document.getElementById('final-adv').className = `final-player-score${!gagne ? ' winner' : ''}`;
   document.getElementById('final-adv-name').textContent = ETAT.adversaire?.nom || 'CPU';
 
+  // Titre résultat
+  const titreEl = document.getElementById('final-title-text');
+  titreEl.textContent = gagne ? '🏆 Victoire !' : '😔 Défaite';
+
   document.getElementById('final-overlay').classList.add('show');
 
   // ── Sauvegarde Supabase ──
-  const result = await sauvegarderFinPartie('bowling', { score: scoreJoueur, gagne });
-  if (result?.xp_gagne) {
-    const xpEl = document.createElement('div');
-    xpEl.style.cssText = 'font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:4px;animation:popIn .4s ease both;';
-    xpEl.textContent = `+${result.xp_gagne} XP ⭐`;
-    document.getElementById('final-overlay').appendChild(xpEl);
+  // On sauvegarde le SCORE (quilles tombées avec bonus officiels)
+  // C'est ce score qui compte pour le classement
+  if (typeof sauvegarderFinPartie === 'function') {
+    const result = await sauvegarderFinPartie('bowling', { score: scoreJoueur, gagne });
+    if (result?.xp_gagne) {
+      const xpEl = document.createElement('div');
+      xpEl.style.cssText = 'font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:4px;animation:popIn .4s ease both;';
+      xpEl.textContent = `+${result.xp_gagne} XP ⭐`;
+      document.getElementById('final-overlay').appendChild(xpEl);
+    }
   }
 }
 
