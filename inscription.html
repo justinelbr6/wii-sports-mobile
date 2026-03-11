@@ -411,6 +411,16 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script>
+// Auto cache-busting: ajoute un timestamp à tous les imports JS locaux
+document.querySelectorAll('script[src*="js/"]').forEach(s => {
+  const url = new URL(s.src);
+  if (!url.searchParams.has('v')) {
+    url.searchParams.set('v', Date.now());
+    s.src = url.toString();
+  }
+});
+</script>
+<script>
 /* ═══════════════════════════════════════════════════
    DONNÉES
 ═══════════════════════════════════════════════════ */
@@ -466,9 +476,22 @@ function creerScene(canvasId, W, H){
   return {scene,cam,rend};
 }
 
-// Charger un .glb avec requête POST (API FFL require POST)
+// Charger un .glb avec requête POST (API FFL require params en body)
 function chargerGLB(scene, url, cb){
-  fetch(url, {method:'POST'}).then(r=>{
+  // Extraire les params de l'URL et les envoyer en POST body
+  const urlObj=new URL(url);
+  const params=new URLSearchParams();
+  params.append('data', urlObj.searchParams.get('data'));
+  params.append('shirtColor', urlObj.searchParams.get('shirtColor'));
+  params.append('hairColor', urlObj.searchParams.get('hairColor'));
+  params.append('hairType', urlObj.searchParams.get('hairType'));
+  params.append('width', urlObj.searchParams.get('width'));
+  params.append('verifyAsync', urlObj.searchParams.get('verifyAsync'));
+
+  fetch('https://mii-unsecure.ariankordi.net/miis/image.glb', {
+    method:'POST',
+    body:params
+  }).then(r=>{
     if(!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.blob();
   }).then(blob=>{
