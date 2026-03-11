@@ -190,6 +190,36 @@ async function connecter() {
 
 async function routerApresConnexion(user) {
   showScreen('screen-loading');
+
+  // ── Vérifier s'il y a un profil en attente (venant de l'inscription) ──
+  const pendingStr = localStorage.getItem('wii_profil_pending');
+  if (pendingStr) {
+    try {
+      const pending = JSON.parse(pendingStr);
+      // Sauvegarder dans Supabase maintenant que le user est confirmé et connecté
+      const { error } = await supabaseClient.from('profiles').upsert({
+        id:       user.id,
+        email:    user.email,
+        ...pending,
+      }, { onConflict: 'id' });
+
+      if (!error) {
+        // Nettoyer le localStorage
+        localStorage.removeItem('wii_profil_pending');
+        localStorage.removeItem('wii_pending_email');
+        window.location.href = 'index.html';
+        return;
+      } else {
+        console.error('Erreur sauvegarde profil pending:', error.message);
+        // On continue quand même vers l'index si le profil existe déjà
+      }
+    } catch(e) {
+      console.error('Parsing profil pending:', e);
+      localStorage.removeItem('wii_profil_pending');
+    }
+  }
+
+  // ── Flux normal : vérifier si onboarding déjà fait ──
   const { data:profil, error } = await supabaseClient
     .from('profiles').select('onboarding_done').eq('id', user.id).single();
 
@@ -238,6 +268,13 @@ async function validerOnboarding() {
 }
 
 (async () => {
+  // Pré-remplir l'email si on vient de l'inscription
+  const pendingEmail = localStorage.getItem('wii_pending_email');
+  if (pendingEmail) {
+    const emailInput = document.getElementById('input-email');
+    if (emailInput) emailInput.value = pendingEmail;
+  }
+
   const { data:{ session } } = await supabaseClient.auth.getSession();
   if (session?.user) await routerApresConnexion(session.user);
 })();

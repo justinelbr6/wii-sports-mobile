@@ -372,14 +372,20 @@
     <button class="btn-play" id="btn-mii" onclick="validerMiiEtSauvegarder()">🚀 C'est parti !</button>
   </div>
 
-  <!-- ══ Écran 5 : Succès ══ -->
+  <!-- ══ Écran 5 : Confirmation email ══ -->
   <div class="screen" id="screen-succes">
-    <div id="succes-mii-wrap">
-      <canvas id="succesCanvas"></canvas>
+    <div style="font-size:4rem;animation:popIn .5s cubic-bezier(0.34,1.56,0.64,1)">📧</div>
+    <div class="success-title" style="margin-top:4px;">Vérifie tes emails !</div>
+    <p class="success-msg">
+      Un lien de confirmation t'a été envoyé.<br>
+      Clique dessus pour activer ton compte,<br>
+      puis connecte-toi ici 👇
+    </p>
+    <div style="background:rgba(25,118,210,0.08);border:1.5px solid rgba(25,118,210,0.2);border-radius:16px;padding:12px 16px;width:100%;text-align:center;">
+      <div style="font-size:.7rem;font-weight:800;color:rgba(13,71,161,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Tes choix sont sauvegardés ✅</div>
+      <div style="font-size:.8rem;font-weight:700;color:#1565C0;line-height:1.5;">Niveaux + Mii seront enregistrés<br>automatiquement à ta première connexion</div>
     </div>
-    <div class="success-title" style="margin-top:8px;">Ton Mii est prêt ! 🎉</div>
-    <p class="success-msg">Bienvenue dans Wii Sports Mobile !<br>À toi de jouer !</p>
-    <button class="btn-play" onclick="window.location.href='index.html'">🎮 Jouer maintenant !</button>
+    <button class="btn-play" onclick="window.location.href='login.html'">🔐 Se connecter →</button>
   </div>
 </div>
 
@@ -597,6 +603,8 @@ async function sInscrire(){
     affMsg('msg-inscription',traduireErreur(error.message),'error');return;
   }
   userCree=data.user;
+  // Sauvegarder l'email pour pré-remplir le login après confirmation
+  localStorage.setItem('wii_pending_email', email);
   showScreen('screen-onboarding');
 }
 
@@ -624,39 +632,26 @@ function allerMii(){
 ═══════════════════════════════════════════════════ */
 async function validerMiiEtSauvegarder(){
   document.getElementById('btn-mii').disabled=true;
-  document.getElementById('loading-label').textContent='Sauvegarde de ton Mii…';
-  showScreen('screen-loading');
-  const{data:{user}}=await supabaseClient.auth.getUser();
-  const u=user||userCree;
-  if(!u){showScreen('screen-inscription');affMsg('msg-inscription','❌ Session perdue.','error');return;}
 
-  const{error}=await supabaseClient.from('profiles').upsert({
-    id:u.id,email:u.email,
-    full_name:nomUser||u.user_metadata?.full_name||u.email.split('@')[0],
-    level_tennis:choix.tennis,level_golf:choix.golf,
-    level_baseball:choix.baseball,level_bowling:choix.bowling,level_boxe:choix.boxe,
-    mii_color:mii.bodyColor, mii_hair:String(mii.hairType), mii_hair_color:mii.hairColor,
-    onboarding_done:true,
-  },{onConflict:'id'});
+  // ── Stocker tout dans localStorage ──
+  // Ces données seront lues et sauvegardées dans Supabase
+  // AU MOMENT DU PREMIER LOGIN (après confirmation email)
+  const profil_pending = {
+    full_name: nomUser,
+    level_tennis: choix.tennis,
+    level_golf: choix.golf,
+    level_baseball: choix.baseball,
+    level_bowling: choix.bowling,
+    level_boxe: choix.boxe,
+    mii_color: mii.bodyColor,
+    mii_hair: String(mii.hairType),
+    mii_hair_color: mii.hairColor,
+    onboarding_done: true,
+  };
+  localStorage.setItem('wii_profil_pending', JSON.stringify(profil_pending));
 
-  if(error){
-    console.error(error);showScreen('screen-mii');
-    document.getElementById('btn-mii').disabled=false;
-    affMsg('msg-mii',`❌ ${error.message}`,'error');return;
-  }
-
+  // Afficher l'écran succès (confirmation email)
   showScreen('screen-succes');
-  // Lancer le Mii 3D sur l'écran succès
-  setTimeout(()=>{
-    const wrap=document.getElementById('succes-mii-wrap');
-    const W=wrap.clientWidth||170, H=wrap.clientHeight||190;
-    const ctx=creerScene('succesCanvas',W,H);
-    let succesModel=null;
-    chargerGLB(ctx.scene,getMiiURL(mii.bodyColor,mii.hairType,mii.hairColor),model=>{
-      succesModel=model;
-      (function loop(){requestAnimationFrame(loop);if(succesModel)succesModel.rotation.y+=0.018;ctx.rend.render(ctx.scene,ctx.cam);})();
-    });
-  },150);
 }
 
 /* ═══════════════════════════════════════════════════
