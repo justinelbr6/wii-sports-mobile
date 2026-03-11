@@ -336,6 +336,8 @@ const ETAT = {
   coupsAdvTotal:   0,
   coupsAdvParTrou: [0,0,0],
   animSpec:     null,
+  // Sensibilité gyro : Débutant=0.018 | Intermédiaire=0.032 | Confirmé=0.05
+  gyroSensibilite: 0.032,
 };
 
 // ══════════════════════════════════════════
@@ -343,6 +345,10 @@ const ETAT = {
 // ══════════════════════════════════════════
 async function choisirNiveau(niveau) {
   ETAT.niveauChoisi = niveau;
+  // Sensibilité gyro selon le niveau
+  // Débutant = moins sensible (plus facile à contrôler)
+  // Confirmé = très réactif (précision requise)
+  ETAT.gyroSensibilite = niveau === 'facile' ? 0.018 : niveau === 'moyen' ? 0.032 : 0.052;
   document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById(`btn-${niveau}`).classList.add('selected');
   document.getElementById('adv-nom-start').textContent = 'Recherche...';
@@ -407,6 +413,7 @@ let balleVel   = new THREE.Vector3();
 let distanceTrou = 0;
 let CAM_BASE   = { x:0, y:3.5, z:12 };
 let cameraMode = 'jeu'; // 'jeu' | 'vol' | 'reset'
+let obstaclesSolides = []; // rochers trou 3 — liste mise à jour à construireTrou()
 
 function phong(color, shininess=80, specular=0x333333) {
   return new THREE.MeshPhongMaterial({ color, shininess, specular });
@@ -548,6 +555,7 @@ function construireTrou(indexTrou) {
   if (terrainGroupe) scene.remove(terrainGroupe);
   terrainGroupe = new THREE.Group();
   spectateursMiis = [];
+  obstaclesSolides = []; // reset obstacles solides à chaque trou
 
   const cfg  = TROUS[indexTrou];
   const dist = cfg.distance;
@@ -674,12 +682,20 @@ function construireTrou(indexTrou) {
 
     // Murs / obstacles rocheux
     [[8,-dist*0.3,phong(0x78909C,40)],[{w:1.5,d:5},-dist*0.5,phong(0x607D8B,40)]].forEach((_,i)=>{});
-    // Rochers
-    [[7,-dist*0.28,0x78909C],[6.5,-dist*0.31,0x90A4AE],
-     [-6,-dist*0.58,0x78909C],[-7,-dist*0.62,0x546E7A]].forEach(([x,z,c]) => {
-      const roc = new THREE.Mesh(new THREE.DodecahedronGeometry(1.1+Math.random()*0.6,0),phong(c,20));
+    // Rochers — SOLIDES (collision avec la balle)
+    const rockerData = [
+      [7,-dist*0.28,0x78909C],[6.5,-dist*0.31,0x90A4AE],
+      [-6,-dist*0.58,0x78909C],[-7,-dist*0.62,0x546E7A]
+    ];
+    rockerData.forEach(([x,z,c]) => {
+      const rayon = 1.1+Math.random()*0.6;
+      const roc = new THREE.Mesh(new THREE.DodecahedronGeometry(rayon,0),phong(c,20));
       roc.position.set(x, 0.5, z); roc.rotation.y=Math.random()*Math.PI;
-      roc.castShadow=true; terrainGroupe.add(roc);
+      roc.castShadow=true;
+      roc.userData.solide = true;     // marqueur collision
+      roc.userData.rayon  = rayon * 1.1; // rayon de collision légèrement élargi
+      terrainGroupe.add(roc);
+      obstaclesSolides.push(roc);     // ajout dans la liste de collision
     });
 
     // Bunkers multiples
@@ -900,7 +916,7 @@ function mettreAJourFleche() {
 
   // Ajuste l'angle avec le gyroscope (gauche/droite) — 360° complet possible
   const nx = gyro.getNormalizedX(30); // -1 .. +1
-  angleVise += nx * 0.04;             // tourne progressivement
+  angleVise += nx * ETAT.gyroSensibilite; // sensibilité selon niveau
 
   const bx = ballePos.x, bz = ballePos.z;
   const Y_FLECHE = 0.10; // bien au-dessus de l'herbe
@@ -988,6 +1004,8 @@ const GRAVITY = -0.014;
 
 function frapper(puissance) {
   if (ETAT.ballEnVol || !ETAT.peutFrapper || ETAT.inTrou) return;
+  // Sauvegarder la position courante avant le tir (pour Out of Bounds)
+  ETAT.dernierePosBalle = ballePos.clone();
   ETAT.peutFrapper = false;
   ETAT.ballEnVol   = true;
   ETAT.coupsParTrou[ETAT.trou]++;
@@ -1134,7 +1152,7 @@ function troupSuivant() {
   document.getElementById('swipe-hint').style.opacity = '1';
 }
 
-function finPartie() {
+async function finPartie() {
   const coupsJ = ETAT.coupsTotal;
   const coupsA = ETAT.coupsAdvTotal;
   const gagne  = coupsJ <= coupsA; // au golf on veut MOINS de coups
@@ -1157,6 +1175,38 @@ function finPartie() {
   const titre = gagne ? '🏆 Victoire !' : '😔 Défaite';
   document.querySelector('#final-overlay .final-title').textContent = titre;
   document.getElementById('final-overlay').classList.add('show');
+
+  // ── Sauvegarde Supabase ──
+  // Score golf = coups par rapport au par (négatif = mieux, on inverse pour XP)
+  const scoreXP = Math.max(0, parTotal * 2 - coupsJ); // plus on fait peu de coups, plus XP est haute
+  const result = await sauvegarderFinPartie('golf', { score: coupsJ, gagne });
+  if (result?.xp_gagne) {
+    const xpEl = document.createElement('div');
+    xpEl.style.cssText = 'font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:4px;animation:popIn .4s ease both;';
+    xpEl.textContent = `+${result.xp_gagne} XP ⭐`;
+    document.getElementById('final-overlay').appendChild(xpEl);
+  }
+}
+
+function afficherMessageOOB(msg) {
+  let el = document.getElementById('oob-msg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'oob-msg';
+    el.style.cssText = `
+      position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+      background:rgba(200,40,40,0.92); color:white;
+      font-family:'Fredoka One',cursive; font-size:1.1rem;
+      padding:14px 24px; border-radius:20px; z-index:50;
+      text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.4);
+      animation:popIn .3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events:none;
+    `;
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display='none'; }, 2800);
 }
 
 function mettreAJourHUD() {
@@ -1272,13 +1322,43 @@ function animate() {
     ombreMesh.position.z = ballePos.z;
     ombreMesh.material.opacity = Math.max(0.05, 0.25 - ballePos.y * 0.03);
 
+    // Collision avec obstacles solides (rochers trou 3)
+    for (const obs of obstaclesSolides) {
+      const dx = ballePos.x - obs.position.x;
+      const dy = ballePos.y - obs.position.y;
+      const dz = ballePos.z - obs.position.z;
+      const dist3D = Math.sqrt(dx*dx + dy*dy + dz*dz);
+      const rayonColl = obs.userData.rayon || 1.2;
+      if (dist3D < rayonColl + 0.2) {
+        // Normale de rebond = vecteur depuis le centre de l'obstacle vers la balle
+        const nx = dx/dist3D, ny = dy/dist3D, nz = dz/dist3D;
+        // Réflexion de la vitesse selon la normale (rebond réaliste)
+        const dot = balleVel.x*nx + balleVel.y*ny + balleVel.z*nz;
+        balleVel.x = (balleVel.x - 2*dot*nx) * 0.55;
+        balleVel.y = Math.abs((balleVel.y - 2*dot*ny) * 0.55) + 0.04;
+        balleVel.z = (balleVel.z - 2*dot*nz) * 0.55;
+        // Repousser la balle hors de l'obstacle
+        ballePos.set(
+          obs.position.x + nx*(rayonColl+0.25),
+          obs.position.y + ny*(rayonColl+0.25),
+          obs.position.z + nz*(rayonColl+0.25)
+        );
+        if (navigator.vibrate) navigator.vibrate([20,5,20]);
+        break;
+      }
+    }
+
     // Dans le trou ?
     if (checkDansTrou()) { balleTombeDansTrou(); }
 
-    // Hors limites Z (trop loin)
+    // Hors limites Z (trop loin derrière le trou)
     if (ballePos.z < -(TROUS[ETAT.trou].distance + 20)) {
-      ballePos.z = -(TROUS[ETAT.trou].distance + 18);
+      // Out of bounds — annuler le coup, remettre la balle à sa position précédente
       balleVel.set(0,0,0); ETAT.ballEnVol=false;
+      ballePos.copy(ETAT.dernierePosBalle || new THREE.Vector3(0,0.2,8));
+      ETAT.coupsTotal--;
+      ETAT.coupsParTrou[ETAT.trou]--;
+      document.getElementById('hud-shots').textContent = ETAT.coupsTotal;
       ETAT.peutFrapper=true; cameraMode='reset';
       document.getElementById('swipe-hint').style.opacity='1';
       const dx2 = 0 - ballePos.x;
@@ -1287,6 +1367,26 @@ function animate() {
       CAM_BASE.x = ballePos.x - Math.sin(angleVise)*12;
       CAM_BASE.y = 3.5;
       CAM_BASE.z = ballePos.z - Math.cos(angleVise)*12;
+      // Message OOB
+      afficherMessageOOB('🚫 Hors limites ! Rejoue depuis ta position.');
+    }
+
+    // Hors limites X (trop loin sur les côtés)
+    if (Math.abs(ballePos.x) > 35) {
+      balleVel.set(0,0,0); ETAT.ballEnVol=false;
+      ballePos.copy(ETAT.dernierePosBalle || new THREE.Vector3(0,0.2,8));
+      ETAT.coupsTotal--;
+      ETAT.coupsParTrou[ETAT.trou]--;
+      document.getElementById('hud-shots').textContent = ETAT.coupsTotal;
+      ETAT.peutFrapper=true; cameraMode='reset';
+      document.getElementById('swipe-hint').style.opacity='1';
+      const dx3 = 0 - ballePos.x;
+      const dz3 = (-TROUS[ETAT.trou].distance) - ballePos.z;
+      angleVise = Math.atan2(dx3, dz3);
+      CAM_BASE.x = ballePos.x - Math.sin(angleVise)*12;
+      CAM_BASE.y = 3.5;
+      CAM_BASE.z = ballePos.z - Math.cos(angleVise)*12;
+      afficherMessageOOB('🚫 Hors limites ! Rejoue depuis ta position.');
     }
   }
 

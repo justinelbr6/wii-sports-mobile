@@ -217,7 +217,7 @@ canvas { display:block; }
     <div class="tennis-pts" id="pts-joueur">0</div>
   </div>
   <div class="score-divider">
-    <span>VS</span>
+    <span id="sets-display">Sets 0–0</span>
     <span id="set-label">Jeu 1</span>
   </div>
   <div class="team-score right">
@@ -228,6 +228,7 @@ canvas { display:block; }
 </div>
 
 <div id="swipe-hint">⬆️ Glisse pour servir !</div>
+<div id="retour-hint" style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);font-family:'Fredoka One',cursive;font-size:13px;color:rgba(255,255,255,0.7);background:rgba(0,0,0,0.4);border-radius:20px;padding:6px 16px;pointer-events:none;z-index:20;display:none;">🎾 Swipe pour frapper !</div>
 <div id="power-bar-wrap">
   <div id="power-bar-bg"><div id="power-bar-fill"></div></div>
   <div id="power-label">Puissance</div>
@@ -294,6 +295,8 @@ let etat = {
   adversaire: null,
   ptsJoueur:0, ptsAdv:0,
   jeuxJoueur:0, jeuxAdv:0,
+  setsJoueur:0, setsAdv:0,       // ← sets gagnés (match en 3 sets, 2 sets pour gagner)
+  jeuxDansSet:0,                  // numéro du jeu courant dans le set
   balle:{ x:0, y:1.2, z:0, vx:0, vy:0, vz:0, enVol:false, direction:1 },
   joueurTilt:0,
   phase:'service',
@@ -618,57 +621,102 @@ function lancerService(power, angleX) {
   animerFrappe(miiJ1.brasG, raqJ1);
 }
 
-// Touch listeners pour le service (ajoutés sur le canvas après demarrer())
+// Touch listeners pour le service ET les retours en échange
 function attacherSwipeService() {
   const canvas = renderer.domElement;
 
+  // Variables pour le swipe retour en échange
+  let retourSwipeActif = false;
+  let retourStartY = 0, retourStartX = 0, retourPower = 0;
+
   canvas.addEventListener('touchstart', e => {
-    if (etat.phase !== 'service' || !jeuActif) return;
     const t = e.touches[0];
-    swipeStartY = t.clientY;
-    swipeStartX = t.clientX;
-    swipePower  = 0;
-    swipeActif  = true;
-    document.getElementById('swipe-hint').style.display = 'none';
-    document.getElementById('power-bar-wrap').style.display = 'flex';
+    if (etat.phase === 'service' && jeuActif) {
+      swipeStartY = t.clientY;
+      swipeStartX = t.clientX;
+      swipePower  = 0;
+      swipeActif  = true;
+      document.getElementById('swipe-hint').style.display = 'none';
+      document.getElementById('power-bar-wrap').style.display = 'flex';
+    } else if (etat.phase === 'echange' && jeuActif && etat.balle.direction === 1) {
+      // Balle vient vers le joueur — préparer le retour
+      retourStartY = t.clientY; retourStartX = t.clientX;
+      retourPower = 0; retourSwipeActif = true;
+      document.getElementById('retour-hint').style.display = 'none';
+      document.getElementById('power-bar-wrap').style.display = 'flex';
+    }
   }, { passive:true });
 
   canvas.addEventListener('touchmove', e => {
-    if (!swipeActif || etat.phase !== 'service') return;
     const t = e.touches[0];
-    const dy = swipeStartY - t.clientY; // positif = vers le haut
-    swipePower = Math.max(0, Math.min(1, dy / (window.innerHeight * 0.35)));
-    document.getElementById('power-bar-fill').style.width = (swipePower * 100) + '%';
+    if (swipeActif && etat.phase === 'service') {
+      const dy = swipeStartY - t.clientY;
+      swipePower = Math.max(0, Math.min(1, dy / (window.innerHeight * 0.35)));
+      document.getElementById('power-bar-fill').style.width = (swipePower * 100) + '%';
+    } else if (retourSwipeActif && etat.phase === 'echange') {
+      const dy = retourStartY - t.clientY;
+      retourPower = Math.max(0, Math.min(1, dy / (window.innerHeight * 0.3)));
+      document.getElementById('power-bar-fill').style.width = (retourPower * 100) + '%';
+    }
   }, { passive:true });
 
   canvas.addEventListener('touchend', e => {
-    if (!swipeActif || etat.phase !== 'service') return;
-    swipeActif = false;
     const changedTouch = e.changedTouches[0];
-    const dx = changedTouch.clientX - swipeStartX;
-    const angleX = Math.max(-1, Math.min(1, dx / (window.innerWidth * 0.3)));
-    lancerService(swipePower, angleX);
+    if (swipeActif && etat.phase === 'service') {
+      swipeActif = false;
+      document.getElementById('power-bar-wrap').style.display = 'none';
+      const dx = changedTouch.clientX - swipeStartX;
+      const angleX = Math.max(-1, Math.min(1, dx / (window.innerWidth * 0.3)));
+      lancerService(swipePower, angleX);
+    } else if (retourSwipeActif && etat.phase === 'echange') {
+      retourSwipeActif = false;
+      document.getElementById('power-bar-wrap').style.display = 'none';
+      document.getElementById('power-bar-fill').style.width = '0%';
+      // Stocker la puissance et le visé pour le prochain retour
+      const dx = changedTouch.clientX - retourStartX;
+      etat._retourPower = retourPower;
+      etat._retourAngle = Math.max(-1, Math.min(1, dx / (window.innerWidth * 0.3)));
+    }
   }, { passive:true });
 
   // Souris (desktop)
   canvas.addEventListener('mousedown', e => {
-    if (etat.phase !== 'service' || !jeuActif) return;
-    swipeStartY = e.clientY; swipeStartX = e.clientX; swipePower = 0; swipeActif = true;
-    document.getElementById('swipe-hint').style.display = 'none';
-    document.getElementById('power-bar-wrap').style.display = 'flex';
+    if (etat.phase === 'service' && jeuActif) {
+      swipeStartY = e.clientY; swipeStartX = e.clientX; swipePower = 0; swipeActif = true;
+      document.getElementById('swipe-hint').style.display = 'none';
+      document.getElementById('power-bar-wrap').style.display = 'flex';
+    } else if (etat.phase === 'echange' && jeuActif && etat.balle.direction === 1) {
+      retourStartY = e.clientY; retourStartX = e.clientX;
+      retourPower = 0; retourSwipeActif = true;
+      document.getElementById('power-bar-wrap').style.display = 'flex';
+    }
   });
   canvas.addEventListener('mousemove', e => {
-    if (!swipeActif || etat.phase !== 'service') return;
-    const dy = swipeStartY - e.clientY;
-    swipePower = Math.max(0, Math.min(1, dy / (window.innerHeight * 0.35)));
-    document.getElementById('power-bar-fill').style.width = (swipePower * 100) + '%';
+    if (swipeActif && etat.phase === 'service') {
+      const dy = swipeStartY - e.clientY;
+      swipePower = Math.max(0, Math.min(1, dy / (window.innerHeight * 0.35)));
+      document.getElementById('power-bar-fill').style.width = (swipePower * 100) + '%';
+    } else if (retourSwipeActif && etat.phase === 'echange') {
+      const dy = retourStartY - e.clientY;
+      retourPower = Math.max(0, Math.min(1, dy / (window.innerHeight * 0.3)));
+      document.getElementById('power-bar-fill').style.width = (retourPower * 100) + '%';
+    }
   });
   canvas.addEventListener('mouseup', e => {
-    if (!swipeActif || etat.phase !== 'service') return;
-    swipeActif = false;
-    const dx = e.clientX - swipeStartX;
-    const angleX = Math.max(-1, Math.min(1, dx / (window.innerWidth * 0.3)));
-    lancerService(swipePower, angleX);
+    if (swipeActif && etat.phase === 'service') {
+      swipeActif = false;
+      document.getElementById('power-bar-wrap').style.display = 'none';
+      const dx = e.clientX - swipeStartX;
+      const angleX = Math.max(-1, Math.min(1, dx / (window.innerWidth * 0.3)));
+      lancerService(swipePower, angleX);
+    } else if (retourSwipeActif && etat.phase === 'echange') {
+      retourSwipeActif = false;
+      document.getElementById('power-bar-wrap').style.display = 'none';
+      document.getElementById('power-bar-fill').style.width = '0%';
+      const dx = e.clientX - retourStartX;
+      etat._retourPower = retourPower;
+      etat._retourAngle = Math.max(-1, Math.min(1, dx / (window.innerWidth * 0.3)));
+    }
   });
 }
 
@@ -757,23 +805,37 @@ function updateBalle() {
   // ── Joueur retourne — fond de court J1 ──
   if (b.z > 6.5 && b.z < 9.5 && b.direction === 1) {
     iaADejaFrappe = false; iaTimer = 0;
-    const angle = tiltX * 0.6;
-    b.vx = angle * d.vitesse * 6;
-    b.vz = -d.vitesse * 9;
-    b.vy = 0.038;
+    // Puissance du swipe (0.5 par défaut si pas de swipe préparé)
+    const power = etat._retourPower !== undefined ? etat._retourPower : 0.5;
+    const angleSwipe = etat._retourAngle !== undefined ? etat._retourAngle : 0;
+    etat._retourPower = undefined; etat._retourAngle = undefined;
+    const angle = tiltX * 0.6 + angleSwipe * 0.3;
+    const vitMult = 7 + power * 6; // 7 à 13 selon puissance
+    b.vx = angle * d.vitesse * vitMult;
+    b.vz = -d.vitesse * (8 + power * 4);
+    b.vy = 0.03 + power * 0.02;
     b.direction = -1;
     animerFrappe(miiJ1.brasG, raqJ1);
+    // Afficher hint retour pour le prochain échange
+    document.getElementById('retour-hint').style.display = 'block';
+    setTimeout(()=>{ document.getElementById('retour-hint').style.display='none'; }, 1500);
   }
 
   // ── Joueur retourne — filet J2 ──
   if (b.z > 2.0 && b.z < 4.2 && b.x > 0.5 && b.direction === 1) {
     iaADejaFrappe = false; iaTimer = 0;
-    const angle = tiltX * 0.5;
-    b.vx = angle * d.vitesse * 5;
-    b.vz = -d.vitesse * 10;
-    b.vy = 0.02;
+    const power = etat._retourPower !== undefined ? etat._retourPower : 0.4;
+    const angleSwipe = etat._retourAngle !== undefined ? etat._retourAngle : 0;
+    etat._retourPower = undefined; etat._retourAngle = undefined;
+    const angle = tiltX * 0.5 + angleSwipe * 0.3;
+    const vitMult = 6 + power * 6;
+    b.vx = angle * d.vitesse * vitMult;
+    b.vz = -d.vitesse * (8 + power * 3);
+    b.vy = 0.015 + power * 0.015;
     b.direction = -1;
     animerFrappe(miiJ2.brasG, raqJ2);
+    document.getElementById('retour-hint').style.display = 'block';
+    setTimeout(()=>{ document.getElementById('retour-hint').style.display='none'; }, 1500);
   }
 
   // Hors limites
@@ -841,8 +903,11 @@ function pointAdversaire() {
   setTimeout(()=>{ if(jeuActif) serviceJoueur(); },2200);
 }
 
-// ── Scoring tennis officiel — 3 jeux pour gagner ──
+// ── Scoring tennis officiel — Sets (gagner 2 sets sur 3) ──
+// Chaque set = 3 jeux à gagner en premier (pour rester fluide mobile)
 const PTS_LBL = ['0','15','30','40'];
+const JEUX_PAR_SET = 3; // nombre de jeux pour gagner un set
+
 function mettreAJourScore() {
   const pj=etat.ptsJoueur, pa=etat.ptsAdv;
   let lj, la;
@@ -865,6 +930,7 @@ function mettreAJourScore() {
   if (joueurGagne || advGagne) {
     if (joueurGagne) etat.jeuxJoueur++; else etat.jeuxAdv++;
     etat.ptsJoueur=0; etat.ptsAdv=0;
+    etat.jeuxDansSet++;
 
     const sj=document.getElementById('score-joueur');
     const sa=document.getElementById('score-adv');
@@ -873,32 +939,67 @@ function mettreAJourScore() {
     sj.classList.add('bump'); sa.classList.add('bump');
     setTimeout(()=>{ sj.classList.remove('bump'); sa.classList.remove('bump'); },500);
 
-    // Flash "Jeu !"
     afficherFlash(joueurGagne ? 'Jeu ! 🎾' : 'Jeu adverse 😬', joueurGagne ? '#FFE500' : '#FF7043');
 
-    // Mise à jour label set
-    const setNum = etat.jeuxJoueur + etat.jeuxAdv + 1;
-    document.getElementById('set-label').textContent = `Jeu ${setNum}`;
+    // Set gagné ? (premier à JEUX_PAR_SET jeux dans le set)
+    if (etat.jeuxJoueur >= JEUX_PAR_SET || etat.jeuxAdv >= JEUX_PAR_SET) {
+      const setGagneJoueur = etat.jeuxJoueur >= JEUX_PAR_SET;
+      if (setGagneJoueur) etat.setsJoueur++; else etat.setsAdv++;
 
-    // Match à 3 jeux
-    if (etat.jeuxJoueur>=3 || etat.jeuxAdv>=3) { setTimeout(finDeMatch,800); return; }
+      // Afficher résultat du set
+      afficherFlash(
+        setGagneJoueur ? `Set ${etat.setsJoueur+etat.setsAdv} à toi ! 🏆` : `Set perdu 😬`,
+        setGagneJoueur ? '#FFE500' : '#FF7043'
+      );
+
+      // Mettre à jour l'affichage des sets
+      document.getElementById('sets-display').textContent = `Sets ${etat.setsJoueur}–${etat.setsAdv}`;
+
+      // Match gagné ? (2 sets sur 3)
+      if (etat.setsJoueur >= 2 || etat.setsAdv >= 2) {
+        setTimeout(finDeMatch, 1200); return;
+      }
+
+      // Nouveau set — reset jeux
+      etat.jeuxJoueur = 0; etat.jeuxAdv = 0; etat.jeuxDansSet = 0;
+      document.getElementById('score-joueur').textContent = '0';
+      document.getElementById('score-adv').textContent   = '0';
+      const setNum = etat.setsJoueur + etat.setsAdv + 1;
+      document.getElementById('set-label').textContent = `Set ${setNum}`;
+      return;
+    }
+
+    // Mise à jour label jeu dans le set
+    const jeuNum = etat.jeuxJoueur + etat.jeuxAdv + 1;
+    document.getElementById('set-label').textContent = `Jeu ${jeuNum}`;
+
   } else {
     document.getElementById('score-joueur').textContent=etat.jeuxJoueur;
     document.getElementById('score-adv').textContent=etat.jeuxAdv;
   }
 }
 
-function finDeMatch() {
+async function finDeMatch() {
   jeuActif=false;
-  const victoire=etat.jeuxJoueur>etat.jeuxAdv;
+  const victoire=etat.setsJoueur>etat.setsAdv;
   document.getElementById('res-emoji').textContent = victoire?'🏆':'😢';
   document.getElementById('res-title').textContent = victoire?'Victoire !':'Défaite...';
   document.getElementById('res-sub').textContent   = victoire
-    ? `${etat.jeuxJoueur} – ${etat.jeuxAdv} · Excellent match !`
-    : `${etat.jeuxJoueur} – ${etat.jeuxAdv} · Essaie encore !`;
+    ? `${etat.setsJoueur} sets – ${etat.setsAdv} · Excellent match !`
+    : `${etat.setsJoueur} sets – ${etat.setsAdv} · Essaie encore !`;
   document.getElementById('result-overlay').classList.add('show');
   if (victoire) { animerSpec('joieForte'); if(navigator.vibrate) navigator.vibrate([60,30,60,30,120]); }
   else { if(navigator.vibrate) navigator.vibrate([20,10,20,10,20]); }
+
+  // ── Sauvegarde Supabase ──
+  const scoreTotal = etat.setsJoueur * 100 + etat.jeuxJoueur * 10;
+  const result = await sauvegarderFinPartie('tennis', { score: scoreTotal, gagne: victoire });
+  if (result?.xp_gagne) {
+    const xpEl = document.createElement('div');
+    xpEl.style.cssText = 'font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:10px;';
+    xpEl.textContent = `+${result.xp_gagne} XP ⭐`;
+    document.querySelector('.result-box').appendChild(xpEl);
+  }
 }
 
 // ══════════════════════════════════════════

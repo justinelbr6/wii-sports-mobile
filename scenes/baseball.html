@@ -557,7 +557,9 @@ function majHud(){document.getElementById('hud-score').textContent=G.score;docum
 function majVies(){document.querySelectorAll('.hud-heart').forEach((h,i)=>h.classList.toggle('lost',i>=G.vies));}
 function flashCoup(color){const el=document.getElementById('flash');el.style.background=color;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),100);}
 
-function afficherGameOver(){
+async function afficherGameOver(){
+  const gagne = G.score >= 200; // Victoire si bon score
+
   document.getElementById('go-score').textContent=`Score : ${G.score}`;
   document.getElementById('go-pitches').textContent=G.lancers;
   document.getElementById('go-hits').textContent=G.frappes;
@@ -567,6 +569,15 @@ function afficherGameOver(){
   document.getElementById('go-detail').textContent=`Précision : ${ratio}%`;
   document.getElementById('go-title').textContent=G.score>=500?'🏆 Incroyable !':G.score>=200?'⚾ Bien joué !':'⚾ Game Over';
   document.getElementById('gameover-overlay').classList.add('show');
+
+  // ── Sauvegarde Supabase ──
+  const result = await sauvegarderFinPartie('baseball', { score: G.score, gagne });
+  if(result?.xp_gagne){
+    const xpEl=document.createElement('div');
+    xpEl.style.cssText='font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:8px;animation:popIn .4s ease both;';
+    xpEl.textContent=`+${result.xp_gagne} XP ⭐`;
+    document.getElementById('gameover-overlay').appendChild(xpEl);
+  }
 }
 
 let camShake=0;

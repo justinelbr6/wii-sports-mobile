@@ -1501,17 +1501,19 @@ function animCelebSpec(dur){
 // ══════════════════════════════════════════════════════
 //  GAME OVER
 // ══════════════════════════════════════════════════════
-function afficherGameOver(){
+async function afficherGameOver(){
   // Save best score
   if(G.score>G.bestScore){
     G.bestScore=G.score;
     try{ localStorage.setItem('boxe_best',''+G.score); }catch(e){}
   }
 
+  const gagne = G.score >= 500; // Victoire si score suffisant
+
   document.getElementById('go-title').textContent=
     G.score>=1000?'👑 LÉGENDE !':
-    G.score>=500?'🏆 Champion !':
-    G.score>=200?'🥊 Bien joué !':'💀 K.O.';
+    G.score>=500 ?'🏆 Champion !':
+    G.score>=200 ?'🥊 Bien joué !':'💀 K.O.';
   document.getElementById('go-score').textContent='Score : '+G.score;
   document.getElementById('go-round').textContent=G.round;
   document.getElementById('go-dodges').textContent=G.esquivesOK;
@@ -1532,6 +1534,15 @@ function afficherGameOver(){
   document.getElementById('big-combo').classList.remove('show');
   hideDodgeIndicator();
   hideSeqDots();
+
+  // ── Sauvegarde Supabase ──
+  const result = await sauvegarderFinPartie('boxe', { score: G.score, gagne });
+  if(result?.xp_gagne){
+    const xpEl=document.createElement('div');
+    xpEl.style.cssText='font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:4px;animation:popIn .4s ease both;';
+    xpEl.textContent=`+${result.xp_gagne} XP ⭐`;
+    document.getElementById('gameover-overlay').appendChild(xpEl);
+  }
 }
 
 // ══════════════════════════════════════════════════════

@@ -1713,7 +1713,7 @@ function mettreAJourScoreAdv() {
   setTimeout(() => afficherProvoc(ETAT.scoreTotalAdv, ETAT.scoreTotal), 800);
 }
 
-function finPartie() {
+async function finPartie() {
   const scoreJoueur = ETAT.scoreTotal;
   const scoreAdv    = ETAT.scoreTotalAdv;
   const gagne       = scoreJoueur > scoreAdv;
@@ -1726,6 +1726,15 @@ function finPartie() {
   document.getElementById('final-adv-name').textContent = ETAT.adversaire?.nom || 'CPU';
 
   document.getElementById('final-overlay').classList.add('show');
+
+  // ── Sauvegarde Supabase ──
+  const result = await sauvegarderFinPartie('bowling', { score: scoreJoueur, gagne });
+  if (result?.xp_gagne) {
+    const xpEl = document.createElement('div');
+    xpEl.style.cssText = 'font-family:"Fredoka One",cursive;font-size:1.1rem;color:#FFD700;text-align:center;margin-top:4px;animation:popIn .4s ease both;';
+    xpEl.textContent = `+${result.xp_gagne} XP ⭐`;
+    document.getElementById('final-overlay').appendChild(xpEl);
+  }
 }
 
 // ============================================
