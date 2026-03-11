@@ -65,19 +65,7 @@
     }
     .sport-tab:active { transform:translateY(2px); }
 
-    /* ── Filtre niveau ── */
-    .niveau-row { display:flex; gap:6px; }
-    .niveau-btn {
-      flex:1; background:rgba(255,255,255,0.4); border:2px solid rgba(255,255,255,0.6);
-      border-radius:14px; padding:8px 4px; font-family:'Baloo 2',cursive;
-      font-size:.78rem; font-weight:700; color:rgba(26,74,128,0.65);
-      cursor:pointer; transition:all .15s; text-align:center; -webkit-appearance:none;
-    }
-    .niveau-btn.active {
-      background:linear-gradient(135deg,#43b89c,#2a8a72); color:white;
-      border-color:#2a8a72; box-shadow:0 3px 0 #1a5c4a, 0 5px 14px rgba(42,138,114,0.3);
-    }
-    .niveau-btn:active { transform:translateY(2px); }
+    /* ── Filtre niveau — supprimé ── */
 
     /* ── Carte classement ── */
     .classement-card {
@@ -229,13 +217,7 @@ for(let i=0;i<6;i++){
     <button class="sport-tab" data-sport="baseball" onclick="changerSport('baseball',this)">⚾ Baseball</button>
   </div>
 
-  <!-- Filtre niveau -->
-  <div class="niveau-row" id="niveauRow">
-    <button class="niveau-btn active" data-niveau="tous" onclick="changerNiveau('tous',this)">🌟 Tous</button>
-    <button class="niveau-btn" data-niveau="Débutant" onclick="changerNiveau('Débutant',this)">😊 Débutant</button>
-    <button class="niveau-btn" data-niveau="Intermédiaire" onclick="changerNiveau('Intermédiaire',this)">😤 Inter.</button>
-    <button class="niveau-btn" data-niveau="Confirmé" onclick="changerNiveau('Confirmé',this)">💀 Confirmé</button>
-  </div>
+  <!-- Filtre niveau supprimé — classement par meilleurs scores réels -->
 
   <!-- Mon rang -->
   <div class="mon-rang-card" id="monRangCard" style="display:none">
@@ -293,14 +275,21 @@ for(let i=0;i<6;i++){
    ÉTAT
 ════════════════════════════════════════ */
 let sportActuel = 'global';
-let niveauActuel = 'tous';
-let monProfil = null;
-let monUserId = null;
+let monProfil   = null;
+let monUserId   = null;
 
-// Emojis par sport (pour les avatars)
 const SPORT_EMOJI = { global:'🎮', bowling:'🎳', golf:'⛳', tennis:'🎾', boxe:'🥊', baseball:'⚾' };
 const SPORT_LABEL = { global:'Global', bowling:'Bowling', golf:'Golf', tennis:'Tennis', boxe:'Boxe', baseball:'Baseball' };
-const NIVEAU_COLONNE = { bowling:'level_bowling', golf:'level_golf', tennis:'level_tennis', boxe:'level_boxe', baseball:'level_baseball' };
+
+// Unité d'affichage et sens du tri par sport
+const SPORT_META = {
+  global:   { unite:'victoires', asc: false, label: j => `${j.stats_wins ?? 0} victoires` },
+  bowling:  { unite:'pts',       asc: false },
+  golf:     { unite:'coups',     asc: true  }, // Golf : MOINS = mieux
+  tennis:   { unite:'balles',    asc: false },
+  boxe:     { unite:'pts',       asc: false },
+  baseball: { unite:'pts',       asc: false },
+};
 
 /* ════════════════════════════════════════
    INIT
@@ -308,10 +297,8 @@ const NIVEAU_COLONNE = { bowling:'level_bowling', golf:'level_golf', tennis:'lev
 (async () => {
   const session = await checkAuth();
   if (!session) return;
-
   monUserId = session.user.id;
   monProfil = await getProfilCourant();
-
   afficherStatsPerso();
   chargerClassement();
 })();
@@ -322,15 +309,6 @@ const NIVEAU_COLONNE = { bowling:'level_bowling', golf:'level_golf', tennis:'lev
 function changerSport(sport, btn) {
   sportActuel = sport;
   document.querySelectorAll('.sport-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  // Cacher filtre niveau pour le global
-  document.getElementById('niveauRow').style.display = sport === 'global' ? 'none' : 'flex';
-  chargerClassement();
-}
-
-function changerNiveau(niveau, btn) {
-  niveauActuel = niveau;
-  document.querySelectorAll('.niveau-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   chargerClassement();
 }
@@ -344,8 +322,8 @@ function afficherStatsPerso() {
   document.getElementById('statVictoires').textContent = monProfil.stats_wins ?? 0;
   const parties = (monProfil.stats_wins ?? 0) + (monProfil.stats_losses ?? 0);
   document.getElementById('statParties').textContent = parties;
-  document.getElementById('statStreak').textContent = monProfil.win_streak ?? 0;
-  document.getElementById('statXP').textContent = monProfil.xp_points ?? 0;
+  document.getElementById('statStreak').textContent  = monProfil.win_streak ?? 0;
+  document.getElementById('statXP').textContent      = monProfil.xp_points ?? 0;
 }
 
 /* ════════════════════════════════════════
@@ -357,23 +335,68 @@ async function chargerClassement() {
   document.getElementById('monRangCard').style.display = 'none';
 
   try {
-    let query = supabaseClient
-      .from('profiles')
-      .select('id, full_name, stats_wins, stats_losses, xp_points, win_streak, level_bowling, level_golf, level_tennis, level_boxe, level_baseball, mii_color, mii_hair');
+    let joueurs = [];
 
-    // Filtre niveau (sauf global)
-    if (sportActuel !== 'global' && niveauActuel !== 'tous') {
-      const col = NIVEAU_COLONNE[sportActuel];
-      if (col) query = query.eq(col, niveauActuel);
+    if (sportActuel === 'global') {
+      // ── Mode global : classement par victoires depuis profiles ──
+      const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('id, full_name, stats_wins, stats_losses, xp_points, win_streak')
+        .order('stats_wins', { ascending: false })
+        .order('xp_points',  { ascending: false })
+        .limit(50);
+      if (error) throw error;
+
+      joueurs = (data || []).map(j => ({
+        userId:    j.id,
+        nom:       j.full_name || 'Joueur',
+        score:     j.stats_wins ?? 0,
+        xp:        j.xp_points ?? 0,
+        wins:      j.stats_wins ?? 0,
+        losses:    j.stats_losses ?? 0,
+        streak:    j.win_streak ?? 0,
+        gagne:     true,
+        joue_le:   null,
+      }));
+
+    } else {
+      // ── Mode sport : meilleur score par joueur depuis table classement ──
+      const meta = SPORT_META[sportActuel];
+
+      // On récupère toutes les entrées du sport avec le profil du joueur
+      const { data, error } = await supabaseClient
+        .from('classement')
+        .select('user_id, score, gagne, joue_le, profiles(full_name)')
+        .eq('sport', sportActuel)
+        .order('score', { ascending: meta.asc })
+        .limit(500); // on prend large pour dédupliquer côté client
+
+      if (error) throw error;
+
+      // Garder seulement le MEILLEUR score par joueur
+      const parJoueur = {};
+      for (const row of (data || [])) {
+        const uid = row.user_id;
+        const existant = parJoueur[uid];
+        const mieux = !existant ||
+          (meta.asc  ? row.score < existant.score
+                     : row.score > existant.score);
+        if (mieux) parJoueur[uid] = row;
+      }
+
+      // Convertir en tableau trié
+      joueurs = Object.values(parJoueur)
+        .sort((a, b) => meta.asc ? a.score - b.score : b.score - a.score)
+        .slice(0, 50)
+        .map(row => ({
+          userId:  row.user_id,
+          nom:     row.profiles?.full_name || 'Joueur',
+          score:   row.score,
+          gagne:   row.gagne,
+          joue_le: row.joue_le,
+        }));
     }
 
-    // Tri : victoires d'abord, puis XP
-    query = query.order('stats_wins', { ascending: false }).order('xp_points', { ascending: false }).limit(50);
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    const joueurs = data || [];
     afficherClassement(joueurs);
 
   } catch(err) {
@@ -386,74 +409,62 @@ async function chargerClassement() {
    AFFICHAGE
 ════════════════════════════════════════ */
 function afficherClassement(joueurs) {
-  const card = document.getElementById('classementCard');
+  const card  = document.getElementById('classementCard');
   const title = document.getElementById('classementTitle');
+  const meta  = SPORT_META[sportActuel];
 
-  // Titre dynamique
-  let tit = `Classement ${SPORT_LABEL[sportActuel]}`;
-  if (sportActuel !== 'global' && niveauActuel !== 'tous') tit += ` · ${niveauActuel}`;
-  title.textContent = tit;
+  title.textContent = `Classement ${SPORT_LABEL[sportActuel]}`;
 
   if (joueurs.length === 0) {
-    card.innerHTML = `<div class="empty-state"><div class="icon">🏜️</div><p>Aucun joueur ici encore.<br>Sois le premier !</p></div>`;
+    card.innerHTML = `<div class="empty-state"><div class="icon">🏜️</div><p>Aucune partie enregistrée.<br>Joue le premier !</p></div>`;
     return;
   }
 
   // Trouver mon rang
-  const monRang = joueurs.findIndex(j => j.id === monUserId);
+  const monRang = joueurs.findIndex(j => j.userId === monUserId);
+  afficherMonRang(joueurs, monRang, meta);
 
-  // Afficher mon rang
-  afficherMonRang(joueurs, monRang);
-
-  // Construire le HTML
   const top3 = joueurs.slice(0, 3);
   const reste = joueurs.slice(3);
-
   let html = '';
 
-  // ── Podium ──
-  if (top3.length >= 1) {
-    html += `<div class="podium-wrap">`;
+  // ── Podium top 3 ──
+  html += `<div class="podium-wrap">`;
+  const ordres = [
+    { idx: 1, classe: 'second', rank: '🥈', num: 2 },
+    { idx: 0, classe: 'first',  rank: '🥇', num: 1 },
+    { idx: 2, classe: 'third',  rank: '🥉', num: 3 },
+  ];
+  ordres.forEach(({ idx, classe, rank, num }) => {
+    if (!top3[idx]) return;
+    const j = top3[idx];
+    const estMoi = j.userId === monUserId;
+    const prenom = (j.nom || 'Joueur').split(' ')[0];
+    const { valStr, unite } = formatScore(j.score, meta);
 
-    const ordres = [
-      { idx: 1, classe: 'second', rank: '🥈', num: 2 },
-      { idx: 0, classe: 'first',  rank: '🥇', num: 1 },
-      { idx: 2, classe: 'third',  rank: '🥉', num: 3 },
-    ];
-
-    ordres.forEach(({ idx, classe, rank, num }) => {
-      if (!top3[idx]) return;
-      const j = top3[idx];
-      const estMoi = j.id === monUserId;
-      const prenom = (j.full_name || 'Joueur').split(' ')[0];
-      const score = getScore(j);
-      const emoji = SPORT_EMOJI[sportActuel];
-
-      html += `
-        <div class="podium-item ${classe}">
-          <div class="podium-avatar">
-            ${num === 1 ? '<span class="podium-avatar-crown">👑</span>' : ''}
-            ${emoji}
-          </div>
-          <div class="podium-name">${prenom}${estMoi ? ' (Moi)' : ''}</div>
-          <div class="podium-score-val">${score}</div>
-          <div class="podium-score-label">${scoreLabel()}</div>
-          <div class="podium-block">${rank}</div>
-        </div>`;
-    });
-
-    html += `</div>`;
-  }
+    html += `
+      <div class="podium-item ${classe}">
+        <div class="podium-avatar">
+          ${num === 1 ? '<span class="podium-avatar-crown">👑</span>' : ''}
+          ${SPORT_EMOJI[sportActuel]}
+        </div>
+        <div class="podium-name">${prenom}${estMoi ? ' (Moi)' : ''}</div>
+        <div class="podium-score-val">${valStr}</div>
+        <div class="podium-score-label">${unite}</div>
+        <div class="podium-block">${rank}</div>
+      </div>`;
+  });
+  html += `</div>`;
 
   // ── Liste 4+ ──
   if (reste.length > 0) {
     html += `<div class="classement-list">`;
     reste.forEach((j, i) => {
-      const rang = i + 4;
-      const estMoi = j.id === monUserId;
-      const prenom = (j.full_name || 'Joueur').split(' ')[0];
-      const score = getScore(j);
-      const niveau = getNiveauJoueur(j);
+      const rang    = i + 4;
+      const estMoi  = j.userId === monUserId;
+      const prenom  = (j.nom || 'Joueur').split(' ')[0];
+      const { valStr, unite } = formatScore(j.score, meta);
+      const dateStr = j.joue_le ? new Date(j.joue_le).toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) : '';
 
       html += `
         <div class="classement-row ${estMoi ? 'moi' : ''}">
@@ -461,9 +472,9 @@ function afficherClassement(joueurs) {
           <div class="row-avatar">${SPORT_EMOJI[sportActuel]}</div>
           <div class="row-info">
             <div class="row-name">${prenom}${estMoi ? '<span class="moi-badge">MOI</span>' : ''}</div>
-            <div class="row-detail">${niveau}</div>
+            <div class="row-detail">${dateStr}</div>
           </div>
-          <div class="row-score">${score} <span>${scoreLabel()}</span></div>
+          <div class="row-score">${valStr} <span>${unite}</span></div>
         </div>`;
     });
     html += `</div>`;
@@ -472,21 +483,19 @@ function afficherClassement(joueurs) {
   card.innerHTML = html;
 }
 
-function afficherMonRang(joueurs, rang) {
+function afficherMonRang(joueurs, rang, meta) {
   const card = document.getElementById('monRangCard');
   if (rang === -1 || !monProfil) { card.style.display = 'none'; return; }
 
   card.style.display = 'flex';
-  const total = joueurs.length;
   const j = joueurs[rang];
-  const score = getScore(j);
+  const { valStr, unite } = formatScore(j.score, meta);
 
-  document.getElementById('monRangVal').textContent = `#${rang + 1} sur ${total}`;
-  document.getElementById('monRangSub').textContent = `${SPORT_LABEL[sportActuel]}${niveauActuel !== 'tous' ? ' · ' + niveauActuel : ''}`;
-  document.getElementById('monRangScore').textContent = score;
-  document.getElementById('monRangScoreLabel').textContent = scoreLabel();
+  document.getElementById('monRangVal').textContent        = `#${rang + 1} sur ${joueurs.length}`;
+  document.getElementById('monRangSub').textContent        = SPORT_LABEL[sportActuel];
+  document.getElementById('monRangScore').textContent      = valStr;
+  document.getElementById('monRangScoreLabel').textContent = unite;
 
-  // Emoji selon le rang
   let emoji = '🎮';
   if (rang === 0) emoji = '👑';
   else if (rang === 1) emoji = '🥈';
@@ -498,29 +507,12 @@ function afficherMonRang(joueurs, rang) {
 /* ════════════════════════════════════════
    HELPERS
 ════════════════════════════════════════ */
-function getScore(joueur) {
-  // Score = victoires pour l'instant (on pourra affiner par sport plus tard)
-  return joueur.stats_wins ?? 0;
-}
-
-function scoreLabel() {
-  return 'victoires';
-}
-
-function getNiveauJoueur(joueur) {
-  if (sportActuel === 'global') {
-    // Moyenne des niveaux
-    const niveaux = [joueur.level_bowling, joueur.level_golf, joueur.level_tennis, joueur.level_boxe, joueur.level_baseball].filter(Boolean);
-    if (niveaux.includes('Confirmé')) return '💀 Confirmé';
-    if (niveaux.includes('Intermédiaire')) return '😤 Intermédiaire';
-    return '😊 Débutant';
+function formatScore(score, meta) {
+  // Golf : affichage spécial "X coups"
+  if (sportActuel === 'golf') {
+    return { valStr: score, unite: 'coups (min)' };
   }
-  const col = NIVEAU_COLONNE[sportActuel];
-  const niv = joueur[col];
-  if (niv === 'Confirmé') return '💀 Confirmé';
-  if (niv === 'Intermédiaire') return '😤 Intermédiaire';
-  if (niv === 'Débutant') return '😊 Débutant';
-  return '—';
+  return { valStr: score, unite: meta.unite };
 }
 </script>
 </body>
