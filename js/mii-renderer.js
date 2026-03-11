@@ -9,6 +9,22 @@
 const MII_RENDERER = (() => {
   const cache = {}; // Cache recolored images to avoid repeated processing
 
+  // ── Get base path for assets (works for both root and subdirectories) ──
+  function getBasePath() {
+    const scripts = document.querySelectorAll('script[src*="mii-renderer"]');
+    if (scripts.length > 0) {
+      const src = scripts[0].src;
+      // Check if we're in /scenes/ subdirectory
+      if (src.includes('/scenes/')) {
+        return '../assets/textures/'; // From /scenes/
+      }
+    }
+    // Default for root level
+    return './assets/textures/';
+  }
+
+  const basePath = getBasePath();
+
   // ── Helper: Convert hex color to RGB ──
   function hexToRgb(hex) {
     return [
@@ -96,6 +112,8 @@ const MII_RENDERER = (() => {
 
       img.onerror = () => {
         console.error('❌ Erreur chargement sprite Mii:', spriteUrl);
+        console.error('   Vérifiez que le fichier PNG existe au chemin:', spriteUrl);
+        console.error('   URL complète:', new URL(spriteUrl, window.location.href).href);
         resolve(null);
       };
 
@@ -110,9 +128,10 @@ const MII_RENDERER = (() => {
       return null;
     }
 
-    const spriteUrl = gender === 'woman'
-      ? '/wii-sports-mobile/assets/textures/mii_woman.png'
-      : '/wii-sports-mobile/assets/textures/mii_man.png';
+    const filename = gender === 'woman' ? 'mii_woman.png' : 'mii_man.png';
+    const spriteUrl = basePath + filename;
+
+    console.log('📦 Loading Mii sprite from:', spriteUrl);
 
     const recoloredCanvas = await recolorMii(spriteUrl, miiData.mii_color, miiData.mii_hair_color);
 
@@ -137,9 +156,10 @@ const MII_RENDERER = (() => {
       return null;
     }
 
-    const spriteUrl = gender === 'woman'
-      ? '/wii-sports-mobile/assets/textures/mii_woman.png'
-      : '/wii-sports-mobile/assets/textures/mii_man.png';
+    const filename = gender === 'woman' ? 'mii_woman.png' : 'mii_man.png';
+    const spriteUrl = basePath + filename;
+
+    console.log('🎮 Loading Mii sprite for game:', spriteUrl);
 
     const recoloredCanvas = await recolorMii(spriteUrl, miiData.mii_color, miiData.mii_hair_color);
 
