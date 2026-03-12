@@ -90,7 +90,7 @@
       backdrop-filter: blur(14px);
       border: 2px solid rgba(255,255,255,0.75);
       border-radius: 20px;
-      min-height: 180px;
+      min-height: 200px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -98,24 +98,24 @@
       box-shadow: inset 0 2px 10px rgba(255,255,255,0.6), 0 4px 20px rgba(0,80,180,0.12);
     }
     .preview-content {
-      text-align: center; padding: 12px;
+      width: 100%; display: flex; flex-direction: column; align-items: center;
+      gap: 8px; padding: 14px 12px 10px;
       transition: opacity 0.15s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
     }
-    .preview-emoji {
-      font-size: 4.5rem; display: block;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.12));
+    .preview-sport-img {
+      max-height: 130px; max-width: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 14px rgba(0,60,140,0.18));
       animation: floatAnim 3s ease-in-out infinite;
     }
-    @keyframes floatAnim {
-      0%,100% { transform: translateY(0) rotate(-2deg); }
-      50%      { transform: translateY(-8px) rotate(2deg); }
+    .preview-logo-img {
+      max-height: 38px; max-width: 80%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 6px rgba(0,60,140,0.15));
     }
-    .preview-title { font-size: 2rem; font-weight: 800; color: #1a5fa0; text-shadow: 1px 2px 0 rgba(255,255,255,0.9); margin-top: 4px; line-height: 1; }
-    .preview-desc  { font-size: 0.82rem; color: #3a7abf; font-weight: 700; margin-top: 4px; }
-    .preview-tags  { display: flex; gap: 6px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
-    .tag {
-      background: rgba(42,130,196,0.13); border: 1.5px solid rgba(42,130,196,0.28);
-      border-radius: 20px; padding: 3px 10px; font-size: 0.68rem; font-weight: 700; color: #1a5fa0;
+    @keyframes floatAnim {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-7px); }
     }
 
     /* ── Sports list ── */
@@ -210,9 +210,8 @@
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <div class="logo-right">
-      <div class="logo-wii-line">Wii<em>Sports</em></div>
-      <div class="logo-sports-line">Mobile</div>
-      <div class="logo-badge">✦ Fan Made ✦</div>
+      <img src="assets/textures/logo_wiisport.png" alt="Wii Sports Mobile" style="height:46px;object-fit:contain;display:block;">
+      <div class="logo-badge" style="text-align:center;margin-top:3px;">✦ Fan Made ✦</div>
     </div>
     <button id="muteBtn" onclick="toggleMute()" title="Musique"
       style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.3);border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer;flex-shrink:0;">
@@ -229,21 +228,15 @@
 
   <div class="preview-panel">
     <div class="preview-content" id="previewContent">
-      <span class="preview-emoji" id="prevEmoji">🎳</span>
-      <div class="preview-title" id="prevTitle">Bowling</div>
-      <div class="preview-desc"  id="prevDesc">Renverse toutes les quilles !</div>
-      <div class="preview-tags">
-        <span class="tag" id="prevTag1">10 Frames</span>
-        <span class="tag" id="prevTag2">2 lancers / frame</span>
-        <span class="tag" id="prevTag3">📐 Gyroscope</span>
-      </div>
+      <img id="prevSportImg" src="assets/textures/bowling.png" alt="Bowling" class="preview-sport-img">
+      <img id="prevLogoImg"  src="assets/textures/bowling_logo.png" alt="" class="preview-logo-img">
     </div>
   </div>
 
   <div class="sports-list">
 
     <button class="sport-btn selected" id="btn-bowling"
-      onclick="selectionner('bowling','🎳','Bowling','Renverse toutes les quilles !','10 Frames','2 lancers / frame','📐 Gyroscope')">
+      onclick="selectionner('bowling')">
       <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">🎳</span>
@@ -256,7 +249,7 @@
     </button>
 
     <button class="sport-btn" id="btn-golf"
-      onclick="selectionner('golf','⛳','Golf','Mets la balle dans le trou !','3 Trous','Par / Score','📐 Gyroscope')">
+      onclick="selectionner('golf')">
       <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">⛳</span>
@@ -269,7 +262,7 @@
     </button>
 
     <button class="sport-btn" id="btn-tennis"
-      onclick="selectionner('tennis','🎾','Tennis','Gagne le  sets !','1 Sets','15·30·40·Jeu','📐 Gyroscope')">
+      onclick="selectionner('tennis')">
       <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">🎾</span>
@@ -282,7 +275,7 @@
     </button>
 
     <button class="sport-btn" id="btn-boxe"
-      onclick="selectionner('boxe','🥊','Boxe','Entraine tes reflexes !','3 Rounds','Barre de vie')">
+      onclick="selectionner('boxe')">
       <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">🥊</span>
@@ -295,7 +288,7 @@
     </button>
 
     <button class="sport-btn" id="btn-baseball"
-      onclick="selectionner('baseball','⚾️','Baseball','Sois précis dans le timing !','5 Rounds','Barre de vie')">
+      onclick="selectionner('baseball')">
       <div class="bracket-left"></div><div class="bracket-right"></div>
       <div class="sport-btn-inner">
         <span class="sport-btn-emoji">⚾️</span>
@@ -416,19 +409,16 @@
     baseball: { emoji:'⚾️', nom:'Baseball', desc:'Sois précis dans le timing !', t1:'5 Rounds', t2:'Barre de vie' },
   };
 
-  function selectionner(sport, emoji, nom, desc, t1, t2, t3) {
+  function selectionner(sport) {
     sportActuel = sport;
     document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById(`btn-${sport}`).classList.add('selected');
     const c = document.getElementById('previewContent');
-    c.style.opacity = '0'; c.style.transform = 'scale(0.88)';
+    c.style.opacity = '0'; c.style.transform = 'scale(0.92)';
     setTimeout(() => {
-      document.getElementById('prevEmoji').textContent = emoji;
-      document.getElementById('prevTitle').textContent = nom;
-      document.getElementById('prevDesc').textContent  = desc;
-      document.getElementById('prevTag1').textContent  = t1;
-      document.getElementById('prevTag2').textContent  = t2;
-      document.getElementById('prevTag3').textContent  = t3;
+      document.getElementById('prevSportImg').src = `assets/textures/${sport}.png`;
+      document.getElementById('prevSportImg').alt = sport;
+      document.getElementById('prevLogoImg').src  = `assets/textures/${sport}_logo.png`;
       c.style.transition = 'all 0.28s cubic-bezier(0.34,1.56,0.64,1)';
       c.style.opacity = '1'; c.style.transform = 'scale(1)';
     }, 140);
