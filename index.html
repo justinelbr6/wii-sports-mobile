@@ -354,23 +354,37 @@
 <script>
   // ── Musique de fond ──
   const bgMusic = document.getElementById('bgMusic');
-  bgMusic.volume = 0.4;
+  bgMusic.volume = 0.5;
+  let musicStarted = false;
   let muted = false;
 
   function lancerMusique() {
-    bgMusic.play().catch(() => {}); // Ignore si bloqué par le navigateur
+    if (musicStarted) return;
+    bgMusic.play().then(() => {
+      musicStarted = true;
+      document.getElementById('muteBtn').textContent = '🔊';
+    }).catch(() => {});
   }
 
   function toggleMute() {
+    if (!musicStarted) {
+      // Premier clic sur 🔊 : forcer le démarrage
+      bgMusic.play().then(() => {
+        musicStarted = true;
+        muted = false;
+        document.getElementById('muteBtn').textContent = '🔊';
+      });
+      return;
+    }
     muted = !muted;
     bgMusic.muted = muted;
     document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
   }
 
-  // Tentative autoplay + fallback sur premier geste
+  // Tenter autoplay + démarrer sur n'importe quelle interaction
   lancerMusique();
-  document.addEventListener('touchstart', lancerMusique, { once: true });
-  document.addEventListener('click', lancerMusique, { once: true });
+  document.addEventListener('touchstart', lancerMusique);
+  document.addEventListener('click', lancerMusique);
 
   // ── Bulles déco ──
   for (let i = 0; i < 8; i++) {

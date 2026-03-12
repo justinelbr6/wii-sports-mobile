@@ -608,8 +608,12 @@ function ouvrirModalMii(){
   // Lancer la musique Mii
   const miiMusic = document.getElementById('miiMusic');
   miiMusic.currentTime = 0;
-  miiMusic.volume = 0.45;
-  miiMusic.play().catch(() => {});
+  miiMusic.volume = 0.5;
+  miiMusic.play().then(() => {
+    console.log('🎵 Musique Mii lancée');
+  }).catch(err => {
+    console.warn('⚠️ Musique Mii bloquée:', err.message);
+  });
 
   // Init ou rafraîchir la scène 3D
   setTimeout(()=>{
