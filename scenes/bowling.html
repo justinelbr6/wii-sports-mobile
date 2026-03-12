@@ -397,11 +397,13 @@
       100%    { opacity:0.15; }
     }
     @keyframes ballRoll {
-      0%,10%  { transform:translateY(0) rotate(0deg); }
-      70%     { transform:translateY(-42px) rotate(-360deg); opacity:0.1; }
-      71%     { transform:translateY(0) rotate(0deg); opacity:0; }
-      80%     { opacity:1; }
-      100%    { opacity:1; }
+      0% {/* Position de départ */
+      transform: translateY(0) rotate(0deg);
+    }
+    100% {
+      /* La boule monte de 41 pixels vers le haut de la piste et fait un tour complet */
+      transform: translateY(-41px) rotate(-360deg);
+    }
     }
     @keyframes fingerSwipe {
       0%,15%  { transform:translateY(0); opacity:1; }
