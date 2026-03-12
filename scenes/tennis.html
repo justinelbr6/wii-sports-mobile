@@ -436,7 +436,11 @@ canvas { display:block; }
 //  atteint la zone de l'IA avant qu'elle frappe.
 //  Doit être petit (≤ temps de vol dans la zone arrière).
 // ══════════════════════════════════════════
-
+const DIFF = {
+  facile:    { vitesse:0.030, erreurIA:0.45, delaiIA:3 },
+  moyen:     { vitesse:0.042, erreurIA:0.20, delaiIA:2 },
+  difficile: { vitesse:0.058, erreurIA:0.04, delaiIA:0 },
+};
 
 // ══════════════════════════════════════════
 //  ÉTAT
