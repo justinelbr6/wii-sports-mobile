@@ -214,7 +214,7 @@ async function getClassementSport(sport, limit = 20) {
     const userIds = [...new Set(scoresData.map(s => s.user_id))];
     const { data: profilesData, error: profilesError } = await supabaseClient
       .from('profiles')
-      .select('id, full_name')
+      .select('id, full_name, mii_color, mii_hair_color, gender')
       .in('id', userIds);
 
     if (profilesError) {
@@ -280,7 +280,7 @@ async function getClassementTennis(limit = 20) {
     const userIds = Object.keys(victoires);
     const { data: profilesData, error: profilesError } = await supabaseClient
       .from('profiles')
-      .select('id, full_name')
+      .select('id, full_name, mii_color, mii_hair_color, gender')
       .in('id', userIds);
 
     if (profilesError) {

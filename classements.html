@@ -96,7 +96,7 @@
       border-radius:50%; display:flex; align-items:center; justify-content:center;
       font-size:1.5rem; border:3px solid white; box-shadow:0 4px 12px rgba(0,0,0,0.15);
       position:relative; flex-shrink:0; width:54px; height:54px;
-      background:linear-gradient(135deg,#E8E8E8,#BDBDBD);
+      background:linear-gradient(135deg,#E8E8E8,#BDBDBD); overflow:hidden;
     }
     .podium-item.p1 .podium-avatar { width:68px; height:68px; font-size:2rem; background:linear-gradient(135deg,#FFE066,#FFB800); }
     .podium-item.p3 .podium-avatar { background:linear-gradient(135deg,#FFCC99,#CD853F); }
@@ -138,7 +138,7 @@
     .row-avatar {
       width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#a8e4f7,#2a82c4);
       display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;
-      border:2px solid rgba(255,255,255,0.8);
+      border:2px solid rgba(255,255,255,0.8); overflow:hidden;
     }
     .row-info { flex:1; min-width:0; }
     .row-name { font-family:'Fredoka One',cursive; font-size:.9rem; color:#1a4a80; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -218,6 +218,7 @@ for(let i=0;i<6;i++){
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=4"></script>
+<script src="js/mii-renderer.js?v=2"></script>
 <script>
 /* ══════════════════════════════════════════
    CONFIG
@@ -308,9 +309,9 @@ function afficherClassement(joueurs) {
 
     html += `
       <div class="podium-item ${classe} slide-up" style="animation-delay:${idx * 0.08}s">
-        <div class="podium-avatar">
+        <div class="podium-avatar" id="mii-av-${idx}">
           ${num === 1 ? '<span class="podium-crown">👑</span>' : ''}
-          ${SPORT_EMOJI[sportActuel]}
+          <span class="av-fallback">${SPORT_EMOJI[sportActuel]}</span>
         </div>
         <div class="podium-name${estMoi ? ' moi' : ''}">${nom}${estMoi ? ' 👈' : ''}</div>
         <div class="podium-score-val">${j.score ?? '—'}</div>
@@ -341,7 +342,7 @@ function afficherClassement(joueurs) {
       html += `
         <div class="classement-row${estMoi ? ' moi' : ''} slide-up" style="animation-delay:${Math.min(i*0.04,0.4)}s">
           <div class="rank-badge">${rang}</div>
-          <div class="row-avatar">${SPORT_EMOJI[sportActuel]}</div>
+          <div class="row-avatar" id="mii-av-${i+3}"><span class="av-fallback">${SPORT_EMOJI[sportActuel]}</span></div>
           <div class="row-info">
             <div class="row-name${estMoi ? ' moi' : ''}">${nom}${estMoi ? '<span class="moi-badge">MOI</span>' : ''}</div>
             <div class="row-detail">${date ? `Record du ${date}` : 'Joueur'}</div>
@@ -354,6 +355,24 @@ function afficherClassement(joueurs) {
   }
 
   card.innerHTML = html;
+
+  // Rendre les Miis de façon asynchrone dans chaque avatar
+  joueurs.forEach((j, i) => {
+    const profil = j.profiles;
+    if (!profil?.mii_color || !profil?.mii_hair_color) return;
+    const el = document.getElementById(`mii-av-${i}`);
+    if (!el) return;
+    const gender = profil.gender || 'man';
+    MII_RENDERER.createMiiCanvas(profil, gender, 80, true).then(canvas => {
+      const target = document.getElementById(`mii-av-${i}`);
+      if (!canvas || !target) return;
+      const crown = target.querySelector('.podium-crown');
+      target.innerHTML = '';
+      if (crown) target.appendChild(crown);
+      canvas.style.cssText = 'width:100%;height:100%;display:block;';
+      target.appendChild(canvas);
+    });
+  });
 }
 
 /* ══════════════════════════════════════════
