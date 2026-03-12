@@ -214,6 +214,10 @@
       <div class="logo-sports-line">Mobile</div>
       <div class="logo-badge">✦ Fan Made ✦</div>
     </div>
+    <button id="muteBtn" onclick="toggleMute()" title="Musique"
+      style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.3);border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer;flex-shrink:0;">
+      🔊
+    </button>
     <button onclick="seDeconnecter()" title="Se déconnecter"
       style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.3);border-radius:50%;width:34px;height:34px;font-size:1rem;cursor:pointer;flex-shrink:0;">
       🚪
@@ -338,11 +342,36 @@
   </div>
 </div>
 
+<!-- Musique de fond -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="assets/sounds/WII_sport.mp3" type="audio/mpeg">
+</audio>
+
 <!-- Supabase CDN — doit être AVANT supabase.js -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=3"></script>
 
 <script>
+  // ── Musique de fond ──
+  const bgMusic = document.getElementById('bgMusic');
+  bgMusic.volume = 0.4;
+  let muted = false;
+
+  function lancerMusique() {
+    bgMusic.play().catch(() => {}); // Ignore si bloqué par le navigateur
+  }
+
+  function toggleMute() {
+    muted = !muted;
+    bgMusic.muted = muted;
+    document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+  }
+
+  // Tentative autoplay + fallback sur premier geste
+  lancerMusique();
+  document.addEventListener('touchstart', lancerMusique, { once: true });
+  document.addEventListener('click', lancerMusique, { once: true });
+
   // ── Bulles déco ──
   for (let i = 0; i < 8; i++) {
     const b = document.createElement('div');

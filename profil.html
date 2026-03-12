@@ -406,6 +406,11 @@
   </div>
 </div>
 
+<!-- Musique Mii -->
+<audio id="miiMusic" loop preload="auto">
+  <source src="assets/sounds/MII.wav" type="audio/wav">
+</audio>
+
 <!-- Supabase CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js?v=4"></script>
@@ -600,6 +605,12 @@ function ouvrirModalMii(){
   document.getElementById('miiModalOverlay').classList.add('visible');
   document.body.style.overflow = 'hidden';
 
+  // Lancer la musique Mii
+  const miiMusic = document.getElementById('miiMusic');
+  miiMusic.currentTime = 0;
+  miiMusic.volume = 0.45;
+  miiMusic.play().catch(() => {});
+
   // Init ou rafraîchir la scène 3D
   setTimeout(()=>{
     if(!editSceneInit) initEditScene();
@@ -615,6 +626,9 @@ function ouvrirModalMii(){
 function fermerModalMii(){
   document.getElementById('miiModalOverlay').classList.remove('visible');
   document.body.style.overflow = '';
+  const miiMusic = document.getElementById('miiMusic');
+  miiMusic.pause();
+  miiMusic.currentTime = 0;
 }
 function fermerModalSiDehors(e){
   if(e.target === document.getElementById('miiModalOverlay')) fermerModalMii();
