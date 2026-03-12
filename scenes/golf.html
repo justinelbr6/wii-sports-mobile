@@ -550,6 +550,7 @@ const ETAT = {
   coupsAdvTotal:   0,
   coupsAdvParTrou: [0,0,0],
   animSpec:     null,
+  dernierePosBalle: new THREE.Vector3(0, 0.2, 8), // position pour rejeu après OOB
   // Sensibilité gyro : Débutant=0.018 | Intermédiaire=0.032 | Confirmé=0.05
   gyroSensibilite: 0.032,
 };
@@ -907,7 +908,7 @@ function construireTrou(indexTrou) {
       [-6,-dist*0.58,0x78909C],[-7,-dist*0.62,0x546E7A]
     ];
     rockerData.forEach(([x,z,c]) => {
-      const rayon = 0.65 + Math.random() * 0.25; // taille réduite : 0.65-0.90
+      const rayon = 1.8 + Math.random() * 0.4; // taille augmentée : 1.8-2.2 (obstacles solides)
       const roc = new THREE.Mesh(new THREE.DodecahedronGeometry(rayon,0),phong(c,20));
       roc.position.set(x, rayon * 0.55, z); roc.rotation.y=Math.random()*Math.PI;
       roc.castShadow=true;
@@ -1578,45 +1579,41 @@ function animate() {
     // Dans le trou ?
     if (checkDansTrou()) { balleTombeDansTrou(); }
 
-    // Hors limites Z (trop loin derrière le trou)
-    if (ballePos.z < -(TROUS[ETAT.trou].distance + 20)) {
-      // Out of bounds — annuler le coup, remettre la balle à sa position précédente
-      balleVel.set(0,0,0); ETAT.ballEnVol=false;
-      ballePos.copy(ETAT.dernierePosBalle || new THREE.Vector3(0,0.2,8));
-      if (balleMesh) balleMesh.position.copy(ballePos); // sync mesh
+    // ── Fonction pour rejuer après hors limites ──
+    const rejouerApresOOB = () => {
+      balleVel.set(0,0,0);
+      ETAT.ballEnVol = false;
+      ballePos.copy(ETAT.dernierePosBalle.clone());
+      if (balleMesh) balleMesh.position.copy(ballePos);
       ETAT.coupsTotal--;
       ETAT.coupsParTrou[ETAT.trou]--;
       document.getElementById('hud-shots').textContent = ETAT.coupsTotal;
-      ETAT.peutFrapper=true; cameraMode='reset';
-      document.getElementById('swipe-hint').style.opacity='1';
-      const dx2 = 0 - ballePos.x;
-      const dz2 = (-TROUS[ETAT.trou].distance) - ballePos.z;
-      angleVise = Math.atan2(dx2, dz2);
-      baseAngle  = angleVise;
-      CAM_BASE.x = ballePos.x - Math.sin(angleVise)*12;
+      ETAT.peutFrapper = true;
+      cameraMode = 'reset';
+      document.getElementById('swipe-hint').style.opacity = '1';
+      const dx = 0 - ballePos.x;
+      const dz = (-TROUS[ETAT.trou].distance) - ballePos.z;
+      angleVise = Math.atan2(dx, dz);
+      baseAngle = angleVise;
+      CAM_BASE.x = ballePos.x - Math.sin(angleVise) * 12;
       CAM_BASE.y = 3.5;
-      CAM_BASE.z = ballePos.z - Math.cos(angleVise)*12;
+      CAM_BASE.z = ballePos.z - Math.cos(angleVise) * 12;
       afficherMessageOOB('🚫 Hors limites ! Rejoue depuis ta position.');
+    };
+
+    // Hors limites Z (trop loin derrière le trou)
+    if (ballePos.z < -(TROUS[ETAT.trou].distance + 20)) {
+      rejouerApresOOB();
     }
 
     // Hors limites X (trop loin sur les côtés)
     if (Math.abs(ballePos.x) > 35) {
-      balleVel.set(0,0,0); ETAT.ballEnVol=false;
-      ballePos.copy(ETAT.dernierePosBalle || new THREE.Vector3(0,0.2,8));
-      if (balleMesh) balleMesh.position.copy(ballePos); // sync mesh
-      ETAT.coupsTotal--;
-      ETAT.coupsParTrou[ETAT.trou]--;
-      document.getElementById('hud-shots').textContent = ETAT.coupsTotal;
-      ETAT.peutFrapper=true; cameraMode='reset';
-      document.getElementById('swipe-hint').style.opacity='1';
-      const dx3 = 0 - ballePos.x;
-      const dz3 = (-TROUS[ETAT.trou].distance) - ballePos.z;
-      angleVise = Math.atan2(dx3, dz3);
-      baseAngle  = angleVise;
-      CAM_BASE.x = ballePos.x - Math.sin(angleVise)*12;
-      CAM_BASE.y = 3.5;
-      CAM_BASE.z = ballePos.z - Math.cos(angleVise)*12;
-      afficherMessageOOB('🚫 Hors limites ! Rejoue depuis ta position.');
+      rejouerApresOOB();
+    }
+
+    // Hors limites Y (tombée dans un trou/gouffre)
+    if (ballePos.y < -5) {
+      rejouerApresOOB();
     }
   }
 
