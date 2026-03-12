@@ -86,20 +86,14 @@
     .mii-title { font-size:1.15rem; font-weight:800; color:#0D47A1; text-align:center; }
     .mii-sub   { font-size:.75rem; font-weight:700; color:rgba(13,71,161,0.5); text-align:center; }
 
-    .mii-3d-wrap {
-      width:100%; height:230px; border-radius:20px; overflow:hidden;
+    .mii-preview-wrap {
+      width:160px; height:190px; border-radius:20px; overflow:hidden;
       background:linear-gradient(160deg,#dff0ff 0%,#c2e0ff 100%);
       border:2px solid rgba(255,255,255,0.9);
       box-shadow:0 4px 20px rgba(0,100,180,0.15);
-      position:relative; touch-action:none;
+      display:flex; align-items:center; justify-content:center;
     }
-    #mii3dCanvas { width:100% !important; height:100% !important; display:block; }
-    .mii-3d-loading {
-      position:absolute; inset:0; display:flex; flex-direction:column;
-      align-items:center; justify-content:center; gap:8px; pointer-events:none;
-    }
-    .mii-3d-loading .sp { width:28px; height:28px; border:3px solid rgba(13,71,161,0.2); border-top-color:#1976D2; border-radius:50%; animation:spin .7s linear infinite; }
-    .mii-3d-loading span { font-size:.75rem; font-weight:700; color:#1565C0; }
+    .mii-preview-wrap canvas { width:100% !important; height:100% !important; display:block; }
 
     .mii-option-group { width:100%; display:flex; flex-direction:column; gap:6px; }
     .mii-option-label { font-size:.68rem; font-weight:800; color:rgba(13,71,161,0.55); text-transform:uppercase; letter-spacing:1.2px; padding-left:4px; }
@@ -113,18 +107,6 @@
     .color-dot:active { transform:scale(0.9); }
     .color-dot.sel { border-color:#0D47A1; box-shadow:0 0 0 3px rgba(13,71,161,0.3); transform:scale(1.12); }
 
-    .hair-row { display:flex; gap:8px; }
-    .hair-card {
-      flex:1; background:rgba(255,255,255,0.7); border:2.5px solid rgba(13,71,161,0.15);
-      border-radius:16px; padding:10px 6px 6px;
-      display:flex; flex-direction:column; align-items:center; gap:4px;
-      cursor:pointer; transition:all .15s; -webkit-appearance:none; border-style:solid;
-    }
-    .hair-card:active { transform:scale(0.95); }
-    .hair-card.sel { background:rgba(25,118,210,0.12); border-color:#1976D2; box-shadow:0 3px 12px rgba(13,71,161,0.25); }
-    .hair-card svg { width:36px; height:36px; }
-    .hair-card span { font-size:.68rem; font-weight:700; color:rgba(13,71,161,0.6); }
-    .hair-card.sel span { color:#1565C0; }
 
     /* ✅ Boutons de genre */
     .mii-gender-btn {
@@ -146,76 +128,7 @@
     #succesCanvas { width:100% !important; height:100% !important; display:block; }
   </style>
 
-  <!-- Three.js r126 -->
-  <script src="https://unpkg.com/three@0.126.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.126.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://unpkg.com/three@0.126.0/examples/js/controls/OrbitControls.js"></script>
-
-  <!-- Vertex Shader FFL officiel -->
-  <script id="vertexShader" type="x-shader/x-vertex">
-    attribute vec4 _color;
-    attribute vec3 tangent;
-    varying vec4 v_color;
-    varying vec4 v_position;
-    varying vec3 v_normal;
-    varying vec3 v_tangent;
-    varying vec2 v_texCoord;
-    void main(){
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-      v_position  = modelViewMatrix * vec4(position,1.0);
-      v_normal    = normalize(normalMatrix * normal);
-      v_texCoord  = uv;
-      v_tangent   = normalize(normalMatrix * tangent.xyz);
-      v_color     = _color;
-    }
-  </script>
-
-  <!-- Fragment Shader FFL officiel -->
-  <script id="fragmentShader" type="x-shader/x-fragment">
-    precision mediump float;
-    #define FFL_MODULATE_MODE_CONSTANT 0
-    varying vec4 v_color; varying vec4 v_position;
-    varying vec3 v_normal; varying vec3 v_tangent; varying vec2 v_texCoord;
-    uniform vec4  u_const1;
-    uniform vec4  u_light_ambient, u_light_diffuse, u_light_specular;
-    uniform vec3  u_light_dir;
-    uniform bool  u_light_enable;
-    uniform vec4  u_material_ambient, u_material_diffuse, u_material_specular;
-    uniform int   u_material_specular_mode;
-    uniform float u_material_specular_power;
-    uniform int   u_mode;
-    uniform vec4  u_rim_color;
-    uniform float u_rim_power;
-    uniform sampler2D s_texture;
-    float calcBlinn(vec3 l,vec3 n,vec3 e,float p){ return pow(max(dot(reflect(-l,n),e),0.0),p); }
-    float calcAniso(vec3 l,vec3 t,vec3 e,float p){
-      float lt=dot(l,t),vt=dot(e,t),ln=sqrt(1.0-lt*lt);
-      return pow(max(ln*sqrt(1.0-vt*vt)-lt*vt,0.0),p);
-    }
-    void main(){
-      vec4 color;
-      if(u_mode==FFL_MODULATE_MODE_CONSTANT) color=u_const1;
-      else color=texture2D(s_texture,v_texCoord);
-      if(u_light_enable){
-        vec3 amb=u_light_ambient.xyz*u_material_ambient.xyz;
-        vec3 norm=normalize(v_normal);
-        vec3 eye=normalize(-v_position.xyz);
-        float fDot=max(dot(u_light_dir,norm),0.1);
-        vec3 diff=u_light_diffuse.xyz*u_material_diffuse.xyz*fDot;
-        float refl; float str=v_color.g;
-        if(u_material_specular_mode==0){
-          str=1.0; refl=calcBlinn(u_light_dir,norm,eye,u_material_specular_power);
-        } else {
-          refl=mix(calcAniso(u_light_dir,v_tangent,eye,u_material_specular_power),
-                   calcBlinn(u_light_dir,norm,eye,u_material_specular_power),v_color.r);
-        }
-        vec3 spec=u_light_specular.xyz*u_material_specular.xyz*refl*str;
-        vec3 rim=u_rim_color.rgb*pow(v_color.a*(1.0-abs(norm.z)),u_rim_power);
-        color.rgb=(amb+diff)*color.rgb+spec+rim;
-      }
-      gl_FragColor=color;
-    }
-  </script>
+  <script src="js/mii-renderer.js?v=3"></script>
 </head>
 <body>
 <script>
@@ -248,8 +161,12 @@
       </div>
       <div class="field">
         <label>Mot de passe</label>
-        <input type="password" id="input-password" placeholder="minimum 6 caractères" autocomplete="new-password" oninput="verifierMotDePasse()"/>
+        <input type="password" id="input-password" placeholder="minimum 6 caractères" autocomplete="new-password" maxlength="72" oninput="verifierMotDePasse()"/>
         <div class="pwd-strength"><div class="pwd-strength-bar" id="pwd-bar"></div></div>
+        <div style="display:flex;justify-content:space-between;padding:0 4px;margin-top:2px;">
+          <span style="font-size:.65rem;font-weight:700;color:rgba(13,71,161,0.45);">6 caractères minimum</span>
+          <span id="pwd-count" style="font-size:.65rem;font-weight:700;color:rgba(13,71,161,0.45);">0 / 72</span>
+        </div>
       </div>
       <div class="field">
         <label>Confirmer le mot de passe</label>
@@ -317,74 +234,38 @@
     <button class="btn-play" id="btn-onboarding" onclick="allerMii()" disabled>🎨 Créer mon Mii →</button>
   </div>
 
-  <!-- ══ Écran 4 : CRÉATION DU MII 3D ══ -->
+  <!-- ══ Écran 4 : CRÉATION DU MII (même interface que profil) ══ -->
   <div class="screen" id="screen-mii">
     <div class="mii-title">Crée ton Mii ! 🧍</div>
     <div class="mii-sub">Il t'accompagnera dans tous tes sports</div>
 
-    <!-- ✅ SÉLECTION DE GENRE -->
+    <!-- Genre -->
     <div class="mii-option-group">
       <div class="mii-option-label">👥 Ton genre</div>
-      <div style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;">
+      <div style="display:flex;gap:12px;justify-content:center;">
         <button class="mii-gender-btn sel" onclick="choisirGenre('man',this)" data-gender="man">👨 Homme</button>
         <button class="mii-gender-btn" onclick="choisirGenre('woman',this)" data-gender="woman">👩 Femme</button>
       </div>
     </div>
 
-    <!-- Canvas 3D preview -->
-    <div class="mii-3d-wrap" id="mii3dWrap">
-      <canvas id="mii3dCanvas"></canvas>
-      <div class="mii-3d-loading" id="mii3dLoading">
-        <div class="sp"></div>
-        <span>Chargement du Mii…</span>
+    <!-- Preview sprite Mii (même que profil.html) -->
+    <div class="mii-preview-wrap" id="miiPreviewWrap">
+      <div id="mii-preview-spinner" style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div class="spinner"></div>
+        <span class="spinner-label">Chargement…</span>
       </div>
     </div>
 
-    <!-- Couleur t-shirt -->
+    <!-- Tenue -->
     <div class="mii-option-group">
       <div class="mii-option-label">🎨 Couleur de la tenue</div>
-      <div class="color-row" id="color-body-row">
-        <div class="color-dot sel" style="background:#E8531E" onclick="choisirCouleurBody('#E8531E',this)" title="Orange Wii"></div>
-        <div class="color-dot" style="background:#2962FF" onclick="choisirCouleurBody('#2962FF',this)" title="Bleu"></div>
-        <div class="color-dot" style="background:#D50000" onclick="choisirCouleurBody('#D50000',this)" title="Rouge"></div>
-        <div class="color-dot" style="background:#2E7D32" onclick="choisirCouleurBody('#2E7D32',this)" title="Vert"></div>
-        <div class="color-dot" style="background:#F9A825" onclick="choisirCouleurBody('#F9A825',this)" title="Jaune"></div>
-        <div class="color-dot" style="background:#6A1B9A" onclick="choisirCouleurBody('#6A1B9A',this)" title="Violet"></div>
-        <div class="color-dot" style="background:#AD1457" onclick="choisirCouleurBody('#AD1457',this)" title="Rose"></div>
-        <div class="color-dot" style="background:#37474F" onclick="choisirCouleurBody('#37474F',this)" title="Gris foncé"></div>
-      </div>
+      <div class="color-row" id="color-body-row"></div>
     </div>
 
-    <!-- Coiffure -->
+    <!-- Carnation -->
     <div class="mii-option-group">
-      <div class="mii-option-label">✂️ Coiffure</div>
-      <div class="hair-row">
-        <button class="hair-card sel" onclick="choisirCoiffure(0,this)">
-          <svg viewBox="0 0 36 36"><ellipse cx="18" cy="11" rx="13" ry="11" fill="#5C3317"/><ellipse cx="18" cy="19" rx="13" ry="9" fill="#FFCBA4"/></svg>
-          <span>Courte</span>
-        </button>
-        <button class="hair-card" onclick="choisirCoiffure(1,this)">
-          <svg viewBox="0 0 36 36"><ellipse cx="18" cy="10" rx="13" ry="11" fill="#2A1A0A"/><rect x="5" y="16" width="5" height="14" rx="3" fill="#2A1A0A"/><rect x="26" y="16" width="5" height="14" rx="3" fill="#2A1A0A"/><ellipse cx="18" cy="19" rx="12" ry="8" fill="#FFCBA4"/></svg>
-          <span>Mi-long</span>
-        </button>
-        <button class="hair-card" onclick="choisirCoiffure(2,this)">
-          <svg viewBox="0 0 36 36"><circle cx="9" cy="11" r="7" fill="#C8882A"/><circle cx="18" cy="7" r="8" fill="#C8882A"/><circle cx="27" cy="11" r="7" fill="#C8882A"/><ellipse cx="18" cy="19" rx="13" ry="8" fill="#FFCBA4"/></svg>
-          <span>Bouclée</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Couleur cheveux -->
-    <div class="mii-option-group">
-      <div class="mii-option-label">💇 Couleur des cheveux</div>
-      <div class="color-row" id="color-hair-row">
-        <div class="color-dot sel" style="background:#3D1C02" onclick="choisirCouleurHair('#3D1C02',this)" title="Brun foncé"></div>
-        <div class="color-dot" style="background:#0D0D0D" onclick="choisirCouleurHair('#0D0D0D',this)" title="Noir"></div>
-        <div class="color-dot" style="background:#8B4513" onclick="choisirCouleurHair('#8B4513',this)" title="Châtain"></div>
-        <div class="color-dot" style="background:#C8A800" onclick="choisirCouleurHair('#C8A800',this)" title="Blond"></div>
-        <div class="color-dot" style="background:#8B1A1A" onclick="choisirCouleurHair('#8B1A1A',this)" title="Roux"></div>
-        <div class="color-dot" style="background:#AAAAAA" onclick="choisirCouleurHair('#AAAAAA',this)" title="Gris/Blanc"></div>
-      </div>
+      <div class="mii-option-label">🫶 Carnation</div>
+      <div class="color-row" id="color-skin-row"></div>
     </div>
 
     <div class="msg" id="msg-mii"></div>
@@ -429,7 +310,7 @@ function estEmailAutorise(e){ return DOMAINES.includes(e.split('@')[1]?.toLowerC
 
 const choix={tennis:null,golf:null,baseball:null,bowling:null,boxe:null};
 let nomUser='', userCree=null;
-const mii={bodyColor:'#E8531E', hairType:0, hairColor:'#3D1C02'};
+const mii = { bodyColor: '#E8531E', skinColor: '#fad9b4' };
 
 /* ═══════════════════════════════════════════════════
    NAVIGATION
@@ -442,181 +323,84 @@ function affMsg(id,txt,type){const el=document.getElementById(id);el.textContent
 function cachMsg(id){const el=document.getElementById(id);el.textContent='';el.className='msg';}
 
 /* ═══════════════════════════════════════════════════
-   THREE.JS — MOTEUR MII 3D
+   MII — PALETTES (identiques à profil.html)
 ═══════════════════════════════════════════════════ */
-// Paramètres matériaux FFL officiels (par modulateType)
-const MAT=[
-  {a:new THREE.Vector4(.85,.75,.75,1),d:new THREE.Vector4(.75,.75,.75,1),s:new THREE.Vector4(.3,.3,.3,1),  sp:1.2, sm:0}, // faceline
-  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(0,0,0,1),      sp:40,  sm:1}, // beard
-  {a:new THREE.Vector4(.9,.85,.85,1),d:new THREE.Vector4(.75,.75,.75,1),s:new THREE.Vector4(.22,.22,.22,1),sp:1.5, sm:0}, // nose
-  {a:new THREE.Vector4(.85,.75,.75,1),d:new THREE.Vector4(.75,.75,.75,1),s:new THREE.Vector4(.3,.3,.3,1), sp:1.2, sm:0}, // forehead
-  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(.35,.35,.35,1),sp:10,  sm:1}, // hair
-  {a:new THREE.Vector4(.75,.75,.75,1),d:new THREE.Vector4(.72,.72,.72,1),s:new THREE.Vector4(.3,.3,.3,1), sp:1.5, sm:0}, // cap
-  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(0,0,0,1),      sp:40,  sm:1}, // mask
-  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(0,0,0,1),      sp:40,  sm:1}, // noseline
-  {a:new THREE.Vector4(1,1,1,1),     d:new THREE.Vector4(.7,.7,.7,1),  s:new THREE.Vector4(0,0,0,1),      sp:40,  sm:1}, // glass
+const OUTFIT_COLORS = [
+  {hex:'#E8531E',label:'Orange Wii'}, {hex:'#2962FF',label:'Bleu'},
+  {hex:'#D50000',label:'Rouge'},      {hex:'#2E7D32',label:'Vert'},
+  {hex:'#F9A825',label:'Jaune'},      {hex:'#6A1B9A',label:'Violet'},
+  {hex:'#AD1457',label:'Rose'},       {hex:'#37474F',label:'Gris foncé'},
 ];
-const LAMB=new THREE.Vector4(.73,.73,.73,1);
-const LDIF=new THREE.Vector4(.6,.6,.6,1);
-const LSPE=new THREE.Vector4(.7,.7,.7,1);
-const LDIR=new THREE.Vector3(-.4531,.4226,.7849);
-const RIMC=new THREE.Vector4(.3,.3,.3,1);
-const RIMP=2.0;
+const SKIN_TONES = [
+  {hex:'#fad9b4',label:'Claire'},   {hex:'#f5c8a0',label:'Lumineuse'},
+  {hex:'#e8b080',label:'Dorée'},    {hex:'#d4956a',label:'Hâlée'},
+  {hex:'#c47a45',label:'Caramel'},  {hex:'#8d5524',label:'Chocolat'},
+];
 
-// Créer une scène Three.js sur un canvas donné
-function creerScene(canvasId, W, H){
-  const canvas=document.getElementById(canvasId);
-  const scene=new THREE.Scene();
-  const cam=new THREE.PerspectiveCamera(15, W/H, 10, 10000);
-  cam.position.set(0,37.05,415.53);
-  cam.lookAt(0,37.05,0);
-  const rend=new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
-  rend.setSize(W,H,false);
-  rend.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  return {scene,cam,rend};
+function genererPalette(rowId, colors, onPick, selectedHex) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  row.innerHTML = '';
+  colors.forEach(c => {
+    const dot = document.createElement('div');
+    dot.className = 'color-dot' + (c.hex === selectedHex ? ' sel' : '');
+    dot.style.background = c.hex;
+    dot.title = c.label;
+    dot.onclick = () => onPick(c.hex, dot);
+    row.appendChild(dot);
+  });
 }
 
-// Charger un .glb avec requête POST (API FFL require params en JSON body)
-function chargerGLB(scene, url, cb){
-  // Extraire les params de l'URL et les envoyer en JSON
-  const urlObj=new URL(url);
-  const body={
-    data: urlObj.searchParams.get('data'),
-    shirtColor: urlObj.searchParams.get('shirtColor'),
-    hairColor: urlObj.searchParams.get('hairColor'),
-    hairType: urlObj.searchParams.get('hairType'),
-    width: urlObj.searchParams.get('width'),
-    verifyAsync: urlObj.searchParams.get('verifyAsync')
-  };
+function rafraichirPreviewMii() {
+  const wrap = document.getElementById('miiPreviewWrap');
+  const spinner = document.getElementById('mii-preview-spinner');
+  if (spinner) spinner.style.display = 'flex';
 
-  fetch('https://mii-unsecure.ariankordi.net/miis/image.glb', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(body)
-  }).then(r=>{
-    if(!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.blob();
-  }).then(blob=>{
-    const blobUrl=URL.createObjectURL(blob);
-    new THREE.GLTFLoader().load(blobUrl, gltf=>{
-      URL.revokeObjectURL(blobUrl);
-      const model=gltf.scene;
-      model.traverse(node=>{
-        if(!node.isMesh) return;
-        const ud=node.geometry.userData;
-        const mt=ud.modulateType;
-        const mp=(mt!==undefined&&mt<9)?MAT[mt]:MAT[0];
-        const mm=ud.modulateMode===undefined?0:ud.modulateMode;
-        const mc=ud.modulateColor?new THREE.Vector4(...ud.modulateColor,1):new THREE.Vector4(1,0,0,1);
-        const le=mt>5?false:true;
-        const ori=node.material;
-        if(ori.map) ori.map.colorSpace=THREE.LinearSRGBColorSpace;
-        let side=ori.side;
-        if(ud.cullMode!==undefined) side=ud.cullMode===0?THREE.DoubleSide:ud.cullMode===1?THREE.FrontSide:THREE.BackSide;
-        node.material=new THREE.ShaderMaterial({
-          vertexShader:document.getElementById('vertexShader').textContent,
-          fragmentShader:document.getElementById('fragmentShader').textContent,
-          uniforms:{
-            u_const1:{value:mc},u_light_ambient:{value:LAMB},u_light_diffuse:{value:LDIF},
-            u_light_specular:{value:LSPE},u_light_dir:{value:LDIR},u_light_enable:{value:le},
-            u_material_ambient:{value:mp.a},u_material_diffuse:{value:mp.d},u_material_specular:{value:mp.s},
-            u_material_specular_mode:{value:mp.sm},u_material_specular_power:{value:mp.sp},
-            u_mode:{value:mm},u_rim_color:{value:RIMC},u_rim_power:{value:RIMP},s_texture:{value:ori.map},
-          },
-          side, blending:THREE.CustomBlending, blendDstAlpha:THREE.OneFactor,
-          transparent:ori.transparent, alphaTest:ori.alphaTest,
-        });
-      });
-      scene.add(model);
-      cb&&cb(model);
-    },undefined,err=>{console.warn('GLB err:',err);cb&&cb(null);});
-  }).catch(err=>{console.warn('Fetch err:',err);cb&&cb(null);});
-}
-
-// Construire l'URL API Mii
-// hairType : 0=court, 1=mi-long, 2=bouclé
-// Les types de cheveux disponibles dans l'API FFL : 0,33,57 correspondent environ aux 3 styles
-const HAIR_API=[0,33,57];
-function getMiiURL(bodyColor, hairType, hairColor){
-  const shirt=bodyColor.replace('#','');
-  const hair=hairColor.replace('#','');
-  const ht=HAIR_API[hairType]||0;
-  // Mii data générique (Mii neutre de base)
-  return `https://mii-unsecure.ariankordi.net/miis/image.glb?data=AwAAQOlVognnx6YhuP8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==&shirtColor=${shirt}&hairColor=${hair}&hairType=${ht}&width=512&verifyAsync=1`;
-}
-
-// ── Scène principale (écran Mii) ──
-let mainCtx=null, mainModel=null, mainAnimId=null;
-let mii3dReady=false;
-
-function initMiiScreen(){
-  if(mii3dReady) return;
-  mii3dReady=true;
-
-  // ✅ Restaurer le genre sauvegardé
-  const savedGenre = localStorage.getItem('mii_genre');
-  if (savedGenre) {
-    miiGenre = savedGenre;
-    const genreBtn = document.querySelector(`.mii-gender-btn[data-gender="${savedGenre}"]`);
-    if (genreBtn) genreBtn.classList.add('sel');
-  }
-
-  const wrap=document.getElementById('mii3dWrap');
-  const W=wrap.clientWidth||330, H=wrap.clientHeight||230;
-  mainCtx=creerScene('mii3dCanvas',W,H);
-  // Contrôles orbitaux (touch/drag)
-  const ctrl=new THREE.OrbitControls(mainCtx.cam,mainCtx.rend.domElement);
-  ctrl.target.set(0,37.05,0); ctrl.update();
-  // Loop de rendu
-  (function loop(){mainAnimId=requestAnimationFrame(loop);if(mainModel)mainModel.rotation.y+=0.012;mainCtx.rend.render(mainCtx.scene,mainCtx.cam);})();
-  rechargerMii();
-}
-
-function rechargerMii(){
-  if(!mainCtx) return;
-  if(mainModel){mainCtx.scene.remove(mainModel);mainModel=null;}
-  const loading=document.getElementById('mii3dLoading');
-  loading.style.display='flex';
-  chargerGLB(mainCtx.scene, getMiiURL(mii.bodyColor,mii.hairType,mii.hairColor), model=>{
-    loading.style.display='none';
-    if(model) mainModel=model;
+  const profilData = { mii_color: mii.bodyColor, mii_hair_color: mii.skinColor };
+  MII_RENDERER.createMiiCanvas(profilData, miiGenre, 190, false).then(canvas => {
+    wrap.innerHTML = '';
+    if (canvas) {
+      canvas.style.cssText = 'width:100%;height:100%;display:block;';
+      wrap.appendChild(canvas);
+    }
+  }).catch(() => {
+    if (spinner) spinner.style.display = 'none';
   });
 }
 
 /* ═══════════════════════════════════════════════════
    SÉLECTION MII
 ═══════════════════════════════════════════════════ */
-// ✅ Genre (man/woman)
 let miiGenre = 'man';
+
 function choisirGenre(genre, el) {
   miiGenre = genre;
   document.querySelectorAll('.mii-gender-btn').forEach(d => d.classList.remove('sel'));
   el.classList.add('sel');
-  localStorage.setItem('mii_genre', genre);
   if (navigator.vibrate) navigator.vibrate(8);
-  // Pas besoin de rechargerMii() pour le genre - c'est just le sprite PNG
+  rafraichirPreviewMii();
 }
 
-function choisirCouleurBody(color,el){
-  mii.bodyColor=color;
-  document.querySelectorAll('#color-body-row .color-dot').forEach(d=>d.classList.remove('sel'));
-  el.classList.add('sel');
-  if(navigator.vibrate)navigator.vibrate(8);
-  rechargerMii();
+function choisirCouleurBody(hex, dot) {
+  mii.bodyColor = hex;
+  document.querySelectorAll('#color-body-row .color-dot').forEach(d => d.classList.remove('sel'));
+  dot.classList.add('sel');
+  if (navigator.vibrate) navigator.vibrate(8);
+  rafraichirPreviewMii();
 }
-function choisirCoiffure(type,btn){
-  mii.hairType=type;
-  document.querySelectorAll('.hair-card').forEach(c=>c.classList.remove('sel'));
-  btn.classList.add('sel');
-  if(navigator.vibrate)navigator.vibrate(8);
-  rechargerMii();
+
+function choisirCouleurSkin(hex, dot) {
+  mii.skinColor = hex;
+  document.querySelectorAll('#color-skin-row .color-dot').forEach(d => d.classList.remove('sel'));
+  dot.classList.add('sel');
+  if (navigator.vibrate) navigator.vibrate(8);
+  rafraichirPreviewMii();
 }
-function choisirCouleurHair(color,el){
-  mii.hairColor=color;
-  document.querySelectorAll('#color-hair-row .color-dot').forEach(d=>d.classList.remove('sel'));
-  el.classList.add('sel');
-  if(navigator.vibrate)navigator.vibrate(8);
-  rechargerMii();
+
+function initMiiScreen() {
+  genererPalette('color-body-row', OUTFIT_COLORS, choisirCouleurBody, mii.bodyColor);
+  genererPalette('color-skin-row', SKIN_TONES, choisirCouleurSkin, mii.skinColor);
+  setTimeout(rafraichirPreviewMii, 80);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -636,6 +420,8 @@ function verifierEmail(){
 function verifierMotDePasse(){
   const pwd=document.getElementById('input-password').value;
   const bar=document.getElementById('pwd-bar');
+  const count=document.getElementById('pwd-count');
+  if(count) count.textContent=`${pwd.length} / 72`;
   let f=0;
   if(pwd.length>=6)f++;if(pwd.length>=10)f++;
   if(/[A-Z]/.test(pwd))f++;if(/[0-9]/.test(pwd))f++;if(/[^A-Za-z0-9]/.test(pwd))f++;
@@ -714,10 +500,9 @@ async function validerMiiEtSauvegarder(){
     level_baseball: choix.baseball,
     level_bowling: choix.bowling,
     level_boxe: choix.boxe,
-    mii_color: mii.bodyColor,
-    mii_hair: String(mii.hairType),
-    mii_hair_color: mii.hairColor,
-    gender: miiGenre,  // ✅ Ajouter le genre du Mii
+    mii_color:      mii.bodyColor,
+    mii_hair_color: mii.skinColor,  // carnation stockée dans ce champ (même que profil.html)
+    gender: miiGenre,
     onboarding_done: true,
   };
   localStorage.setItem('wii_profil_pending', JSON.stringify(profil_pending));
