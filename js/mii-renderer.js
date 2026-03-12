@@ -34,10 +34,10 @@ const MII_RENDERER = (() => {
     ];
   }
 
-  // ── Main Function: Recolor PNG sprite based on outfit and hair color ──
-  async function recolorMii(spriteUrl, outfitHex, hairHex) {
+  // ── Main Function: Recolor PNG sprite based on outfit and skin color ──
+  async function recolorMii(spriteUrl, outfitHex, skinHex) {
     // Create cache key
-    const cacheKey = spriteUrl + '|' + outfitHex + '|' + hairHex;
+    const cacheKey = spriteUrl + '|' + outfitHex + '|' + skinHex;
     if (cache[cacheKey]) {
       return cache[cacheKey];
     }
@@ -60,13 +60,13 @@ const MII_RENDERER = (() => {
 
         // Get target colors from hex
         const [or, og, ob] = hexToRgb(outfitHex);
-        const [hr, hg, hb] = hexToRgb(hairHex);
+        const [sr, sg, sb] = hexToRgb(skinHex);
 
         // Reference source colors (from mii_man.png / mii_woman.png)
-        // Outfit: orange satur
+        // Outfit: orange saturé
         const SRC_OUT_R = 230, SRC_OUT_G = 90, SRC_OUT_B = 45;
-        // Hair: brown/dark
-        const SRC_HAIR_R = 139, SRC_HAIR_G = 86, SRC_HAIR_B = 49;
+        // Skin: ton pêche clair
+        const SRC_SKIN_R = 245, SRC_SKIN_G = 215, SRC_SKIN_B = 190;
 
         // Process each pixel
         for (let i = 0; i < data.length; i += 4) {
@@ -84,9 +84,9 @@ const MII_RENDERER = (() => {
           const isOutfit = (r > 160) && (g < r * 0.56) && (b < r * 0.42) &&
                           (sat > 0.38) && (mx === r);
 
-          // ── HAIR: brown/dark, low saturation ──
-          const isHair = !isOutfit && (r > 100) && (g < r * 0.7) && (b < r * 0.6) &&
-                        (sat > 0.08) && (sat < 0.45);
+          // ── SKIN: ton chaud peu saturé, rouge domine légèrement ──
+          const isSkin = !isOutfit && (r > 195) && (g > 155) && (b > 120) &&
+                        (sat > 0.08) && (sat < 0.42) && (mx === r) && (r - b < 115);
 
           // Apply recoloring while preserving luminosity
           if (isOutfit) {
@@ -94,11 +94,11 @@ const MII_RENDERER = (() => {
             data[i] = Math.min(255, Math.round(or * lum));
             data[i + 1] = Math.min(255, Math.round(og * lum));
             data[i + 2] = Math.min(255, Math.round(ob * lum));
-          } else if (isHair) {
-            const lum = r / SRC_HAIR_R;
-            data[i] = Math.min(255, Math.round(hr * lum));
-            data[i + 1] = Math.min(255, Math.round(hg * lum));
-            data[i + 2] = Math.min(255, Math.round(hb * lum));
+          } else if (isSkin) {
+            const lum = r / SRC_SKIN_R;
+            data[i] = Math.min(255, Math.round(sr * lum));
+            data[i + 1] = Math.min(255, Math.round(sg * lum));
+            data[i + 2] = Math.min(255, Math.round(sb * lum));
           }
         }
 
@@ -122,7 +122,8 @@ const MII_RENDERER = (() => {
   }
 
   // ── Create Canvas Element for HTML Display ──
-  async function createMiiCanvas(miiData, gender = 'man', size = 200) {
+  // headOnly: si true, recadre sur la tête du Mii (top 42% du sprite, centré)
+  async function createMiiCanvas(miiData, gender = 'man', size = 200, headOnly = false) {
     if (!miiData || !miiData.mii_color || !miiData.mii_hair_color) {
       console.warn('⚠️ Mii data incomplete:', miiData);
       return null;
@@ -137,14 +138,22 @@ const MII_RENDERER = (() => {
 
     if (!recoloredCanvas) return null;
 
-    // Create display canvas with target size
     const displayCanvas = document.createElement('canvas');
     displayCanvas.width = size;
     displayCanvas.height = size;
     const ctx = displayCanvas.getContext('2d');
 
-    // Scale and draw recolored sprite
-    ctx.drawImage(recoloredCanvas, 0, 0, size, size);
+    if (headOnly) {
+      // Recadrer sur la zone tête : top 42% du sprite, centré horizontalement
+      const sw = recoloredCanvas.width;
+      const sh = recoloredCanvas.height;
+      const cropH = Math.round(sh * 0.42);
+      const cropX = Math.round(sw * 0.1);
+      const cropW = Math.round(sw * 0.8);
+      ctx.drawImage(recoloredCanvas, cropX, 0, cropW, cropH, 0, 0, size, size);
+    } else {
+      ctx.drawImage(recoloredCanvas, 0, 0, size, size);
+    }
 
     return displayCanvas;
   }
