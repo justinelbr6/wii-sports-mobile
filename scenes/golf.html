@@ -631,6 +631,10 @@ let CAM_BASE   = { x:0, y:3.5, z:12 };
 let cameraMode = 'jeu'; // 'jeu' | 'vol' | 'reset'
 let obstaclesSolides = []; // rochers trou 3 — liste mise à jour à construireTrou()
 
+// ── Calibration gyroscope ──
+let gyroCalibBase = 0;   // baseline gamma capturée au démarrage
+let gyroSmoothX   = 0;   // valeur lissée (EMA)
+
 function phong(color, shininess=80, specular=0x333333) {
   return new THREE.MeshPhongMaterial({ color, shininess, specular });
 }
@@ -904,14 +908,15 @@ function construireTrou(indexTrou) {
       [-6,-dist*0.58,0x78909C],[-7,-dist*0.62,0x546E7A]
     ];
     rockerData.forEach(([x,z,c]) => {
-      const rayon = 1.1+Math.random()*0.6;
+      const rayon = 0.65 + Math.random() * 0.25; // taille réduite : 0.65-0.90
       const roc = new THREE.Mesh(new THREE.DodecahedronGeometry(rayon,0),phong(c,20));
-      roc.position.set(x, 0.5, z); roc.rotation.y=Math.random()*Math.PI;
+      roc.position.set(x, rayon * 0.55, z); roc.rotation.y=Math.random()*Math.PI;
       roc.castShadow=true;
-      roc.userData.solide = true;     // marqueur collision
-      roc.userData.rayon  = rayon * 1.1; // rayon de collision légèrement élargi
+      roc.userData.solide   = true;
+      roc.userData.rayon    = rayon;
+      roc.userData.hauteur  = rayon * 2; // hauteur totale du rocher
       terrainGroupe.add(roc);
-      obstaclesSolides.push(roc);     // ajout dans la liste de collision
+      obstaclesSolides.push(roc);
     });
 
     // Bunkers multiples
@@ -1130,9 +1135,14 @@ function mettreAJourFleche() {
   if (ETAT.ballEnVol || !ETAT.peutFrapper) { flecheG.visible = false; return; }
   flecheG.visible = true;
 
-  // Ajuste l'angle avec le gyroscope (gauche/droite) — 360° complet possible
-  const nx = gyro.getNormalizedX(30); // -1 .. +1
-  angleVise += nx * ETAT.gyroSensibilite; // sensibilité selon niveau
+  // Ajuste l'angle avec le gyroscope — calibré + lissé + deadzone
+  const rawX  = (gyro.x || 0) - gyroCalibBase;          // retire la baseline
+  gyroSmoothX = gyroSmoothX * 0.65 + rawX * 0.35;       // lissage exponentiel
+  const normX = Math.max(-1, Math.min(1, gyroSmoothX / 22)); // normalise sur ±22°
+  const DZ    = 0.12;                                    // deadzone 12 %
+  const nx    = Math.abs(normX) < DZ ? 0
+              : Math.sign(normX) * (Math.abs(normX) - DZ) / (1 - DZ);
+  angleVise += nx * ETAT.gyroSensibilite;
 
   const bx = ballePos.x, bz = ballePos.z;
   const Y_FLECHE = 0.10; // bien au-dessus de l'herbe
@@ -1441,6 +1451,9 @@ function demarrerJeu() {
 
   const lancer = async () => {
     try { await gyro.start(); } catch(e) {}
+    // Calibrer le gyroscope : capture la position neutre du téléphone après 400ms
+    gyroCalibBase = 0; gyroSmoothX = 0;
+    setTimeout(() => { gyroCalibBase = gyro.x || 0; }, 400);
     construireTrou(0);
     creerBalle();
     resetBalle();
@@ -1539,26 +1552,29 @@ function animate() {
     ombreMesh.material.opacity = Math.max(0.05, 0.25 - ballePos.y * 0.03);
 
     // Collision avec obstacles solides (rochers trou 3)
+    // Collision cylindrique : vérifie la distance XZ d'abord (évite le pass-through
+    // au sol), puis rebond selon la normale 3D complète.
     for (const obs of obstaclesSolides) {
-      const dx = ballePos.x - obs.position.x;
-      const dy = ballePos.y - obs.position.y;
-      const dz = ballePos.z - obs.position.z;
-      const dist3D = Math.sqrt(dx*dx + dy*dy + dz*dz);
-      const rayonColl = obs.userData.rayon || 1.2;
-      if (dist3D < rayonColl + 0.2) {
-        // Normale de rebond = vecteur depuis le centre de l'obstacle vers la balle
-        const nx = dx/dist3D, ny = dy/dist3D, nz = dz/dist3D;
-        // Réflexion de la vitesse selon la normale (rebond réaliste)
-        const dot = balleVel.x*nx + balleVel.y*ny + balleVel.z*nz;
-        balleVel.x = (balleVel.x - 2*dot*nx) * 0.55;
-        balleVel.y = Math.abs((balleVel.y - 2*dot*ny) * 0.55) + 0.04;
-        balleVel.z = (balleVel.z - 2*dot*nz) * 0.55;
-        // Repousser la balle hors de l'obstacle
-        ballePos.set(
-          obs.position.x + nx*(rayonColl+0.25),
-          obs.position.y + ny*(rayonColl+0.25),
-          obs.position.z + nz*(rayonColl+0.25)
-        );
+      const dx    = ballePos.x - obs.position.x;
+      const dz    = ballePos.z - obs.position.z;
+      const distXZ = Math.sqrt(dx*dx + dz*dz);
+      const rayonColl = (obs.userData.rayon || 0.8) + 0.2; // rayon + taille balle
+      const topRoc    = obs.position.y + (obs.userData.hauteur || 1.6);
+
+      // Déclenche si la balle est dans le cylindre (XZ) et en dessous du sommet du rocher
+      if (distXZ < rayonColl && ballePos.y < topRoc + 0.15) {
+        // Normale de rebond complète en 3D
+        const dy    = ballePos.y - obs.position.y;
+        const dist3D = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.001;
+        const nx_n  = dx/dist3D, ny_n = dy/dist3D, nz_n = dz/dist3D;
+        const dot   = balleVel.x*nx_n + balleVel.y*ny_n + balleVel.z*nz_n;
+        balleVel.x  = (balleVel.x - 2*dot*nx_n) * 0.50;
+        balleVel.y  = Math.abs((balleVel.y - 2*dot*ny_n) * 0.50) + 0.06;
+        balleVel.z  = (balleVel.z - 2*dot*nz_n) * 0.50;
+        // Repousser la balle hors du cylindre
+        const pushDist = rayonColl + 0.05;
+        ballePos.x = obs.position.x + (dx / (distXZ || 0.001)) * pushDist;
+        ballePos.z = obs.position.z + (dz / (distXZ || 0.001)) * pushDist;
         if (navigator.vibrate) navigator.vibrate([20,5,20]);
         break;
       }
@@ -1572,6 +1588,7 @@ function animate() {
       // Out of bounds — annuler le coup, remettre la balle à sa position précédente
       balleVel.set(0,0,0); ETAT.ballEnVol=false;
       ballePos.copy(ETAT.dernierePosBalle || new THREE.Vector3(0,0.2,8));
+      if (balleMesh) balleMesh.position.copy(ballePos); // sync mesh
       ETAT.coupsTotal--;
       ETAT.coupsParTrou[ETAT.trou]--;
       document.getElementById('hud-shots').textContent = ETAT.coupsTotal;
@@ -1583,7 +1600,6 @@ function animate() {
       CAM_BASE.x = ballePos.x - Math.sin(angleVise)*12;
       CAM_BASE.y = 3.5;
       CAM_BASE.z = ballePos.z - Math.cos(angleVise)*12;
-      // Message OOB
       afficherMessageOOB('🚫 Hors limites ! Rejoue depuis ta position.');
     }
 
@@ -1591,6 +1607,7 @@ function animate() {
     if (Math.abs(ballePos.x) > 35) {
       balleVel.set(0,0,0); ETAT.ballEnVol=false;
       ballePos.copy(ETAT.dernierePosBalle || new THREE.Vector3(0,0.2,8));
+      if (balleMesh) balleMesh.position.copy(ballePos); // sync mesh
       ETAT.coupsTotal--;
       ETAT.coupsParTrou[ETAT.trou]--;
       document.getElementById('hud-shots').textContent = ETAT.coupsTotal;
